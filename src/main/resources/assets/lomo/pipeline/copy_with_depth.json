@@ -1,0 +1,13 @@
+{
+	"programs": [
+		{
+			"name": "copy_with_depth",
+			"vertexSource": "canvas:shaders/pipeline/post/simple_full_frame.vert",
+			"fragmentSource": "lomo:shaders/pipeline/copy_with_depth.frag",
+			"samplers": [
+				"u_input",
+				"u_input_depth"
+			]
+		}
+	]
+}
