@@ -1,0 +1,215 @@
+{
+	"nameKey": "name",
+	"descriptionKey": "desc",
+	"materialVertexShader": "canvas:shaders/pipeline/standard.vert",
+	"materialFragmentShader": "canvas:shaders/pipeline/standard.frag",
+	"fabulousTargets": {
+		"entity": "default",
+		"particles": "default",
+		"weather": "default",
+		"clouds": "default",
+		"translucent": "transcluent"
+	},
+	"drawTargets": {
+		"solidTerrain": "default",
+		"translucentTerrain": "transcluent",
+		"translucentEntity": "transcluent",
+		"weather": "default",
+		"clouds": "default",
+		"translucentParticles": "default"
+	},
+	"images": [
+		{
+			"name": "solid_main",
+			"lod": 0,
+			"internalFormat": "RGBA8",
+			"pixelFormat": "RGBA",
+			"pixelDataType": "UNSIGNED_BYTE",
+			"target": "TEXTURE_2D",
+			"texParams": [
+				{
+					"name": "TEXTURE_MIN_FILTER",
+					"val": "LINEAR"
+				},
+				{
+					"name": "TEXTURE_MAG_FILTER",
+					"val": "LINEAR"
+				},
+				{
+					"name": "TEXTURE_WRAP_S",
+					"val": "CLAMP"
+				},
+				{
+					"name": "TEXTURE_WRAP_T",
+					"val": "CLAMP"
+				}
+			]
+		},
+		{
+			"name": "solid_depth",
+			"lod": 0,
+			"internalFormat": "DEPTH_COMPONENT",
+			"pixelFormat": "DEPTH_COMPONENT",
+			"pixelDataType": "FLOAT",
+			"target": "TEXTURE_2D",
+			"texParams": [
+				{
+					"name": "TEXTURE_MIN_FILTER",
+					"val": "NEAREST"
+				},
+				{
+					"name": "TEXTURE_MAG_FILTER",
+					"val": "NEAREST"
+				},
+				{
+					"name": "TEXTURE_WRAP_S",
+					"val": "CLAMP"
+				},
+				{
+					"name": "TEXTURE_WRAP_T",
+					"val": "CLAMP"
+				},
+				{
+					"name": "TEXTURE_COMPARE_MODE",
+					"val": "NONE"
+				}
+			]
+		},
+		{
+			"name": "transcluent_main",
+			"lod": 0,
+			"internalFormat": "RGBA8",
+			"pixelFormat": "RGBA",
+			"pixelDataType": "UNSIGNED_BYTE",
+			"target": "TEXTURE_2D",
+			"texParams": [
+				{
+					"name": "TEXTURE_MIN_FILTER",
+					"val": "LINEAR"
+				},
+				{
+					"name": "TEXTURE_MAG_FILTER",
+					"val": "LINEAR"
+				},
+				{
+					"name": "TEXTURE_WRAP_S",
+					"val": "CLAMP"
+				},
+				{
+					"name": "TEXTURE_WRAP_T",
+					"val": "CLAMP"
+				}
+			]
+		},
+		{
+			"name": "transcluent_depth",
+			"lod": 0,
+			"internalFormat": "DEPTH_COMPONENT",
+			"pixelFormat": "DEPTH_COMPONENT",
+			"pixelDataType": "FLOAT",
+			"target": "TEXTURE_2D",
+			"texParams": [
+				{
+					"name": "TEXTURE_MIN_FILTER",
+					"val": "NEAREST"
+				},
+				{
+					"name": "TEXTURE_MAG_FILTER",
+					"val": "NEAREST"
+				},
+				{
+					"name": "TEXTURE_WRAP_S",
+					"val": "CLAMP"
+				},
+				{
+					"name": "TEXTURE_WRAP_T",
+					"val": "CLAMP"
+				},
+				{
+					"name": "TEXTURE_COMPARE_MODE",
+					"val": "NONE"
+				}
+			]
+		}
+	],
+
+	"defaultFramebuffer": "default",
+
+	"framebuffers": [
+		{
+			"name": "default",
+			"depthAttachment": {
+				"image": "solid_depth",
+				"clearDepth": 1.0
+			},
+			"colorAttachments": [
+				{
+					"image": "solid_main"
+				}
+			]
+		},
+		{
+			"name": "transcluent",
+			"depthAttachment": {
+				"image": "transcluent_depth",
+				"clearDepth": 1.0
+			},
+			"colorAttachments": [
+				{
+					"image": "transcluent_main",
+					"clearColor": "0x00000000"
+				}
+			]
+		}
+	],
+	"beforeWorldRender": {
+		"passes": [
+			{
+				"name": "clear_transcluent",
+				"framebuffer": "transcluent",
+				"program": "frex_clear"
+			},
+			{
+				"name": "clear_main",
+				"framebuffer": "default",
+				"program": "frex_clear"
+			}
+		]
+	},
+
+	"include": [
+		"canvas:pipeline/basic_light_config.json",
+		"canvas:pipeline/fog_config.json",
+		"canvas:pipeline/handheld_light_config.json"
+	],
+
+	"programs": [
+		{
+			"name": "transcluent",
+			"vertexSource": "canvas:shaders/pipeline/post/simple_full_frame.vert",
+			"fragmentSource": "lomo:shaders/pipeline/transcluent.frag",
+			"samplers": [
+				"transcluent",
+				"transcluentDepth",
+				"solid",
+				"solidDepth"
+			]
+		}
+	],
+
+	"fabulous": {
+		"passes": [
+			{
+				"name": "transcluent",
+				"program": "transcluent",
+				"framebuffer": "default",
+				"samplerImages": [
+					"transcluent_main",
+					"transcluent_depth",
+					"solid_main",
+					"solid_depth"
+				]
+			}
+		]
+	}
+}
