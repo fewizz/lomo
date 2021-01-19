@@ -9,11 +9,11 @@ uniform sampler2D u_input_depth;
 
 varying vec2 _cvv_texcoord;
 
-#define VIEW_DIST 10
-
 float lenSq(vec3 v) {
     return dot(v, v);
 }
+
+//#define LOMO_DISTANCE 24
 
 void main() {
 	vec4 r = (texture2D(u_reflective, _cvv_texcoord) - 0.5) * 2;
@@ -25,7 +25,7 @@ void main() {
 		mat4 view = frx_viewMatrix();
 		mat4 proj = frx_projectionMatrix();
 
-		float window_depth = vec4(texture2D(u_input_depth, _cvv_texcoord)).r ;
+		float window_depth = texture2D(u_input_depth, _cvv_texcoord).r ;
 		vec3 pixel_window_position = vec3(gl_FragCoord.xy, window_depth);
 		vec3 pixel_world_position = window_to_world(pixel_window_position, proj);
 
@@ -33,34 +33,51 @@ void main() {
 		vec3 ss_normal = normalize(rot * normalize(r.xyz));
 
 		vec3 o = normalize(-pixel_world_position);
-		//o.z = -o.z;
 		float d = dot(o, ss_normal);
 		vec3 v0 = ss_normal*d;
 		vec3 res = normalize(o + (v0 - o)* 2);
-
-		//vec4 result_color = vec4(0);
 		
-		float ray_len = 0.35;
+		float ray_len = -pixel_world_position.z / 50;
+		float step = 0.01;
 
-		d = (d - 0.1)*10;
-		//d = d;
+		vec3 position = pixel_world_position + res*ray_len;
 
-		while(d > 0 || true) {
-			vec3 position = pixel_world_position + res*ray_len;
-
+		while(true) {
 			vec3 window_coord = world_to_window(position, proj);
 			vec2 tex_coord = window_coord.xy / frxu_size;
-			float current_depth = vec4(texture2D(u_input_depth, tex_coord)).r;
+			vec2 v0 = (tex_coord - 0.5);
+			float as = max(abs(v0.y), abs(v0.x));
+			if(as >= 0.5) break;
+
+			float current_depth = texture2D(u_input_depth, tex_coord).r;
+			float real_depth = z_window_to_world(current_depth, proj);
+			if(current_depth <= 0) break;
 
 			if(current_depth < window_coord.z) {
-				reflection = texture2D(u_input, tex_coord);
-				ratio = d;
+				//if(real_depth - position.z > step*10) break;
+
+				as = clamp(0.5 - as, 0, 0.5)*2;
+				///vec4 normal = (texture2D(u_reflective, tex_coord) - 0.5) * 2;
+				//vec3 normal_ss = normalize(rot * normalize(normal.xyz));
+				/*normal = vec4(position + normal_ss, 1);
+				normal = proj*normal;
+				normal_ss = normalize(normal.xyz);*/
+				//as *= abs(normal_ss.z);*/
+				//float dt = dot(normal_ss, res);
+				//if(dot(normal_ss, res) >= 0) break;
+
+				//as *= ray_len / LOMO_DISTANCE;
+				as *= sqrt(1 - d*d);
+				reflection = texture2D(u_input, tex_coord);//vec4(vec3(dt), 1);
+				ratio = as;//as;//clamp((0.5 - distFromCenter) * 2, 0, 1);
 				break;
 			}
 
-			if(tex_coord.x > 1 || tex_coord.y > 1 || tex_coord.x < 0 || tex_coord.y < 0 || ray_len > 10) break;
+			ray_len += step;
+			if(ray_len > 1000) break;
 
-			ray_len += 0.35;
+			position += res*step;
+			step += step / 40;
 		}
 
 		//gl_FragData[0] = result_color;

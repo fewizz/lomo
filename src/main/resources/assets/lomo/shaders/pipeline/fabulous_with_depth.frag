@@ -64,14 +64,13 @@ void main() {
 	try_insert(texture2D(cloudsColor, _cvv_texcoord), texture2D(cloudsDepth, _cvv_texcoord).r);
 
 	vec3 texelAccum = color_layers[0].rgb;
-	float depth = depth_layers[0];
 
 	for (int i = 1; i < active_layers; ++i) {
 		texelAccum = blend(texelAccum, color_layers[i]);
 	}
 
 	gl_FragData[0] = vec4(texelAccum.rgb, 1.0);
-	gl_FragDepth = depth;
+	gl_FragData[1] = vec4(depth_layers[active_layers - 1]);
 }
 
 

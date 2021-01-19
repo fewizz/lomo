@@ -3,7 +3,7 @@
 	"descriptionKey": "desc",
 	"materialVertexShader": "canvas:shaders/pipeline/standard.vert",
 	"materialFragmentShader": "canvas:shaders/pipeline/standard.frag",
-	
+
 	"drawTargets": {
 		"solidTerrain": "solid",
 		"translucentTerrain": "translucent",

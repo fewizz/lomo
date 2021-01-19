@@ -58,9 +58,9 @@
 				"program": "reflection",
 				"framebuffer": "reflected",
 				"samplerImages": [
+					"fab_composite_depth",
 					"reflective",
-					"fab_composite_main",
-					"fab_composite_depth"
+					"fab_composite_main"
 				] 
 			},
 			{
@@ -98,6 +98,11 @@
 			{
 				"name": "clear_translucent",
 				"framebuffer": "translucent",
+				"program": "frex_clear"
+			},
+			{
+				"name": "clear_reflected",
+				"framebuffer": "reflected",
 				"program": "frex_clear"
 			}
 		]
@@ -410,8 +415,8 @@
 		{
 			"name": "fab_composite_depth",
 			"lod": 0,
-			"internalFormat": "DEPTH_COMPONENT",
-			"pixelFormat": "DEPTH_COMPONENT",
+			"internalFormat": "GL_R32F",
+			"pixelFormat": "GL_RED",
 			"pixelDataType": "FLOAT",
 			"target": "TEXTURE_2D",
 			"texParams": [
@@ -550,6 +555,19 @@
 			]
 		},
 		{
+			"name": "fab_composite",
+			"colorAttachments": [
+				{
+					"image": "fab_composite_main",
+					"clearColor": "0x00000000"
+				},
+				{
+					"image": "fab_composite_depth",
+					"clearColor": "0xFFFFFFFF"
+				}
+			]
+		},
+		{
 			"name": "translucent",
 			"depthAttachment": {
 				"image": "translucent_depth"
@@ -564,19 +582,6 @@
 				},
 				{
 					"image": "reflective",
-					"clearColor": "0x00000000"
-				}
-			]
-		},
-		{
-			"name": "fab_composite",
-			"depthAttachment": {
-				"image": "fab_composite_depth",
-				"clearDepth": 1.0
-			},
-			"colorAttachments": [
-				{
-					"image": "fab_composite_main",
 					"clearColor": "0x00000000"
 				}
 			]

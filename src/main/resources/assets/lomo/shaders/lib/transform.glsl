@@ -12,17 +12,17 @@ vec2 ndc_to_window(vec2 w) {
 }
 
 float z_window_to_ndc(float zw) {
-    float n = gl_DepthRange.near;
-    float f = gl_DepthRange.far;
+    //float n = gl_DepthRange.near;
+    //float f = gl_DepthRange.far;
 
-    return (zw - (n + f)/2) / ((f - n)/2);
+    return zw * 2 - 1;//(zw - (n + f)/2) / ((f - n)/2);
 }
 
 float z_ndc_to_window(float zd) {
-    float n = gl_DepthRange.near;
-    float f = gl_DepthRange.far;
+    //float n = gl_DepthRange.near;
+    //float f = gl_DepthRange.far;
 
-    return ((f - n)/2)*zd + (n + f)/2;
+    return (zd + 1) / 2;//((f - n)/2)*zd + (n + f)/2;
 }
 
 float z_window_to_world(float zw, mat4 m) {
@@ -41,8 +41,11 @@ vec3 window_to_world(vec3 w, mat4 m) {
 }
 
 vec3 world_to_window(vec3 w, mat4 m) {
-    vec4 clip = m*vec4(w, 1);
-    vec3 ndc = clip.xyz/clip.w;//vec4( ).xyz;
+    //vec4 clip = m*vec4(w, 1);
+    float xc = w.x * m[0][0] + w.z * m[2][0];
+    float yc = w.y * m[1][1] + w.z * m[2][1];
+    float zc = w.z * m[2][2] + m[3][2];
+    vec3 ndc = vec3(xc, yc, zc)/(-w.z);//vec4( ).xyz;
 
     return vec3(ndc_to_window(ndc.xy), z_ndc_to_window(ndc.z));
 }
