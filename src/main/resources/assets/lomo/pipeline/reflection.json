@@ -1,0 +1,134 @@
+{
+	"include": [
+		"lomo:pipeline/copy_with_depth.json"
+	],
+
+	"framebuffers": [
+		{
+			"name": "reflected",
+			"depthAttachment": {"image": "reflected_depth"},
+			"colorAttachments": [{"image": "reflected_main"}]
+		}
+	],
+
+	"programs": [
+		{
+			"name": "reflection",
+			"vertexSource": "canvas:shaders/pipeline/post/simple_full_frame.vert",
+			"fragmentSource": "lomo:shaders/pipeline/reflection.frag",
+			"samplers": [
+				"u_reflective",
+				"u_input",
+				"u_input_depth"
+			]
+		}
+	],
+
+	/*"fabulous": {
+		"passes": [
+            {
+                "name": "composite_copy",
+                "program": "copy_with_depth",
+                "framebuffer": "composite_copy",
+                "samplerImages": [
+                    "composite_main",
+                    "translucent_depth"
+                ] 
+            },
+            {
+                "name": "reflection",
+                "program": "reflection",
+                "framebuffer": "",
+                "samplerImages": [
+                    "translucent_main",
+                    "translucent_depth"
+                ] 
+            }
+        ]
+    }, */
+
+	"images": [
+		{
+			"name": "reflective",
+			"lod": 0,
+			"internalFormat": "RGBA8",
+			"pixelFormat": "RGBA",
+			"pixelDataType": "UNSIGNED_BYTE",
+			"target": "TEXTURE_2D",
+			"texParams": [
+				{
+					"name": "TEXTURE_MIN_FILTER",
+					"val": "LINEAR"
+				},
+				{
+					"name": "TEXTURE_MAG_FILTER",
+					"val": "LINEAR"
+				},
+				{
+					"name": "TEXTURE_WRAP_S",
+					"val": "CLAMP"
+				},
+				{
+					"name": "TEXTURE_WRAP_T",
+					"val": "CLAMP"
+				}
+			]
+		},
+		{
+			"name": "reflected_main",
+			"lod": 0,
+			"internalFormat": "RGBA8",
+			"pixelFormat": "RGBA",
+			"pixelDataType": "UNSIGNED_BYTE",
+			"target": "TEXTURE_2D",
+			"texParams": [
+				{
+					"name": "TEXTURE_MIN_FILTER",
+					"val": "LINEAR"
+				},
+				{
+					"name": "TEXTURE_MAG_FILTER",
+					"val": "LINEAR"
+				},
+				{
+					"name": "TEXTURE_WRAP_S",
+					"val": "CLAMP"
+				},
+				{
+					"name": "TEXTURE_WRAP_T",
+					"val": "CLAMP"
+				}
+			]
+		},
+		{
+			"name": "reflected_depth",
+			"lod": 0,
+			"internalFormat": "DEPTH_COMPONENT",
+			"pixelFormat": "DEPTH_COMPONENT",
+			"pixelDataType": "FLOAT",
+			"target": "TEXTURE_2D",
+			"texParams": [
+				{
+					"name": "TEXTURE_MIN_FILTER",
+					"val": "NEAREST"
+				},
+				{
+					"name": "TEXTURE_MAG_FILTER",
+					"val": "NEAREST"
+				},
+				{
+					"name": "TEXTURE_WRAP_S",
+					"val": "CLAMP"
+				},
+				{
+					"name": "TEXTURE_WRAP_T",
+					"val": "CLAMP"
+				},
+				{
+					"name": "TEXTURE_COMPARE_MODE",
+					"val": "NONE"
+				}
+			]
+		}
+	]
+}

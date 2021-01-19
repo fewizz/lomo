@@ -3,6 +3,7 @@
 	"descriptionKey": "desc",
 	"materialVertexShader": "canvas:shaders/pipeline/standard.vert",
 	"materialFragmentShader": "canvas:shaders/pipeline/standard.frag",
+	
 	"drawTargets": {
 		"solidTerrain": "solid",
 		"translucentTerrain": "translucent",
@@ -19,6 +20,6 @@
 		"canvas:pipeline/handheld_light_config.json",
 		"canvas:pipeline/bloom.json",
 		"lomo:pipeline/translucent_fog.json",
-		"canvas:pipeline/fabulous.json"
+		"lomo:pipeline/fabulous_ex.json"
 	]
 }

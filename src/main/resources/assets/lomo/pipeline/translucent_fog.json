@@ -1,17 +1,17 @@
 {
-    "include": [
-        "lomo:pipeline/copy_with_depth.json"
-    ],
+	"include": [
+		"lomo:pipeline/copy_with_depth.json"
+	],
 
-    "framebuffers": [
+	"framebuffers": [
 		{
 			"name": "translucent_copy",
 			"depthAttachment": {"image": "translucent_copy_depth"},
-            "colorAttachments": [{"image": "translucent_copy_main"}]
-        }
-    ],
+			"colorAttachments": [{"image": "translucent_copy_main"}]
+		}
+	],
 
-    "programs": [
+	"programs": [
 		{
 			"name": "translucent_fog",
 			"vertexSource": "canvas:shaders/pipeline/post/simple_full_frame.vert",
@@ -23,19 +23,19 @@
 				"u_solid_depth"
 			]
 		}
-    ],
-    
-    "fabulous": {
+	],
+
+	"fabulous": {
 		"passes": [
-            {
-                "name": "translucent_copy",
-                "program": "copy_with_depth",
-                "framebuffer": "translucent_copy",
-                "samplerImages": [
-                    "translucent_main",
-                    "translucent_depth"
-                ] 
-            },
+			{
+				"name": "translucent_copy",
+				"program": "copy_with_depth",
+				"framebuffer": "translucent_copy",
+				"samplerImages": [
+					"translucent_main",
+					"translucent_depth"
+				] 
+			},
 			{
 				"name": "translucent_fog",
 				"program": "translucent_fog",
@@ -48,64 +48,64 @@
 				]
 			}
 		]
-    },
-    
-    "images": [
-        {
-            "name": "translucent_copy_main",
-            "lod": 0,
-            "internalFormat": "RGBA8",
-            "pixelFormat": "RGBA",
-            "pixelDataType": "UNSIGNED_BYTE",
-            "target": "TEXTURE_2D",
-            "texParams": [
-                {
-                    "name": "TEXTURE_MIN_FILTER",
-                    "val": "LINEAR"
-                },
-                {
-                    "name": "TEXTURE_MAG_FILTER",
-                    "val": "LINEAR"
-                },
-                {
-                    "name": "TEXTURE_WRAP_S",
-                    "val": "CLAMP"
-                },
-                {
-                    "name": "TEXTURE_WRAP_T",
-                    "val": "CLAMP"
-                }
-            ]
-        },
-        {
-            "name": "translucent_copy_depth",
-            "lod": 0,
-            "internalFormat": "DEPTH_COMPONENT",
-            "pixelFormat": "DEPTH_COMPONENT",
-            "pixelDataType": "FLOAT",
-            "target": "TEXTURE_2D",
-            "texParams": [
-                {
-                    "name": "TEXTURE_MIN_FILTER",
-                    "val": "NEAREST"
-                },
-                {
-                    "name": "TEXTURE_MAG_FILTER",
-                    "val": "NEAREST"
-                },
-                {
-                    "name": "TEXTURE_WRAP_S",
-                    "val": "CLAMP"
-                },
-                {
-                    "name": "TEXTURE_WRAP_T",
-                    "val": "CLAMP"
-                },
-                {
-                    "name": "TEXTURE_COMPARE_MODE",
-                    "val": "NONE"
-                }
-            ]
-        }
-    ]
+	},
+
+	"images": [
+		{
+			"name": "translucent_copy_main",
+			"lod": 0,
+			"internalFormat": "RGBA8",
+			"pixelFormat": "RGBA",
+			"pixelDataType": "UNSIGNED_BYTE",
+			"target": "TEXTURE_2D",
+			"texParams": [
+				{
+					"name": "TEXTURE_MIN_FILTER",
+					"val": "LINEAR"
+				},
+				{
+					"name": "TEXTURE_MAG_FILTER",
+					"val": "LINEAR"
+				},
+				{
+					"name": "TEXTURE_WRAP_S",
+					"val": "CLAMP"
+				},
+				{
+					"name": "TEXTURE_WRAP_T",
+					"val": "CLAMP"
+				}
+			]
+		},
+		{
+			"name": "translucent_copy_depth",
+			"lod": 0,
+			"internalFormat": "DEPTH_COMPONENT",
+			"pixelFormat": "DEPTH_COMPONENT",
+			"pixelDataType": "FLOAT",
+			"target": "TEXTURE_2D",
+			"texParams": [
+				{
+					"name": "TEXTURE_MIN_FILTER",
+					"val": "NEAREST"
+				},
+				{
+					"name": "TEXTURE_MAG_FILTER",
+					"val": "NEAREST"
+				},
+				{
+					"name": "TEXTURE_WRAP_S",
+					"val": "CLAMP"
+				},
+				{
+					"name": "TEXTURE_WRAP_T",
+					"val": "CLAMP"
+				},
+				{
+					"name": "TEXTURE_COMPARE_MODE",
+					"val": "NONE"
+				}
+			]
+		}
+	]
 }
