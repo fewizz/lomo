@@ -24,29 +24,6 @@
 		}
 	],
 
-	/*"fabulous": {
-		"passes": [
-            {
-                "name": "composite_copy",
-                "program": "copy_with_depth",
-                "framebuffer": "composite_copy",
-                "samplerImages": [
-                    "composite_main",
-                    "translucent_depth"
-                ] 
-            },
-            {
-                "name": "reflection",
-                "program": "reflection",
-                "framebuffer": "",
-                "samplerImages": [
-                    "translucent_main",
-                    "translucent_depth"
-                ] 
-            }
-        ]
-    }, */
-
 	"images": [
 		{
 			"name": "reflective",

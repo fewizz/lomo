@@ -28,26 +28,26 @@ void main() {
 	else {
 		vec2 win_xy = gl_FragCoord.xy;
 
-		mat4 pm = frx_projectionMatrix();
+		mat4 proj = frx_projectionMatrix();
 
-		vec3 translucent_v = window_to_world(vec3(win_xy, translucent_depth), pm);
-		vec3 solid_v = window_to_world(vec3(win_xy, solid_depth), pm);
+		vec3 translucent_v = window_to_world(vec3(win_xy, translucent_depth), proj);
+		vec3 solid_v = window_to_world(vec3(win_xy, solid_depth), proj);
 
 		color = translucent_color;
 
-		translucent_v /= 6;
-		translucent_v = dot(translucent_v, translucent_v);
+		translucent_v /= 10;
+		float translucent_length_sq = dot(translucent_v, translucent_v);
 
 		float result = 0;
 
 		if(solid_depth != 1) {
-			solid_v /= 6;
-			solid_v = dot(solid_v, solid_v);
+			solid_v /= 10;
+			float solid_length_sq = dot(solid_v, solid_v);
 
-			result = solid_v - translucent_v;
+			result = solid_length_sq - translucent_length_sq;
 		}
 		else {
-			result = translucent_v;
+			result = translucent_length_sq;
 		}
 		color.a = clamp(result, 0, 1);
 		color = vec4(blend(solid_color, color), 1);
