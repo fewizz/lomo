@@ -30,8 +30,8 @@ void main() {
 
 		mat4 proj = frx_projectionMatrix();
 
-		vec3 translucent_v = window_to_world(vec3(win_xy, translucent_depth), proj);
-		vec3 solid_v = window_to_world(vec3(win_xy, solid_depth), proj);
+		vec3 translucent_v = win_to_cam(vec3(win_xy, translucent_depth), proj);
+		vec3 solid_v = win_to_cam(vec3(win_xy, solid_depth), proj);
 
 		color = translucent_color;
 
