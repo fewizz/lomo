@@ -28,10 +28,6 @@ float z_win_to_cam(float zw, mat4 m) {
 	return -m[3][2] / (m[2][2] + zd);
 }
 
-/*float z_clip_to_cam(float zc) {
-	return (zc - m[3][2]) / m[2][2];
-}*/
-
 vec3 win_to_cam(vec3 w, mat4 m) {
 	vec2 ndc = vec2(win_to_ndc(w.xy));
 

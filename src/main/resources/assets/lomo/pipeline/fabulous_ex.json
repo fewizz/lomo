@@ -6,7 +6,7 @@
 		"clouds": "clouds",
 		"translucent": "fab_translucent"
 	},
-	
+
 	"include": [
 		"lomo:pipeline/reflection.json"
 	],
@@ -58,9 +58,9 @@
 				"program": "reflection",
 				"framebuffer": "reflected",
 				"samplerImages": [
-					"fab_composite_depth",
 					"reflective",
-					"fab_composite_main"
+					"fab_composite_main",
+					"fab_composite_depth"
 				] 
 			},
 			{

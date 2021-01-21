@@ -17,9 +17,9 @@
 			"vertexSource": "canvas:shaders/pipeline/post/simple_full_frame.vert",
 			"fragmentSource": "lomo:shaders/pipeline/reflection.frag",
 			"samplers": [
-				"u_input_depth",
 				"u_reflective",
-				"u_input"
+				"u_input",
+				"u_input_depth"
 			]
 		}
 	],

@@ -1,5 +1,6 @@
 #include frex:shaders/api/header.glsl
 #include lomo:shaders/lib/transform.glsl
+#include lomo:reflection_config
 
 /* lomo:pipeline/reflection.frag */
 
@@ -12,12 +13,13 @@ uniform sampler2D u_input_depth;
 varying vec2 _cvv_texcoord;
 
 void main() {
-	vec4 packed_normal = (texture2D(u_reflective, _cvv_texcoord) - 0.5) * 2;
+	vec4 packed_normal = texture2D(u_reflective, _cvv_texcoord);
 
 	vec4 reflection_color = vec4(0);
 	float ratio = 0;
 
-	if(packed_normal != vec4(-1)) {
+	if(packed_normal.a != 0) {
+		vec3 normal = normalize((packed_normal.xyz - 0.5) * 2);
 		mat4 view = frx_viewMatrix();
 		mat4 proj = frx_projectionMatrix();
 
@@ -26,7 +28,7 @@ void main() {
 		vec3 cam_s_position = win_to_cam(win_s_position, proj);
 
 		mat3 rotation = mat3(view);
-		vec3 cam_s_normal = normalize(rotation * packed_normal.xyz);
+		vec3 cam_s_normal = normalize(rotation * normal);
 
 		vec3 into_camera = normalize(-cam_s_position);
 		float cos_between_normal_and_ray = dot(into_camera, cam_s_normal);
@@ -89,7 +91,7 @@ void main() {
 				// farness from borderreverting,
 				// clamping, so that it will be close to 0 on borders, and 1 in center
 				ratio = clamp(1 - closeness_to_border, 0, 1);
-				// apply angel, but we need sin
+				// apply angle, but we need sin
 				ratio *= sqrt(1 - cos_between_normal_and_ray*cos_between_normal_and_ray);
 				reflection_color = texture2D(u_input, tex_uv);
 				break;
@@ -101,10 +103,21 @@ void main() {
 		}
 
 #elif LOMO_REFLECTION_TYPE == 0
-		float step = abs(cam_s_position.z / 50);
+
+		float step = abs(cam_s_position.z /
+	#if LOMO_REFLECTION_QUALITY == LOMO_REFLECTION_QUALITY_LOW
+			40
+	#elif LOMO_REFLECTION_QUALITY == LOMO_REFLECTION_QUALITY_MEDIUM
+			60
+	#elif LOMO_REFLECTION_QUALITY == LOMO_REFLECTION_QUALITY_HIGH
+			80
+	#endif
+			);
+
+		#define MAX_STAGE 2
+
 		float ray_len = step;//abs(cam_s_position.z / 50);
 
-#define MAX_STAGE 4
 		float stage = -1;
 
 		while(true) {
@@ -123,31 +136,44 @@ void main() {
 			float win_s_depth = texture2D(u_input_depth, tex_uv).r;
 
 			// We hit the ground
-			if(win_s_depth < win_s_position.z || stage >= MAX_STAGE) {
+			float z_diff = win_s_position.z - win_s_depth;
+			if(z_diff > 0 || stage >= MAX_STAGE) {
 				if(stage == -1) {
 					ray_len = ray_len - step;
 					step = step / MAX_STAGE;
 					stage = 0;
 					//continue; Won't work on amd cards...
-				}else {
-				// farness from borderreverting,
-				// clamping, so that it will be close to 0 on borders, and 1 in center
-				ratio = clamp(1 - closeness_to_border, 0, 1);
+				} else {
+					//float world_z_diff = z_win_to_cam(win_s_depth, proj) - position.z;
+					//ratio = clamp((ray_len/2 - world_z_diff)/step, 0, 1);
 
-				// apply angel, but we need sin
-				ratio *= sqrt(1 - cos_between_normal_and_ray*cos_between_normal_and_ray);
-				reflection_color = texture2D(u_input, tex_uv);
-				break;
+					// farness from borderreverting,
+					// clamping, so that it will be close to 0 on borders, and 1 in center
+					ratio = clamp(1 - closeness_to_border, 0, 1);
+
+					// apply angle, but we need sin
+					ratio *= sqrt(1 - cos_between_normal_and_ray*cos_between_normal_and_ray);
+					reflection_color = texture2D(u_input, tex_uv);
+					break;
 				}
 			}
 
 			if(stage >= 0) ++stage;
-			else step += step/20 * abs(1/max(0.01, abs(cos_between_normal_and_ray)));
+			else step +=
+				step /
+	#if LOMO_REFLECTION_QUALITY == LOMO_REFLECTION_QUALITY_LOW
+					20
+	#elif LOMO_REFLECTION_QUALITY == LOMO_REFLECTION_QUALITY_MEDIUM
+					30
+	#elif LOMO_REFLECTION_QUALITY == LOMO_REFLECTION_QUALITY_HIGH
+					40
+	#endif
+				* abs(1/max(0.01, abs(cos_between_normal_and_ray)));
 		}
 
 #endif
 
 	}
 
-	gl_FragData[0] = texture2D(u_input, _cvv_texcoord) * (1-ratio) + reflection_color*ratio;
+	gl_FragData[0] = mix(texture2D(u_input, _cvv_texcoord), reflection_color, ratio);
 }

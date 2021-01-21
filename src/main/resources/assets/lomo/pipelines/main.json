@@ -1,8 +1,8 @@
 {
 	"nameKey": "name",
 	"descriptionKey": "desc",
-	"materialVertexShader": "canvas:shaders/pipeline/standard.vert",
-	"materialFragmentShader": "canvas:shaders/pipeline/standard.frag",
+	"materialVertexShader": "lomo:shaders/pipeline/lomo.vert",
+	"materialFragmentShader": "lomo:shaders/pipeline/lomo.frag",
 
 	"drawTargets": {
 		"solidTerrain": "solid",
@@ -21,5 +21,22 @@
 		"canvas:pipeline/bloom.json",
 		"lomo:pipeline/translucent_fog.json",
 		"lomo:pipeline/fabulous_ex.json"
+	],
+
+	"options": [
+		{
+			"includeToken": "lomo:reflection_config",
+			"categoryKey": "config.lomo.category.features",
+			"options": {
+				"lomo_reflection_quality": {
+					"default": "low",
+					"choices": ["low", "medium", "high"],
+					"enum": true,
+					"prefix": "LOMO_REFLECTION_QUALITY_",
+					"nameKey": "noname",
+					"descriptionKey": "noname"
+				}
+			}
+		}
 	]
 }
