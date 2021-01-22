@@ -36,10 +36,28 @@ dependencies {
 	modImplementation "com.github.grondag:canvas:ab022ea01a"
 }
 
-loom {
-	remapMod = false
+processResources {
+	inputs.property "version", project.version
+
+	filesMatching(["fabric.mod.json", "pack.mcmeta"]) {
+		expand "version": project.version
+	}
 }
 
-jar {
-	archiveExtension = "zip"
+tasks.withType(JavaCompile).configureEach {
+	it.options.encoding = "UTF-8"
+
+	def targetVersion = 8
+	if (JavaVersion.current().isJava9Compatible()) {
+		 it.options.release = targetVersion
+	}
 }
+
+task shaderpack(type: Zip) {
+	archiveFileName = "${archiveBaseName.get()}-${archiveVersion.get()}.zip"
+	destinationDirectory = jar.destinationDirectory
+	from sourceSets.main.resources
+	exclude "fabric.mod.json"
+}
+
+build.dependsOn shaderpack
