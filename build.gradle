@@ -58,6 +58,10 @@ task shaderpack(type: Zip) {
 	destinationDirectory = jar.destinationDirectory
 	from sourceSets.main.resources
 	exclude "fabric.mod.json"
+
+	filesMatching("pack.mcmeta") {
+		expand "version": project.version
+	}
 }
 
 build.dependsOn shaderpack
