@@ -1,6 +1,5 @@
 {
-	"nameKey": "name",
-	"descriptionKey": "desc",
+	"nameKey": "pipeline.lomo.name",
 	"materialVertexShader": "lomo:shaders/pipeline/lomo.vert",
 	"materialFragmentShader": "lomo:shaders/pipeline/lomo.frag",
 
@@ -14,29 +13,13 @@
 	},
 
 	"include": [
+		"lomo:pipeline/reflection_config.json",
 		"canvas:pipeline/base.json",
 		"canvas:pipeline/basic_light_config.json",
 		"canvas:pipeline/fog_config.json",
 		"canvas:pipeline/handheld_light_config.json",
 		"canvas:pipeline/bloom.json",
-		"lomo:pipeline/translucent_fog.json",
-		"lomo:pipeline/fabulous_ex.json"
-	],
-
-	"options": [
-		{
-			"includeToken": "lomo:reflection_config",
-			"categoryKey": "config.lomo.category.features",
-			"options": {
-				"lomo_reflection_quality": {
-					"default": "low",
-					"choices": ["low", "medium", "high"],
-					"enum": true,
-					"prefix": "LOMO_REFLECTION_QUALITY_",
-					"nameKey": "noname",
-					"descriptionKey": "noname"
-				}
-			}
-		}
+		//"lomo:pipeline/translucent.json"
+		"lomo:pipeline/fabulous.json"
 	]
 }

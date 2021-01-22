@@ -1,0 +1,18 @@
+{
+	"options": [
+		{
+			"includeToken": "lomo:reflection_config",
+			"categoryKey": "config.lomo.category.reflection",
+			"options": {
+				"reflection_quality": {
+					"default": "low",
+					"choices": ["potato", "low", "medium", "high"],
+					"enum": true,
+					"prefix": "LOMO_REFLECTION_QUALITY_",
+					"nameKey": "config.lomo.value.reflection_quality",
+					"descriptionKey": "config.lomo.help.reflection_quality"
+				}
+			}
+		}
+	]
+}

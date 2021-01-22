@@ -1,5 +1,6 @@
 #include frex:shaders/api/header.glsl
 #include lomo:shaders/lib/transform.glsl
+#include lomo:shaders/lib/reflection.glsl
 #include lomo:reflection_config
 
 /* lomo:pipeline/reflection.frag */
@@ -34,145 +35,9 @@ void main() {
 		float cos_between_normal_and_ray = dot(into_camera, cam_s_normal);
 		vec3 reflection_dir = normalize(into_camera + (cam_s_normal*cos_between_normal_and_ray - into_camera)* 2);
 		
-
-#if LOMO_REFLECTION_TYPE == 1
-		vec3 reflection_win_s_a = cam_to_win(cam_s_position, proj);
-		vec3 reflection_win_s_b = cam_to_win(cam_s_position + reflection_dir, proj);
-
-		vec2 win_s_reflection_dir = (reflection_win_s_b-reflection_win_s_a).xy;
-		if(win_s_reflection_dir == vec2(0)) win_s_reflection_dir = vec2(0.0001);
-
-		win_s_reflection_dir = normalize(win_s_reflection_dir);
-		
-		vec2 position = win_s_position.xy;
-
-		float step = 1.5 * abs(1/max(0.01, abs(cos_between_normal_and_ray)));
-		float dist = 0;
-
-		float z_to_x;
-		if(abs(reflection_dir.x) > 0.0001) z_to_x = reflection_dir.z / reflection_dir.x;
-		else z_to_x = 1000;
-
-		vec2 tex_uv = position / frxu_size;
-
-		float z_numerator = (cam_s_position.z - z_to_x*cam_s_position.x);
-		float z_denominator = 1 + (z_to_x*(tex_uv.x*2 - 1 + proj[2][0])/proj[0][0]);
-		float z_denominator_addition = ((z_to_x*win_s_reflection_dir.x/frxu_size.x)*2)/proj[0][0];
-
-		while(true) {
-			dist += step;
-
-			tex_uv += win_s_reflection_dir*step/ frxu_size;
-			
-			if(abs(reflection_dir.z) <= 0.0001) {
-				reflection_color = vec4(1, 0, 0, 1);
-				ratio = 1;
-				break;
-			}
-
-			float denom = (z_denominator + z_denominator_addition*dist );
-			if(denom == 0) {
-				reflection_color = vec4(0, 1, 0, 1);
-				ratio = 1;
-				break;
-			}
-			float z = z_numerator / denom;
-
-			float zw = z_cam_to_win(z, proj);
-
-			vec2 magic = (tex_uv - 0.5);
-			float closeness_to_border = max(abs(magic.y), abs(magic.x)) * 2;
-			if(closeness_to_border >= 1) break;
-
-			float win_s_depth = texture2D(u_input_depth, tex_uv).r;
-
-			// We hit the ground
-			if(win_s_depth < zw) {
-				// farness from borderreverting,
-				// clamping, so that it will be close to 0 on borders, and 1 in center
-				ratio = clamp(1 - closeness_to_border, 0, 1);
-				// apply angle, but we need sin
-				ratio *= sqrt(1 - cos_between_normal_and_ray*cos_between_normal_and_ray);
-				reflection_color = texture2D(u_input, tex_uv);
-				break;
-			}
-
-			if(z < 0);
-			else break;
-			step += step/30;
-		}
-
-#elif LOMO_REFLECTION_TYPE == 0
-
-		float step = abs(cam_s_position.z /
-	#if LOMO_REFLECTION_QUALITY == LOMO_REFLECTION_QUALITY_LOW
-			40
-	#elif LOMO_REFLECTION_QUALITY == LOMO_REFLECTION_QUALITY_MEDIUM
-			60
-	#elif LOMO_REFLECTION_QUALITY == LOMO_REFLECTION_QUALITY_HIGH
-			80
-	#endif
-			);
-
-		#define MAX_STAGE 2
-
-		float ray_len = step;//abs(cam_s_position.z / 50);
-
-		float stage = -1;
-
-		while(true) {
-			ray_len += step;
-			vec3 position = cam_s_position + reflection_dir*ray_len;
-
-			if(position.z >= 0) break;
-
-			win_s_position = cam_to_win(position, proj);
-			vec2 tex_uv = win_s_position.xy / frxu_size;
-
-			vec2 magic = (tex_uv - 0.5);
-			float closeness_to_border = max(abs(magic.y), abs(magic.x)) * 2;
-			if(closeness_to_border >= 1) break;
-
-			float win_s_depth = texture2D(u_input_depth, tex_uv).r;
-
-			// We hit the ground
-			float z_diff = win_s_position.z - win_s_depth;
-			if(z_diff > 0 || stage >= MAX_STAGE) {
-				if(stage == -1) {
-					ray_len = ray_len - step;
-					step = step / MAX_STAGE;
-					stage = 0;
-					//continue; Won't work on amd cards...
-				} else {
-					//float world_z_diff = z_win_to_cam(win_s_depth, proj) - position.z;
-					//ratio = clamp((ray_len/2 - world_z_diff)/step, 0, 1);
-
-					// farness from borderreverting,
-					// clamping, so that it will be close to 0 on borders, and 1 in center
-					ratio = clamp(1 - closeness_to_border, 0, 1);
-
-					// apply angle, but we need sin
-					ratio *= sqrt(1 - cos_between_normal_and_ray*cos_between_normal_and_ray);
-					reflection_color = texture2D(u_input, tex_uv);
-					break;
-				}
-			}
-
-			if(stage >= 0) ++stage;
-			else step +=
-				step /
-	#if LOMO_REFLECTION_QUALITY == LOMO_REFLECTION_QUALITY_LOW
-					20
-	#elif LOMO_REFLECTION_QUALITY == LOMO_REFLECTION_QUALITY_MEDIUM
-					30
-	#elif LOMO_REFLECTION_QUALITY == LOMO_REFLECTION_QUALITY_HIGH
-					40
-	#endif
-				* abs(1/max(0.01, abs(cos_between_normal_and_ray)));
-		}
-
-#endif
-
+		reflect_result res = reflect(cam_s_position, reflection_dir, u_input, u_input_depth, proj);
+		reflection_color = res.color;
+		ratio = res.ratio;
 	}
 
 	gl_FragData[0] = mix(texture2D(u_input, _cvv_texcoord), reflection_color, ratio);

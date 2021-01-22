@@ -1,0 +1,6 @@
+{
+	"pipeline.lomo.name": "Lomo",
+	"config.lomo.category.reflection": "Reflection",
+	"config.lomo.value.reflection_quality": "Reflection Quality",
+	"config.lomo.help.reflection_quality": ""
+}
