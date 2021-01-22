@@ -36,29 +36,10 @@ dependencies {
 	modImplementation "com.github.grondag:canvas:ab022ea01a"
 }
 
-processResources {
-	inputs.property "version", project.version
-
-	filesMatching("fabric.mod.json") {
-		expand "version": project.version
-	}
-}
-
-tasks.withType(JavaCompile).configureEach {
-	it.options.encoding = "UTF-8"
-
-	def targetVersion = 8
-	if (JavaVersion.current().isJava9Compatible()) {
-		 it.options.release = targetVersion
-	}
-}
-
-java {
-	withSourcesJar()
+loom {
+	remapMod = false
 }
 
 jar {
-	from("LICENSE") {
-		rename { "${it}_${project.archivesBaseName}"}
-	}
+	archiveExtension = "zip"
 }
