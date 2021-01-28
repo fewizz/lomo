@@ -1,0 +1,13 @@
+{
+
+"nameKey": "Lomo basic c:",
+"descriptionKey": "pipeline.canvas_basic.desc",
+
+"include": [
+	"lomo:pipeline/base.json",
+	"canvas:pipeline/basic_light_config.json",
+	"canvas:pipeline/fog_config.json",
+	"canvas:pipeline/handheld_light_config.json"
+]
+
+}

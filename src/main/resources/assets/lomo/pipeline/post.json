@@ -1,0 +1,91 @@
+{
+	"programs": [
+		{
+			"name": "post",
+			"vertexSource": "lomo:shaders/pipeline/simple_full_frame_depth_1.vert",
+			"fragmentSource": "lomo:shaders/pipeline/post.frag",
+			"samplers": [
+				"u_reflective",
+				"main_sorted0", "depth_sorted0",
+				"main_sorted1", "depth_sorted1",
+				"main_sorted2", "depth_sorted2",
+				"main_sorted3", "depth_sorted3",
+				"main_sorted4", "depth_sorted4",
+				"main_sorted5", "depth_sorted5"
+			]
+		}
+	],
+
+	"fabulous": {
+		"passes": [
+			{
+				"name": "post",
+				"program": "post",
+				"framebuffer": "composite",
+				"samplerImages": [
+					"reflective",
+					"main_sorted0", "depth_sorted0",
+					"main_sorted1", "depth_sorted1",
+					"main_sorted2", "depth_sorted2",
+					"main_sorted3", "depth_sorted3",
+					"main_sorted4", "depth_sorted4",
+					"main_sorted5", "depth_sorted5"
+				]
+			},
+			{
+				"name": "fab_write",
+				"program": "copy",
+				"framebuffer": "default",
+				"samplerImages": ["clouds_main"]
+			}
+		]
+	},
+
+	"beforeWorldRender": {
+		"passes": [
+			{
+				"name": "clear_composite",
+				"framebuffer": "composite",
+				"program": "frex_clear"
+			},
+			{
+				"name": "clear_default",
+				"framebuffer": "default",
+				"program": "frex_clear"
+			}
+		]
+	},
+
+	"images": [
+		{
+			"name": "composite",
+			"texParams": [
+				{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
+				{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
+				{ "name": "TEXTURE_WRAP_S", "val": "CLAMP" },
+				{ "name": "TEXTURE_WRAP_T", "val": "CLAMP" }
+			]
+		},
+		{
+			"name": "composite_depth_useless",
+			"internalFormat": "DEPTH_COMPONENT",
+			"pixelFormat": "DEPTH_COMPONENT",
+			"pixelDataType": "FLOAT",
+			"texParams": [
+				{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
+				{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
+				{ "name": "TEXTURE_WRAP_S", "val": "CLAMP" },
+				{ "name": "TEXTURE_WRAP_T", "val": "CLAMP" },
+				{ "name": "TEXTURE_COMPARE_MODE", "val": "NONE" }
+			]
+		}
+	],
+
+	"framebuffers": [
+		{
+			"name": "composite",
+			"depthAttachment": { "image": "composite_depth_useless" },
+			"colorAttachments": [{ "image": "composite" }]
+		}
+	]
+}

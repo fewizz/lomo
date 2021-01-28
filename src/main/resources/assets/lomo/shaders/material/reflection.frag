@@ -5,6 +5,6 @@
 
 void frx_startFragment(inout frx_FragmentData fragData) {
 	//fragData.emissivity = -fragData.emissivity;
-	gl_FragData[2].a = 1;
+	gl_FragData[1].a = 1;
 }
 

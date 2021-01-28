@@ -19,7 +19,8 @@
 		"canvas:pipeline/fog_config.json",
 		"canvas:pipeline/handheld_light_config.json",
 		"canvas:pipeline/bloom.json",
-		//"lomo:pipeline/translucent.json"
-		"lomo:pipeline/fabulous.json"
+		"lomo:pipeline/fabulous.json",
+		//"lomo:pipeline/fabulous_sort.json",
+		//"lomo:pipeline/post.json"
 	]
 }

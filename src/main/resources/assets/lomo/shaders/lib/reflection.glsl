@@ -2,30 +2,37 @@
 
 /* lomo:pipeline/lib/reflection.glsl */
 
+sampler2D main_texs[TEX_COUNT];
+sampler2D depth_texs[TEX_COUNT];
+
 struct reflect_result {
 	vec4 color;
 	float ratio;
 };
 
-reflect_result reflect(vec3 cam_s_position, vec3 reflection_dir, in sampler2D u_input, in sampler2D u_input_depth, mat4 proj) {
-	/*vec3 normal = normalize((packed_normal.xyz - 0.5) * 2);
-	mat4 view = frx_viewMatrix();
-	mat4 proj = frx_projectionMatrix();
+struct depth_retrieve_result {
+	int index;
+	float depth;
+	sampler2D texture;
+};
 
-	float win_s_depth = texture2D(u_input_depth, _cvv_texcoord).r ;
-	vec3 win_s_position = vec3(gl_FragCoord.xy, win_s_depth);
-	vec3 cam_s_position = win_to_cam(win_s_position, proj);
+depth_retrieve_result find_closest(vec2 pos, float depth) {
+	int tex_id = 0;
+	sampler2D depth_t = depth_texs[tex_id];
 
-	mat3 rotation = mat3(view);
-	vec3 cam_s_normal = normalize(rotation * normal);
+	for(int i = TEX_COUNT - 1; i >= 0; i--) {
+		float d = texture2D(depth_t, pos).r;
+		if(d <= depth) {
+			return depth_retrieve_result(i, d, depth_t);
+		}
+	}
 
-	vec3 into_camera = normalize(-cam_s_position);
-	float cos_between_normal_and_ray = dot(into_camera, cam_s_normal);
-	vec3 reflection_dir = normalize(into_camera + (cam_s_normal*cos_between_normal_and_ray - into_camera)* 2);*/
-	
-	//float cos_between_normal_and_ray = dot(into_camera, cam_s_normal);
+	return depth_retrieve_result(-1, 1, depth_texs[0]);
+}
+
+reflect_result reflect(vec3 cam_s_position, vec3 reflection_dir, mat4 proj) {
+
 	float cos_between_reflection_and_ray = dot(-normalize(cam_s_position), reflection_dir);
-	//float sin_between_normal_and_ray = dot(camera_dir, reflection_dir);
 	float cos_between_normal_and_ray = sqrt((1 + cos_between_reflection_and_ray) / 2);
 	float sin_between_normal_and_ray = sqrt(1 - cos_between_normal_and_ray*cos_between_normal_and_ray);//dot(camera_dir, reflection_dir);
 
@@ -68,11 +75,12 @@ reflect_result reflect(vec3 cam_s_position, vec3 reflection_dir, in sampler2D u_
 		float closeness_to_border = max(abs(magic.y), abs(magic.x)) * 2;
 		if(closeness_to_border >= 1) break;
 
-		float win_s_depth = texture2D(u_input_depth, tex_uv).r;
+		depth_retrieve_result res = find_closest(tex_uv, win_s_position.z);//texture2D(u_input_depth, tex_uv).r;
 
 		// We hit the ground
-		float z_diff = win_s_position.z - win_s_depth;
-		if(z_diff > 0
+		//depth_retrieve_result res = //win_s_position.z - win_s_depth;
+		float z_diff = win_s_position.z  = res.depth;
+		if(res.index != -1 && z_diff > 0
 #ifdef USE_STABILIZER
 			|| stage >= MAX_STAGE
 #endif
@@ -96,7 +104,7 @@ reflect_result reflect(vec3 cam_s_position, vec3 reflection_dir, in sampler2D u_
 
 				// apply angle, but we need sin
 				ratio *= clamp(sin_between_normal_and_ray*1.5, 0, 1);
-				/*reflection_color =*/return reflect_result(texture2D(u_input, tex_uv), ratio);
+				/*reflection_color =*/return reflect_result(texture2D(main_texs[res.index], tex_uv), ratio);
 				//break;
 			}
 		}

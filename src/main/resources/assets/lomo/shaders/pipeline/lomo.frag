@@ -12,8 +12,8 @@
 /* lomo:pipeline/lomo.frag */
 
 #define TARGET_BASECOLOR 0
-#define TARGET_EMISSIVE  1
-#define TARGET_NORMAL 2
+//#define TARGET_EMISSIVE  1
+#define TARGET_NORMAL 1
 
 #ifdef SHADOW_MAP_PRESENT
 varying vec4 shadowPos;
@@ -127,5 +127,5 @@ void frx_writePipelineFragment(in frx_FragmentData fragData) {
 
 	gl_FragData[TARGET_BASECOLOR] = p_fog(a);
 	gl_FragDepth = gl_FragCoord.z;
-	gl_FragData[TARGET_EMISSIVE] = vec4(fragData.emissivity * a.a, 0.0, 0.0, 1.0);
+	//gl_FragData[TARGET_EMISSIVE] = vec4(fragData.emissivity * a.a, 0.0, 0.0, 1.0);
 }
