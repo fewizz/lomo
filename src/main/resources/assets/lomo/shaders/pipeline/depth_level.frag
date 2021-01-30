@@ -15,6 +15,8 @@ void main() {
 
 	ivec2 orig_size = textureSize(u_depth, 0);
 
+	if(gl_FragCoord.x * 4 * mul >= orig_size.x || gl_FragCoord.y * 4 * mul >= orig_size.y) discard;
+
 	for(int x = 0; x < 4; x++) {
 		for(int y = 0; y < 4; y++) {
 			ivec2 v = ivec2(gl_FragCoord.xy)*4 + ivec2(x, y);
