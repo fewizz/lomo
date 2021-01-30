@@ -1,26 +1,12 @@
 {
 	"nameKey": "pipeline.lomo.name",
-	"materialVertexShader": "lomo:shaders/pipeline/lomo.vert",
-	"materialFragmentShader": "lomo:shaders/pipeline/lomo.frag",
-
-	"drawTargets": {
-		"solidTerrain": "solid",
-		"translucentTerrain": "translucent",
-		"translucentEntity": "entity",
-		"weather": "weather",
-		"clouds": "clouds",
-		"translucentParticles": "particles"
-	},
+	"descriptionKey": "pipeline.canvas_basic.desc",
 
 	"include": [
-		"lomo:pipeline/reflection_config.json",
-		"canvas:pipeline/base.json",
+		"lomo:pipeline/base.json",
+		"lomo:pipeline/reflection.json",
 		"canvas:pipeline/basic_light_config.json",
 		"canvas:pipeline/fog_config.json",
-		"canvas:pipeline/handheld_light_config.json",
-		"canvas:pipeline/bloom.json",
-		"lomo:pipeline/fabulous.json",
-		//"lomo:pipeline/fabulous_sort.json",
-		//"lomo:pipeline/post.json"
+		"canvas:pipeline/handheld_light_config.json"
 	]
 }

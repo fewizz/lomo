@@ -1,60 +1,46 @@
 {
-	"include": [
-		"lomo:pipeline/copy_with_depth.json"
+	"programs": [
+		{
+			"name": "post",
+			"vertexSource": "lomo:shaders/pipeline/simple_full_frame_depth_one.vert",
+			"fragmentSource": "lomo:shaders/pipeline/post.frag",
+			"samplers": [ "u_reflective", "u_main", "u_depth" ]
+		}
+	],
+
+	"fabulous": {
+		"passes": [
+			{
+				"name": "post",
+				"program": "post",
+				"framebuffer": "composite_1",
+				"samplerImages": [ "normal", "composite_main_0", "composite_depth_0" ]
+			},
+			{
+				"name": "copy",
+				"program": "copy",
+				"framebuffer": "solid",
+				"samplerImages": [ "composite_main_1" ]
+			}
+		]
+	},
+
+	"images": [
+		{
+			"name": "composite_main_1",
+			"texParams": [
+				{ "name": "TEXTURE_MIN_FILTER", "val": "LINEAR"},
+				{ "name": "TEXTURE_MAG_FILTER", "val": "LINEAR"},
+				{ "name": "TEXTURE_WRAP_S", "val": "CLAMP"},
+				{ "name": "TEXTURE_WRAP_T", "val": "CLAMP"}
+			]
+		}
 	],
 
 	"framebuffers": [
 		{
-			"name": "reflection",
-			"depthAttachment": {"image": "reflection_depth"},
-			"colorAttachments": [{"image": "reflection_main"}]
-		}
-	],
-
-	"programs": [
-		{
-			"name": "reflection",
-			"vertexSource": "canvas:shaders/pipeline/post/simple_full_frame.vert",
-			"fragmentSource": "lomo:shaders/pipeline/reflection.frag",
-			"samplers": [
-				"u_reflective",
-				"u_input",
-				"u_input_depth"
-			]
-		}
-	],
-
-	"images": [
-		{
-			"name": "reflective",
-			"texParams": [
-				{ "name": "TEXTURE_MIN_FILTER", "val": "LINEAR" },
-				{ "name": "TEXTURE_MAG_FILTER", "val": "LINEAR" },
-				{ "name": "TEXTURE_WRAP_S", "val": "CLAMP" },
-				{ "name": "TEXTURE_WRAP_T", "val": "CLAMP" }
-			]
-		},
-		{
-			"name": "reflection_main",
-			"texParams": [
-				{ "name": "TEXTURE_MIN_FILTER",	"val": "LINEAR" },
-				{ "name": "TEXTURE_MAG_FILTER", "val": "LINEAR" },
-				{ "name": "TEXTURE_WRAP_S", "val": "CLAMP" },
-				{ "name": "TEXTURE_WRAP_T", "val": "CLAMP" }
-			]
-		},
-		{
-			"name": "reflection_depth",
-			"internalFormat": "DEPTH_COMPONENT",
-			"pixelFormat": "DEPTH_COMPONENT",
-			"pixelDataType": "FLOAT",
-			"texParams": [
-				{ "name": "TEXTURE_MIN_FILTER",	"val": "NEAREST" },
-				{ "name": "TEXTURE_MAG_FILTER",	"val": "NEAREST" },
-				{ "name": "TEXTURE_WRAP_S",	"val": "CLAMP" },
-				{ "name": "TEXTURE_WRAP_T",	"val": "CLAMP" },
-				{ "name": "TEXTURE_COMPARE_MODE", "val": "NONE" }
-			]
+			"name": "composite_1",
+			"colorAttachments": [ { "image": "composite_main_1" } ]
 		}
 	]
 }

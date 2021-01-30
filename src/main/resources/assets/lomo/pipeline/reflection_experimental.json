@@ -1,0 +1,136 @@
+{
+	"programs": [
+		{
+			"name": "depth_level",
+			"vertexSource": "lomo:shaders/pipeline/simple_full_frame_depth_one.vert",
+			"fragmentSource": "lomo:shaders/pipeline/depth_level.frag",
+			"samplers": [ "u_depth" ]
+		},
+		{
+			"name": "post",
+			"vertexSource": "lomo:shaders/pipeline/simple_full_frame_depth_one.vert",
+			"fragmentSource": "lomo:shaders/pipeline/post_experimental.frag",
+			"samplers": [ "u_reflective", "u_main", "u_depth" ]
+		}
+	],
+
+	"fabulous": {
+		"passes": [
+			{
+				"name": "depth_0",
+				"program": "copy",
+				"framebuffer": "depth_level_0",
+				"samplerImages": [ "composite_depth_0" ]
+			},
+			{
+				"name": "depth_1",
+				"program": "depth_level",
+				"framebuffer": "depth_level_1",
+				"samplerImages": [ "depth_levels" ],
+				"lod": 1
+			},
+			{
+				"name": "depth_2",
+				"program": "depth_level",
+				"framebuffer": "depth_level_2",
+				"samplerImages": [ "depth_levels" ],
+				"lod": 2
+			},
+			{
+				"name": "depth_3",
+				"program": "depth_level",
+				"framebuffer": "depth_level_3",
+				"samplerImages": [ "depth_levels" ],
+				"lod": 3
+			},
+			{
+				"name": "depth_4",
+				"program": "depth_level",
+				"framebuffer": "depth_level_4",
+				"samplerImages": [ "depth_levels" ],
+				"lod": 4
+			},
+			{
+				"name": "post",
+				"program": "post",
+				"framebuffer": "composite_1",
+				"samplerImages": [ "normal", "composite_main_0", "depth_levels" ]
+			},
+			{
+				"name": "copy",
+				"program": "copy",
+				"framebuffer": "solid",
+				"samplerImages": [ "composite_main_1" ]
+			}
+		]
+	},
+
+	"images": [
+		{
+			"name": "composite_main_1",
+			"texParams": [
+				{ "name": "TEXTURE_MIN_FILTER", "val": "LINEAR"},
+				{ "name": "TEXTURE_MAG_FILTER", "val": "LINEAR"},
+				{ "name": "TEXTURE_WRAP_S", "val": "CLAMP"},
+				{ "name": "TEXTURE_WRAP_T", "val": "CLAMP"}
+			]
+		},
+		{
+			"name": "depth_levels",
+			"lod": 8,
+			"internalFormat": "GL_R32F",
+			"pixelFormat": "RED",
+			"pixelDataType": "FLOAT",
+			"texParams": [
+				{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST_MIPMAP_NEAREST"},
+				{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST"},
+				{ "name": "TEXTURE_WRAP_S", "val": "CLAMP"},
+				{ "name": "TEXTURE_WRAP_T", "val": "CLAMP"}
+			]
+		}
+	],
+
+	"framebuffers": [
+		{
+			"name": "composite_1",
+			"colorAttachments": [ { "image": "composite_main_1" } ]
+		},
+		{
+			"name": "depth_level_0",
+			"colorAttachments": [ { "image": "depth_levels" } ]
+		},
+		{
+			"name": "depth_level_1",
+			"colorAttachments": [ { "image": "depth_levels", "lod": 1 } ]
+		},
+		{
+			"name": "depth_level_2",
+			"colorAttachments": [ { "image": "depth_levels", "lod": 2 } ]
+		},
+		{
+			"name": "depth_level_3",
+			"colorAttachments": [ { "image": "depth_levels", "lod": 3 } ]
+		},
+		{
+			"name": "depth_level_4",
+			"colorAttachments": [ { "image": "depth_levels", "lod": 4 } ]
+		},
+		{
+			"name": "depth_level_5",
+			"colorAttachments": [ { "image": "depth_levels", "lod": 5 } ]
+		},
+		{
+			"name": "depth_level_6",
+			"colorAttachments": [ { "image": "depth_levels", "lod": 6 } ]
+		},
+		{
+			"name": "depth_level_7",
+			"colorAttachments": [ { "image": "depth_levels", "lod": 7 } ]
+		},
+		{
+			"name": "depth_level_8",
+			"colorAttachments": [ { "image": "depth_levels", "lod": 8 } ]
+		}
+	]
+
+}
