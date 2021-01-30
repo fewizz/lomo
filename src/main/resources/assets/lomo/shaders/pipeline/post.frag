@@ -11,65 +11,20 @@ uniform sampler2D u_depth;
 
 varying vec2 _cvv_texcoord;
 
-int prim_diff_f(float v0, float diff) {
-	float v1 = v0 + diff;
-	float mx = max(v0, v1);
-	float mn = min(v0, v1);
+#define E 0.002
 
-	return int(ceil(mx)) - int(floor(mn));
-}
-
-float closest_for(float v0, float d) {
+float dist_f(float v0, float size, float d) {
 	float s = sign(d);
-	float fr = fract(v0);
+	float fr = fract(v0/size)*size;
 
-	if(fr == 0.0) return s;
-	if(s > 0.0) return 1.0 - fr;
-	return - fr;
+	if(abs(ost) <= E) return s*size;
+	if(s > 0.0) return (size - fr)*1.001;
+	return -fr*1.001;
 }
 
-float closest_back(float v0, float d) {
-	float s = sign(d);
-	float fr = fract(v0);
-
-	if(fr == 0.0) return s;
-	if(s > 0.0) -fr;
-	return 1.0 - fr;
+float find_a(float a, float b, float p) {
+	return (p - a) / (b - a);
 }
-
-/*int check(vec2 dir, int dim, ivec2 cell_n) {
-	if(dir[dim] != 0.0) return -1;
-	int other_dim = 1 - dim;
-
-	float stp = sign(dir[other_dim]);
-	float off = 0.5*stp;
-
-	for(
-		float i = 0.0;
-		float(i * FCELL_SIZE) < CHECK_DIST;
-		i++
-	) {
-		ivec2 v = ivec2(0);
-
-		v[other_dim] = int(floor(stp*i + off));
-
-		if(v == cell_n) return COLLIDES;
-	}
-	return NOT_COLLIDES;
-}*/
-int real_lod(int lod) {
-	//if(lod > 0) return lod - 1;
-	return lod / 2;
-}
-
-float center(float begin, float end, int i) {
-	float s = sign(end - begin);
-
-	if(i == 0) return closest_for(begin, s) / 2.0;
-
-	return 
-}
-
 
 void main() {
 	vec4 packed_normal = texture2D(u_reflective, _cvv_texcoord);
@@ -96,31 +51,24 @@ void main() {
 		vec3 reflection_b_ws = cam_to_win(position_cs + reflection_dir/100, proj);
 
 		vec2 reflection_dir_ws = normalize((reflection_b_ws-position_ws).xy);
-		
-		vec2 position = position_ws.xy;
 
-		float dist = 0;
-		//int level = 8;
-		float x_to_y = reflection_dir_ws.x / reflection_dir_ws.y;
-
-
-		vec2 tex_uv = position / frxu_size;
-
+		//float x_to_y = reflection_dir_ws.x / reflection_dir_ws.y;
 		float z_to_x = reflection_dir.z / reflection_dir.x;
 
 		float z_numerator = (position_cs.z - z_to_x*position_cs.x);
-		float z_denominator = 1 + (z_to_x*(tex_uv.x*2 - 1 + proj[2][0])/proj[0][0]);
+		float z_denominator = 1 + (z_to_x*((position_ws.x / frxu_size.x) *2 - 1 + proj[2][0])/proj[0][0]);
 		float z_denominator_addition = ((z_to_x*reflection_dir_ws.x/frxu_size.x)*2)/proj[0][0];
 
-		float steps = 300;
-
+		float steps = 150;
+		//float av_lod = 0;
+		//float switches = 0;
 		/*						*/
 		vec2 dir = reflection_dir_ws;
 
-		if(dir.x == 0) dir.x == 0.001;
-		if(dir.y == 0) dir.y == 0.001;
+		if(dir.x == 0) { dir.x == 0.001; dir = normalize(dir); }
+		if(dir.y == 0) { dir.y == 0.001; dir = normalize(dir); }
 
-		int prim = abs(dir.x) > abs(dir.y) ? 0 : 1;
+		int prim = abs(dir.x) >= abs(dir.y) ? 0 : 1;
 		int sec = 1 - prim;
 
 		ivec2 idir = ivec2(sign(dir));
@@ -128,79 +76,111 @@ void main() {
 		float prim_to_sec = dir[prim] / dir[sec];
 		float sec_to_prim = dir[sec] / dir[prim];
 
-		vec2 cur = vec2(0.5);//dir*0.5;//vec2(0);//vec2(0.5);
+		float dist_per_prim = 1 / dir[prim];
 
-		int level = 16;
-		int lod = 4;
+		float level = 1;
+		int lod = 0;
 
+		vec2 cur = position_ws.xy + dir;
+		if(dir.x > 0 && dir.y > 0) cur += dir/2.0;
+		float dist = length(cur - position_ws.xy);
+		
 		while(true) {
-			float sec_diff = closest_for(cur[sec], dir[sec]);
-			float prim_diff = prim_to_sec*sec_diff;
+		while(true) {
+			ivec2 coord = ivec2( cur/level );
 
-			int steps_l = prim_diff_f(cur[prim], prim_diff);
-			ivec2 stp = ivec2(0);
-			stp[prim] = idir[prim];
+			vec2 uv = (cur/(frxu_size*level) - 0.5);
+			float closeness_to_border = max(abs(uv.y), abs(uv.x)) * 2;
+			if(closeness_to_border >= 1) return;
 
-			//float real_x = cur.x;
+			float denom = ( z_denominator + z_denominator_addition*dist );
+			float z_cs = z_numerator / denom;
+			float z_ws = z_cam_to_win(z_cs, proj);
 
-			for( int i = 0; i < steps_l; i++ ) {
-				ivec2 icur = ivec2(floor(cur)) + stp*i;
-				dist = length(vec2(icur*float(level)));
-				//real_x = 
+			while(lod < 4) {
+				float up_depth_ws = texelFetch(u_depth, coord/4, lod).r;
 
-				cur.x += closest_for(cur[prim], dir[prim]);
-
-				float denom = ( z_denominator + z_denominator_addition*dist );
-				float z = z_numerator / denom;
-				//z += 0.02;
-				float zw = z_cam_to_win(z, proj);
-
-				//tex_uv = (position_ws.xy + reflection_dir_ws*dist)*level / frxu_size;
-				ivec2 coord = icur+ivec2(position_ws.xy/level);
-
-				//vec2 uv = (vec2(coord)/frxu_size - 0.5);
-				///float closeness_to_border = max(abs(uv.y), abs(uv.x)) * 2;
-				//if(closeness_to_border >= 1) return;
-
-				float win_s_depth = texelFetch(u_depth, coord, real_lod(lod)).r;//texture2D(u_depth, tex_uv).r;
-
-				// We hit the ground
-				if(win_s_depth < zw) {
-					ratio = 1;
-
-					if(lod == 0) {
-						gl_FragData[0] = texelFetch(u_main, coord, 0);
-						return;
-					}
-					else {
-						//float done = float(i) / float(steps_l);
-						float x = float(i);
-						cur[prim] += x;
-						cur[sec] += x*sec_to_prim;
-
-						prim_diff = 0.0;
-						sec_diff = 0.0;
-
-						level = level / 4;
-						lod -= 2;
-						cur *= 4.001;//textureSize(u_depth, lod) / textureSize(u_depth, lod + 1);
-						break;
-					}
-					//reflection_color = texture2D(u_main, tex_uv);
-					//return;
-				}
-
-				steps = steps - 1;
-				if(steps <= 0) return;
-
+				if(up_depth_ws <= z_ws ) break;
+				
+				level *= 4.0;
+				++lod;
+				coord = ivec2( cur/level );
 			}
 
-			cur[prim] += prim_diff;
-			cur[sec] += sec_diff*1.001;
+			float depth_ws = -1;
 
-			steps = steps - 1;
+			while(true) {
+				depth_ws = texelFetch(u_depth, coord, lod).r;
+
+				if(z_ws < depth_ws ) break;
+
+				if(lod == 0) {
+					gl_FragData[0] = texelFetch(u_main, coord, 0);
+					return;
+				}
+
+				level /= 4.0;
+				--lod;
+				coord = ivec2( cur/level );
+			}
+
+			float new_dist = -1;
+			vec2 new = vec2(0);
+			float a = 0;
+
+			while(true) {
+				new = cur;
+
+				float prim_dist = dist_f(new[prim], level, dir[prim]);
+				float sec_dist = dist_f(new[sec], level, dir[sec]);
+
+				float sec_to_prim0 = sec_dist / prim_dist;
+
+				if(abs(sec_to_prim0 - sec_to_prim) < E) {
+					new[prim] += prim_dist;
+					new[sec] += sec_dist;
+				}
+				else if(abs(sec_to_prim0) < abs(sec_to_prim)) {
+					new[sec] += sec_dist;
+					new[prim] += prim_to_sec * sec_dist;
+				}
+				else {
+					new[prim] += prim_dist;
+					new[sec] += sec_to_prim * prim_dist;
+				}
+
+				new_dist = dist + dist_per_prim * (new[prim] - cur[prim]);
+
+				denom = ( z_denominator + z_denominator_addition*new_dist );
+				float new_z_cs = z_numerator / denom;
+				float new_z_ws = z_cam_to_win(new_z_cs, proj);
+
+				a = find_a(z_ws, new_z_ws, depth_ws);
+
+				bool upper = new_z_ws <= z_ws;
+				bool collides = a <= 1;
+
+				if(collides && lod == 0) {
+					gl_FragData[0] = texelFetch(u_main, coord, 0);
+					return;
+				}
+				
+				if(!collides || upper) break;
+
+				level /= 4.0;
+				--lod;
+
+				coord = ivec2( cur/level );
+				depth_ws = texelFetch(u_depth, coord, lod).r;
+			}
+
+			cur += (new - cur)*clamp(a, 0, 1.01);
+			dist += (new_dist - dist)*clamp(a, 0, 1.01);
+
+			--steps;
 			if(steps <= 0) return;
 		}
+	}
 	}
 
 	gl_FragData[0] = mix(texture2D(u_main, _cvv_texcoord), reflection_color, ratio);
