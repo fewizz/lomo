@@ -121,11 +121,11 @@ reflection_result reflect(vec3 pos_cs, vec3 dir_cs, vec2 pos_ws, vec2 dir_ws) {
 				//float depth_cs = z_win_to_cam(depth_ws, proj);
 				//float depth_cs = z_win_to_cam(depth_ws, proj);*/
 
-				if(depth_cs - z_cs > 0.2) return reflection_result(false, vec4(0), 0);//reflection_result(true, vec4(1), 1);
+				//if(depth_cs - z_cs > 0.2) return reflection_result(false, vec4(0), 0);//reflection_result(true, vec4(1), 1);
 
 				vec4 color = texelFetch(u_main, coord, 0);
 				float ratio = 1;//clamp(1 - closeness_to_border*closeness_to_border, 0, 1);
-				return reflection_result(true, color/*+vec4(1,0,0,0)*/, ratio);
+				return reflection_result(true, color/*vec4(1,0,0,0)*/, ratio);
 			}
 
 			level /= 4.0;
@@ -151,8 +151,8 @@ reflection_result reflect(vec3 pos_cs, vec3 dir_cs, vec2 pos_ws, vec2 dir_ws) {
 
 			a = find_a(z_cs, new_z_cs, depth_cs);
 
-			bool collides = a <= 1;
-			bool collides_lod_0 = (z_ws > depth_ws || (collides && new_z_ws > depth_ws));
+			bool collides = a <= 1.05;
+			bool collides_lod_0 = (z_ws >= depth_ws || (collides && new_z_ws >= depth_ws));
 
 			if(lod == 0) {
 				if(collides_lod_0) {
@@ -161,7 +161,7 @@ reflection_result reflect(vec3 pos_cs, vec3 dir_cs, vec2 pos_ws, vec2 dir_ws) {
 					vec4 color = texelFetch(u_main, coord, 0);
 					//float ratio = clamp(1 - closeness_to_border*closeness_to_border, 0, 1);
 					float ratio = 1;
-					return reflection_result(true, color/*+vec4(0,1,0,0)*/, ratio);
+					return reflection_result(true, color/*vec4(0,0,1,0)*/, ratio);
 				}
 				a = 1;
 				break;
