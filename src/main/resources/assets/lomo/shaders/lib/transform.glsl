@@ -42,7 +42,19 @@ vec3 cam_to_win(vec3 w, mat4 m) {
 	float xc = w.x * m[0][0] + w.z * m[2][0];
 	float yc = w.y * m[1][1] + w.z * m[2][1];
 	float zc = w.z * m[2][2] + m[3][2];
+	
 	vec3 ndc = vec3(xc, yc, zc)/(-w.z);
 
 	return vec3(ndc_to_win(ndc.xy), z_ndc_to_win(ndc.z));
+}
+
+vec2 dir_cam_to_win(vec3 pos, vec3 dir, mat4 proj) {
+	// black magic that took me 1 hour
+	return normalize(
+		vec2(
+			( dir.x - dir.z * pos.x / pos.z ) * frxu_size.x * proj[0][0],
+			( dir.y - dir.z * pos.y / pos.z ) * frxu_size.y * proj[1][1]
+		)
+	);
+
 }

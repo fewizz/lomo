@@ -71,10 +71,10 @@
 	{
 		"name": "solid_main",
 		"texParams": [
-			{ "name": "TEXTURE_MIN_FILTER", "val": "LINEAR"},
-			{ "name": "TEXTURE_MAG_FILTER", "val": "LINEAR"},
-			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP"},
-			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP"}
+			{ "name": "TEXTURE_MIN_FILTER", "val": "LINEAR" },
+			{ "name": "TEXTURE_MAG_FILTER", "val": "LINEAR" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP" }
 		]
 	},
 	{
@@ -83,20 +83,20 @@
 		"pixelFormat": "DEPTH_COMPONENT",
 		"pixelDataType": "FLOAT",
 		"texParams": [
-			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST"},
-			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST"},
-			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP"},
-			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP"},
-			{ "name": "TEXTURE_COMPARE_MODE", "val": "NONE"}
+			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP" },
+			{ "name": "TEXTURE_COMPARE_MODE", "val": "NONE" }
 		]
 	},
 	{
 		"name": "translucent_main",
 		"texParams": [
-			{ "name": "TEXTURE_MIN_FILTER", "val": "LINEAR"},
-			{ "name": "TEXTURE_MAG_FILTER", "val": "LINEAR"},
-			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP"},
-			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP"}
+			{ "name": "TEXTURE_MIN_FILTER", "val": "LINEAR" },
+			{ "name": "TEXTURE_MAG_FILTER", "val": "LINEAR" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP" }
 		]
 	},
 	{
@@ -105,20 +105,20 @@
 		"pixelFormat": "DEPTH_COMPONENT",
 		"pixelDataType": "FLOAT",
 		"texParams": [
-			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST"},
-			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST"},
-			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP"},
-			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP"},
-			{ "name": "TEXTURE_COMPARE_MODE", "val": "NONE"}
+			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP" },
+			{ "name": "TEXTURE_COMPARE_MODE", "val": "NONE" }
 		]
 	},
 	{
 		"name": "clouds_main",
 		"texParams": [
-			{ "name": "TEXTURE_MIN_FILTER", "val": "LINEAR"},
-			{ "name": "TEXTURE_MAG_FILTER", "val": "LINEAR"},
-			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP"},
-			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP"}
+			{ "name": "TEXTURE_MIN_FILTER", "val": "LINEAR" },
+			{ "name": "TEXTURE_MAG_FILTER", "val": "LINEAR" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP" }
 		]
 	},
 	{
@@ -127,20 +127,20 @@
 		"pixelFormat": "DEPTH_COMPONENT",
 		"pixelDataType": "FLOAT",
 		"texParams": [
-			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST"},
-			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST"},
-			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP"},
-			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP"},
-			{ "name": "TEXTURE_COMPARE_MODE", "val": "NONE"}
+			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP" },
+			{ "name": "TEXTURE_COMPARE_MODE", "val": "NONE" }
 		]
 	},
 	{
 		"name": "entity_main",
 		"texParams": [
-			{ "name": "TEXTURE_MIN_FILTER", "val": "LINEAR"},
-			{ "name": "TEXTURE_MAG_FILTER", "val": "LINEAR"},
-			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP"},
-			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP"}
+			{ "name": "TEXTURE_MIN_FILTER", "val": "LINEAR" },
+			{ "name": "TEXTURE_MAG_FILTER", "val": "LINEAR" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP" }
 		]
 	},
 	{
@@ -149,20 +149,20 @@
 		"pixelFormat": "DEPTH_COMPONENT",
 		"pixelDataType": "FLOAT",
 		"texParams": [
-			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST"},
-			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST"},
-			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP"},
-			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP"},
-			{ "name": "TEXTURE_COMPARE_MODE", "val": "NONE"}
+			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP" },
+			{ "name": "TEXTURE_COMPARE_MODE", "val": "NONE" }
 		]
 	},
 	{
 		"name": "weather_main",
 		"texParams": [
-			{ "name": "TEXTURE_MIN_FILTER", "val": "LINEAR"},
-			{ "name": "TEXTURE_MAG_FILTER", "val": "LINEAR"},
-			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP"},
-			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP"}
+			{ "name": "TEXTURE_MIN_FILTER", "val": "LINEAR" },
+			{ "name": "TEXTURE_MAG_FILTER", "val": "LINEAR" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP" }
 		]
 	},
 	{
@@ -171,20 +171,20 @@
 		"pixelFormat": "DEPTH_COMPONENT",
 		"pixelDataType": "FLOAT",
 		"texParams": [
-			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST"},
-			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST"},
-			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP"},
-			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP"},
-			{ "name": "TEXTURE_COMPARE_MODE", "val": "NONE"}
+			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP" },
+			{ "name": "TEXTURE_COMPARE_MODE", "val": "NONE" }
 		]
 	},
 	{
 		"name": "particles_main",
 		"texParams": [
-			{ "name": "TEXTURE_MIN_FILTER", "val": "LINEAR"},
-			{ "name": "TEXTURE_MAG_FILTER", "val": "LINEAR"},
-			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP"},
-			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP"}
+			{ "name": "TEXTURE_MIN_FILTER", "val": "LINEAR" },
+			{ "name": "TEXTURE_MAG_FILTER", "val": "LINEAR" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP" }
 		]
 	},
 	{
@@ -194,20 +194,20 @@
 		"pixelDataType": "FLOAT",
 		"target": "TEXTURE_2D",
 		"texParams": [
-			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST"},
-			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST"},
-			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP"},
-			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP"},
-			{ "name": "TEXTURE_COMPARE_MODE", "val": "NONE"}
+			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP" },
+			{ "name": "TEXTURE_COMPARE_MODE", "val": "NONE" }
 		]
 	},
 	{
 		"name": "composite_main_0",
 		"texParams": [
-			{ "name": "TEXTURE_MIN_FILTER", "val": "LINEAR"},
-			{ "name": "TEXTURE_MAG_FILTER", "val": "LINEAR"},
-			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP"},
-			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP"}
+			{ "name": "TEXTURE_MIN_FILTER", "val": "LINEAR" },
+			{ "name": "TEXTURE_MAG_FILTER", "val": "LINEAR" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP" }
 		]
 	},
 	{
@@ -216,20 +216,20 @@
 		"pixelFormat": "RED",
 		"pixelDataType": "FLOAT",
 		"texParams": [
-			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST"},
-			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST"},
-			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP"},
-			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP"},
-			{ "name": "TEXTURE_COMPARE_MODE", "val": "NONE"}
+			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP" },
+			{ "name": "TEXTURE_COMPARE_MODE", "val": "NONE" }
 		]
 	},
 	{
 		"name": "normal",
 		"texParams": [
-			{ "name": "TEXTURE_MIN_FILTER", "val": "LINEAR"},
-			{ "name": "TEXTURE_MAG_FILTER", "val": "LINEAR"},
-			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP"},
-			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP"}
+			{ "name": "TEXTURE_MIN_FILTER", "val": "LINEAR" },
+			{ "name": "TEXTURE_MAG_FILTER", "val": "LINEAR" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP" }
 		]
 	}
 ],
@@ -260,12 +260,12 @@
 	{
 		"name": "entity",
 		"depthAttachment": { "image": "entity_depth", "clearDepth": "c:" },
-		"colorAttachments": [ { "image": "entity_main", "clearColor": "c:" } ]
+		"colorAttachments": [ { "image": "entity_main", "clearColor": "c:" }, { "image": "normal", "clearColor": "c:" } ]
 	},
 	{
 		"name": "particles",
 		"depthAttachment": { "image": "particles_depth", "clearDepth": "c:" },
-		"colorAttachments": [ { "image": "particles_main", "clearColor": "c:" } ]
+		"colorAttachments": [ { "image": "particles_main", "clearColor": "c:" }, { "image": "normal", "clearColor": "c:" } ]
 	},
 	{
 		"name": "weather",

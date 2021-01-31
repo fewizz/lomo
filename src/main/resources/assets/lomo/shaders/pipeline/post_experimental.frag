@@ -40,12 +40,13 @@ reflection_result reflect(vec3 pos_cs, vec3 dir_cs, vec2 pos_ws, vec2 dir_ws) {
 	else z_to_prim = dir_cs.z / dir_cs[prim_cs];
 
 	mat4 proj = frx_projectionMatrix();
+	mat4 view = frx_viewMatrix();
 
 	float z_numerator = (pos_cs.z - z_to_prim*pos_cs[prim_cs]);
 	float z_denominator = 1 + (z_to_prim * ((pos_ws[prim_cs] / frxu_size[prim_cs]) * 2 - 1 + proj[2][prim_cs]) / proj[prim_cs][prim_cs]);
 	float z_denominator_addition = ((z_to_prim * dir_ws[prim_cs] / frxu_size[prim_cs]) * 2) / proj[prim_cs][prim_cs];
 
-	float steps = 100;
+	float steps = 400;
 
 	vec2 dir = dir_ws;
 
@@ -67,16 +68,20 @@ reflection_result reflect(vec3 pos_cs, vec3 dir_cs, vec2 pos_ws, vec2 dir_ws) {
 	int lod = 0;
 
 	vec2 cur = pos_ws.xy + dir;
-	if(dir.x > 0 && dir.y > 0) cur += dir/2.0;
+	//if(dir.x > 0 && dir.y > 0) cur += dir/2.0;
 	float dist = length(cur - pos_ws.xy);
 	
 	//while(true) {
 	while(true) {
 		ivec2 coord = ivec2( cur/level );
 
-		vec2 uv = (cur/(frxu_size*level) - 0.5);
-		float closeness_to_border = max(abs(uv.y), abs(uv.x)) * 2;
-		if(closeness_to_border >= 1) return reflection_result(false, vec4(0), 0);
+		/*vec2 magic = (cur/(frxu_size*level)) * 2 - 1;
+		float closeness_to_border = max(abs(magic.x), abs(magic.y));
+		if(closeness_to_border >= 0.95) return reflection_result(false, vec4(0), 0);*/
+		//if(coord.x <= 0 || coord.y <= 0 || coord.x >= (frxu_size/level).x || coord.y >= (frxu_size/level).y ) {
+		if(cur.x < 0 || cur.y <= 0 || cur.x >= frxu_size.x || cur.y >= frxu_size.y ) {
+			return reflection_result(false, vec4(0), 0);
+		}
 
 		float denom = ( z_denominator + z_denominator_addition*dist );
 		float z_cs = z_numerator / denom;
@@ -96,15 +101,31 @@ reflection_result reflect(vec3 pos_cs, vec3 dir_cs, vec2 pos_ws, vec2 dir_ws) {
 		}
 
 		float depth_ws = -1;
+		float depth_cs = -1;
 		while(true) {
 			depth_ws = texelFetch(u_depth, coord, lod).r;
+			depth_cs = z_win_to_cam(depth_ws, proj);
 
-			if(z_ws < depth_ws) break;
+			if(z_cs > depth_cs) break;
 
 			if(lod == 0) {
+				/*mat3 rotation = mat3(view);
+				vec4 packed_normal = texture2D(u_reflective, _cvv_texcoord);
+				vec3 normal = normalize((packed_normal.xyz - 0.5) * 2);
+				vec3 normal_cs = rotation*normal;
+
+				vec2 normal_ws = dir_cam_to_win(win_to_cam(vec3(cur, z_ws), proj), normal_cs, proj);
+				float res = dot(normal_ws, dir_ws);
+
+				if(res >= 0) return reflection_result(false, vec4(0), 0);
+				//float depth_cs = z_win_to_cam(depth_ws, proj);
+				//float depth_cs = z_win_to_cam(depth_ws, proj);*/
+
+				if(depth_cs - z_cs > 0.2) return reflection_result(false, vec4(0), 0);//reflection_result(true, vec4(1), 1);
+
 				vec4 color = texelFetch(u_main, coord, 0);
-				float ratio = clamp(1 - closeness_to_border*closeness_to_border, 0, 1);
-				return reflection_result(true, color, ratio);
+				float ratio = 1;//clamp(1 - closeness_to_border*closeness_to_border, 0, 1);
+				return reflection_result(true, color/*+vec4(1,0,0,0)*/, ratio);
 			}
 
 			level /= 4.0;
@@ -128,17 +149,19 @@ reflection_result reflect(vec3 pos_cs, vec3 dir_cs, vec2 pos_ws, vec2 dir_ws) {
 			float new_z_cs = z_numerator / denom;
 			float new_z_ws = z_cam_to_win(new_z_cs, proj);
 
-			a = find_a(z_ws, new_z_ws, depth_ws);
+			a = find_a(z_cs, new_z_cs, depth_cs);
 
 			bool collides = a <= 1;
 			bool collides_lod_0 = (z_ws > depth_ws || (collides && new_z_ws > depth_ws));
 
 			if(lod == 0) {
 				if(collides_lod_0) {
-					if(abs(depth_ws - new_z_ws) > 0.0008) return reflection_result(false, vec4(0), 0);
+					//if(abs(depth_ws - new_z_ws) > 0.0008) return reflection_result(true, vec4(1,0,0,1), 1);
+					//if(a >= 1.1 )
 					vec4 color = texelFetch(u_main, coord, 0);
-					float ratio = clamp(1 - closeness_to_border*closeness_to_border, 0, 1);
-					return reflection_result(true, color, ratio);
+					//float ratio = clamp(1 - closeness_to_border*closeness_to_border, 0, 1);
+					float ratio = 1;
+					return reflection_result(true, color/*+vec4(0,1,0,0)*/, ratio);
 				}
 				a = 1;
 				break;
@@ -185,19 +208,19 @@ void main() {
 
 		vec3 into_camera = normalize(-position_cs);
 		float cos_between_normal_and_ray = dot(into_camera, normal_cs);
-		vec3 reflection_dir = normal_cs*cos_between_normal_and_ray*2 - into_camera;
+		vec3 reflection_dir = reflect(normalize(position_cs), normal_cs);//normal_cs*cos_between_normal_and_ray*2 - into_camera;
 
-		vec3 reflection_b_ws = cam_to_win(position_cs + reflection_dir/4, proj);
+		//vec3 reflection_b_ws = cam_to_win(position_cs + reflection_dir/4, proj);
 
-		vec2 reflection_dir_ws = normalize((reflection_b_ws-position_ws).xy);
+		vec2 reflection_dir_ws = dir_cam_to_win(position_cs, reflection_dir, proj);//normalize((reflection_b_ws-position_ws).xy);
 
 		reflection_result res = reflect(position_cs, reflection_dir, position_ws.xy, reflection_dir_ws);
 
 		if(res.success) {
 			reflection_color = res.color;
 
-			float sin_between_normal_and_ray = sqrt(1 - cos_between_normal_and_ray*cos_between_normal_and_ray);
-			ratio = res.a*sin_between_normal_and_ray;
+			//float sin_between_normal_and_ray = sqrt(1 - cos_between_normal_and_ray*cos_between_normal_and_ray);
+			ratio = res.a;//*sin_between_normal_and_ray;
 			//return;
 		}
 	}
