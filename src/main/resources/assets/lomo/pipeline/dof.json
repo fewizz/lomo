@@ -14,7 +14,7 @@
 				"program": "dof",
 				"framebuffer": "solid",
 				"samplerImages": [ "composite_main_1", "depth_levels" ]
-			},
+			}/*,
 			{
 				"name": "dof_1",
 				"program": "dof",
@@ -26,7 +26,7 @@
 				"program": "dof",
 				"framebuffer": "solid",
 				"samplerImages": [ "composite_main_1", "depth_levels" ]
-			}
+			}*/
 		]
 	},
 	"images": [
