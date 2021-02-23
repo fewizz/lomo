@@ -7,6 +7,12 @@
 			"samplers": [ "u_depth" ]
 		},
 		{
+			"name": "depth_level8",
+			"vertexSource": "lomo:shaders/pipeline/simple_full_frame_depth_one.vert",
+			"fragmentSource": "lomo:shaders/pipeline/depth_level8.frag",
+			"samplers": [ "u_depth" ]
+		},
+		{
 			"name": "post",
 			"vertexSource": "lomo:shaders/pipeline/simple_full_frame_depth_one.vert",
 			"fragmentSource": "lomo:shaders/pipeline/post_experimental.frag",

@@ -10,29 +10,35 @@
 	"fabulous": {
 		"passes": [
 			{
-				"name": "dof",
+				"name": "dof0",
 				"program": "dof",
 				"framebuffer": "dof",
 				"samplerImages": [ "composite_main_1", "depth_levels" ]
 			},
 			{
-				"name": "dof",
+				"name": "dof1",
 				"program": "dof",
 				"framebuffer": "composite_1",
 				"samplerImages": [ "dof", "depth_levels" ]
 			},
 			{
-				"name": "dof",
+				"name": "dof2",
 				"program": "dof",
 				"framebuffer": "dof",
 				"samplerImages": [ "composite_main_1", "depth_levels" ]
 			},
 			{
-				"name": "dof",
+				"name": "dof3",
 				"program": "dof",
 				"framebuffer": "solid",
 				"samplerImages": [ "dof", "depth_levels" ]
 			}
+			/*{
+				"name": "copy",
+				"program": "copy",
+				"framebuffer": "solid",
+				"samplerImages": [ "composite_main_1" ]
+			}*/
 		]
 	},
 	"images": [

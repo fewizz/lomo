@@ -16,7 +16,7 @@ float focus(float center_depth_ws, float depth_ws) {
 	depth_ws = linearalize(depth_ws);
 
 	// not sure
-	if(depth_ws < center_depth_ws)
+	if(depth_ws <= center_depth_ws)
 		return sqrt((center_depth_ws - depth_ws) / center_depth_ws);
 	else
 		return (depth_ws - center_depth_ws) / (1 - center_depth_ws);

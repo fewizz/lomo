@@ -33,6 +33,8 @@ struct reflection_result {
 	float a;
 };
 
+#define CELL_SIZE 4
+
 reflection_result reflection(vec3 pos_cs, vec3 dir_cs, vec2 pos_ws, vec2 dir_ws) {
 	int prim_cs = abs(dir_cs.x) >= abs(dir_cs.y) ? 0 : 1;
 	float z_to_prim = 0;
@@ -83,14 +85,14 @@ reflection_result reflection(vec3 pos_cs, vec3 dir_cs, vec2 pos_ws, vec2 dir_ws)
 
 		if(z_ws >= 1 || z_ws <= 0) return reflection_result(false, vec4(0), 0);
 
-		while(lod < 2) {
-			float up_depth_ws = texelFetch(u_depth, coord/4, lod+1).r;
+		while(lod < 4) {
+			float up_depth_ws = texelFetch(u_depth, coord / CELL_SIZE, lod+1).r;
 
 			if(up_depth_ws <= z_ws ) break;
 			
-			level *= 4.0;
+			level *= CELL_SIZE;
 			++lod;
-			coord = ivec2( cur/level );
+			coord = ivec2( cur / level );
 		}
 
 		float depth_ws = -1;
@@ -121,9 +123,9 @@ reflection_result reflection(vec3 pos_cs, vec3 dir_cs, vec2 pos_ws, vec2 dir_ws)
 				return reflection_result(true, color/*vec4(1,0,0,0)*/, ratio);
 			}
 
-			level /= 4.0;
+			level /= CELL_SIZE ;
 			--lod;
-			coord = ivec2( cur/level );
+			coord = ivec2( cur / level );
 		}
 
 		float a = 0;
@@ -166,7 +168,7 @@ reflection_result reflection(vec3 pos_cs, vec3 dir_cs, vec2 pos_ws, vec2 dir_ws)
 				break;
 			}
 
-			level /= 4.0;
+			level /= CELL_SIZE;
 			--lod;
 
 			coord = ivec2( cur/level );
