@@ -7,23 +7,30 @@ uniform sampler2D u_depth;
 
 float sqrt_0_5 = sqrt(0.5);
 
-float linearalize(float val) {
+/*(float linearalize(float val) {
 	return val*val;
-}
+}*/
 
-float focus(float center_depth_ws, float depth_ws) {
-	center_depth_ws = linearalize(center_depth_ws);
-	depth_ws = linearalize(depth_ws);
+float focus(float center_depth, ivec2 coord, mat4 proj) {
+	float depth = texelFetch(u_depth, coord, 0).r;
+	depth = linearalize_z_win(depth, proj);
 
+	float res = 0;
 	// not sure
-	if(depth_ws <= center_depth_ws)
-		return sqrt((center_depth_ws - depth_ws) / center_depth_ws);
+	if(depth <= center_depth)
+		res = (center_depth - depth) / center_depth;
 	else
-		return (depth_ws - center_depth_ws) / (1 - center_depth_ws);
+		res = (depth - center_depth) / (1 - center_depth);
+
+	return res;
 }
 
 void main() {
+	mat4 proj = frx_projectionMatrix();
+
 	float center_depth_ws = texelFetch(u_depth, textureSize(u_depth, 0) / 2, 0).r;
+
+	float linear_center_depth = linearalize_z_win(center_depth_ws, proj);
 
 	vec4 resulting_color = vec4(0);
 	float resulting_mul = 0;
@@ -41,8 +48,7 @@ void main() {
 			else {
 				float dist = x*y != 0 ? sqrt_0_5 : 1;
 			
-				float depth = texelFetch(u_depth, coord, 0).r;
-				float mul = dist * focus(center_depth_ws, depth);
+				float mul = dist * focus(linear_center_depth, coord, proj);
 				resulting_color += color * mul;
 				resulting_mul += mul;
 			}

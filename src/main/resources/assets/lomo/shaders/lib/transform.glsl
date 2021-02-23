@@ -23,9 +23,13 @@ float z_cam_to_win(float z, mat4 m) {
 	return z_ndc_to_win( (z*m[2][2] + m[3][2]) / -z );
 }
 
-float z_win_to_cam(float zw, mat4 m) {
-	float zd = z_win_to_ndc(zw);
-	return -m[3][2] / (m[2][2] + zd);
+float z_ndc_to_cam(float z_ndc, mat4 m) {
+	return -m[3][2] / (m[2][2] + z_ndc);
+}
+
+float z_win_to_cam(float z_win, mat4 m) {
+	float z_ndc = z_win_to_ndc(z_win);
+	return z_ndc_to_cam(z_ndc, m);
 }
 
 vec3 win_to_cam(vec3 w, mat4 m) {
@@ -57,4 +61,20 @@ vec2 dir_cam_to_win(vec3 pos, vec3 dir, mat4 proj) {
 		)
 	);
 
+}
+
+vec2 near_far(mat4 proj) {
+	float near = -z_ndc_to_cam(-1, proj);
+	float far = -z_ndc_to_cam(1, proj);
+	return vec2(near, far);
+}
+
+float linearalize_z_win(float z_win, mat4 proj) {
+	float z_cam = z_win_to_cam(z_win, proj);
+
+	vec2 nf = near_far(proj);
+	float dist_from_near = -(z_cam + nf[0]);
+
+	float nf_diff = nf[1] - nf[0];
+	return dist_from_near / nf_diff;
 }

@@ -10,35 +10,23 @@
 	"fabulous": {
 		"passes": [
 			{
-				"name": "dof0",
+				"name": "dof_0",
 				"program": "dof",
-				"framebuffer": "dof",
+				"framebuffer": "solid",
 				"samplerImages": [ "composite_main_1", "depth_levels" ]
 			},
 			{
-				"name": "dof1",
+				"name": "dof_1",
 				"program": "dof",
 				"framebuffer": "composite_1",
-				"samplerImages": [ "dof", "depth_levels" ]
+				"samplerImages": [ "solid_main", "depth_levels" ]
 			},
 			{
-				"name": "dof2",
+				"name": "dof_2",
 				"program": "dof",
-				"framebuffer": "dof",
+				"framebuffer": "solid",
 				"samplerImages": [ "composite_main_1", "depth_levels" ]
-			},
-			{
-				"name": "dof3",
-				"program": "dof",
-				"framebuffer": "solid",
-				"samplerImages": [ "dof", "depth_levels" ]
 			}
-			/*{
-				"name": "copy",
-				"program": "copy",
-				"framebuffer": "solid",
-				"samplerImages": [ "composite_main_1" ]
-			}*/
 		]
 	},
 	"images": [
@@ -52,11 +40,5 @@
 			]
 		}
 
-	],
-	"framebuffers": [
-		{
-			"name": "dof",
-			"colorAttachments": [ { "image": "dof" } ]
-		}
 	]
 }
