@@ -10,7 +10,7 @@ varying vec2 _cvv_texcoord;
 void main() {
 	int lod_from = frxu_lod - 1;
 
-	float mn = 1;
+	float min_depth = 1;
 	int mul = int( pow(2, lod_from*2) );
 
 	ivec2 orig_size = textureSize(u_depth, 0);
@@ -24,9 +24,9 @@ void main() {
 			if(v.x * mul >= orig_size.x || v.y * mul >= orig_size.y) continue;
 
 			float d = texelFetch(u_depth, v, lod_from).r;
-			mn = min(mn, d);
+			min_depth = min(min_depth, d);
 		}
 	}
 
-	gl_FragData[0] = vec4(mn/*-0.001*float(frxu_lod)*/, 0, 0, 1);
+	gl_FragData[0] = vec4(min_depth, 0, 0, 1);
 }

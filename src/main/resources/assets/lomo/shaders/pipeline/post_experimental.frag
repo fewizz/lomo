@@ -2,7 +2,7 @@
 #extension GL_ARB_bindless_texture : require
 #include lomo:shaders/lib/transform.glsl
 
-/* lomo:pipeline/reflection.frag */
+/* lomo:pipeline/post_experimental.frag */
 
 uniform sampler2D u_reflective;
 
@@ -33,7 +33,7 @@ struct reflection_result {
 	float a;
 };
 
-reflection_result reflect(vec3 pos_cs, vec3 dir_cs, vec2 pos_ws, vec2 dir_ws) {
+reflection_result reflection(vec3 pos_cs, vec3 dir_cs, vec2 pos_ws, vec2 dir_ws) {
 	int prim_cs = abs(dir_cs.x) >= abs(dir_cs.y) ? 0 : 1;
 	float z_to_prim = 0;
 	if(dir_cs[prim_cs] == 0) z_to_prim = 1/0.0000001;
@@ -45,8 +45,6 @@ reflection_result reflect(vec3 pos_cs, vec3 dir_cs, vec2 pos_ws, vec2 dir_ws) {
 	float z_numerator = (pos_cs.z - z_to_prim*pos_cs[prim_cs]);
 	float z_denominator = 1 + (z_to_prim * ((pos_ws[prim_cs] / frxu_size[prim_cs]) * 2 - 1 + proj[2][prim_cs]) / proj[prim_cs][prim_cs]);
 	float z_denominator_addition = ((z_to_prim * dir_ws[prim_cs] / frxu_size[prim_cs]) * 2) / proj[prim_cs][prim_cs];
-
-	float steps = 400;
 
 	vec2 dir = dir_ws;
 
@@ -71,14 +69,9 @@ reflection_result reflect(vec3 pos_cs, vec3 dir_cs, vec2 pos_ws, vec2 dir_ws) {
 	//if(dir.x > 0 && dir.y > 0) cur += dir/2.0;
 	float dist = length(cur - pos_ws.xy);
 	
-	//while(true) {
 	while(true) {
 		ivec2 coord = ivec2( cur/level );
 
-		/*vec2 magic = (cur/(frxu_size*level)) * 2 - 1;
-		float closeness_to_border = max(abs(magic.x), abs(magic.y));
-		if(closeness_to_border >= 0.95) return reflection_result(false, vec4(0), 0);*/
-		//if(coord.x <= 0 || coord.y <= 0 || coord.x >= (frxu_size/level).x || coord.y >= (frxu_size/level).y ) {
 		if(cur.x < 0 || cur.y <= 0 || cur.x >= frxu_size.x || cur.y >= frxu_size.y ) {
 			return reflection_result(false, vec4(0), 0);
 		}
@@ -90,7 +83,7 @@ reflection_result reflect(vec3 pos_cs, vec3 dir_cs, vec2 pos_ws, vec2 dir_ws) {
 
 		if(z_ws >= 1 || z_ws <= 0) return reflection_result(false, vec4(0), 0);
 
-		while(lod < 4) {
+		while(lod < 2) {
 			float up_depth_ws = texelFetch(u_depth, coord/4, lod+1).r;
 
 			if(up_depth_ws <= z_ws ) break;
@@ -182,9 +175,6 @@ reflection_result reflect(vec3 pos_cs, vec3 dir_cs, vec2 pos_ws, vec2 dir_ws) {
 
 		cur += dir*dist_add*a;
 		dist += dist_add*a;
-
-		--steps;
-		if(steps <= 0) return reflection_result(false, vec4(0), 0);
 	}
 }
 
@@ -214,13 +204,13 @@ void main() {
 
 		vec2 reflection_dir_ws = dir_cam_to_win(position_cs, reflection_dir, proj);//normalize((reflection_b_ws-position_ws).xy);
 
-		reflection_result res = reflect(position_cs, reflection_dir, position_ws.xy, reflection_dir_ws);
+		reflection_result res = reflection(position_cs, reflection_dir, position_ws.xy, reflection_dir_ws);
 
 		if(res.success) {
 			reflection_color = res.color;
 
 			//float sin_between_normal_and_ray = sqrt(1 - cos_between_normal_and_ray*cos_between_normal_and_ray);
-			ratio = res.a;//*sin_between_normal_and_ray;
+			ratio = 1;//res.a;//*sin_between_normal_and_ray;
 			//return;
 		}
 	}

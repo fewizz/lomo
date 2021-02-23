@@ -17,6 +17,10 @@ repositories {
 		name = "Cotton"
 		url = "https://server.bbkr.space/artifactory/libs-release/"
 	}
+	maven {
+		name = 'TerraformersMC'
+		url = 'https://maven.terraformersmc.com/'
+	}
 	maven { url 'https://jitpack.io' }
 }
 
@@ -33,7 +37,11 @@ dependencies {
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
-	modImplementation "com.github.grondag:canvas:ab022ea01a"
+	modImplementation("com.github.grondag:canvas:${project.canvas_commit}") {
+		exclude module: "modmenu"
+	}
+
+	modImplementation "com.terraformersmc:modmenu:${project.modmenu_version}"
 }
 
 processResources {

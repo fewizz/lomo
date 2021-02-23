@@ -55,12 +55,6 @@
 				"program": "post",
 				"framebuffer": "composite_1",
 				"samplerImages": [ "normal", "composite_main_0", "depth_levels" ]
-			},
-			{
-				"name": "copy",
-				"program": "copy",
-				"framebuffer": "solid",
-				"samplerImages": [ "composite_main_1" ]
 			}
 		]
 	},
@@ -77,7 +71,7 @@
 		},
 		{
 			"name": "depth_levels",
-			"lod": 8,
+			"lod": 4,
 			"internalFormat": "GL_R32F",
 			"pixelFormat": "RED",
 			"pixelDataType": "FLOAT",
@@ -114,7 +108,7 @@
 		{
 			"name": "depth_level_4",
 			"colorAttachments": [ { "image": "depth_levels", "lod": 4 } ]
-		},
+		}/*,
 		{
 			"name": "depth_level_5",
 			"colorAttachments": [ { "image": "depth_levels", "lod": 5 } ]
@@ -130,7 +124,7 @@
 		{
 			"name": "depth_level_8",
 			"colorAttachments": [ { "image": "depth_levels", "lod": 8 } ]
-		}
+		}*/
 	]
 
 }

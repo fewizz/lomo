@@ -1,8 +1,9 @@
 #include frex:shaders/api/header.glsl
+
 #extension GL_ARB_bindless_texture : require
 #include lomo:shaders/lib/transform.glsl
 
-/* lomo:pipeline/reflection.frag */
+/* lomo:pipeline/post.frag */
 
 uniform sampler2D u_reflective;
 
@@ -22,7 +23,7 @@ reflection_result failed_reflection_result(float len) {
 	return reflection_result(false, vec4(0), 0, len);
 }
 
-reflection_result reflect(float first_step_len, vec3 pos_cs, vec3 dir_cs, float max_len) {
+reflection_result reflection(float first_step_len, vec3 pos_cs, vec3 dir_cs, float max_len) {
 	if(dir_cs.xy == vec2(0)) dir_cs = vec3(0, 0, -1);
 	mat4 proj = frx_projectionMatrix();
 	float step = first_step_len;//abs( ( 1 / max( 0.001, abs( cos_between_normal_and_ray ) ) ) ) / 140;
@@ -67,8 +68,8 @@ reflection_result reflect(float first_step_len, vec3 pos_cs, vec3 dir_cs, float 
 	}
 }
 
-reflection_result reflect(vec3 pos_cs, vec3 dir_cs, float cos_between_normal_and_ray, float max_len) {
-	reflection_result res = reflect(
+reflection_result reflection(vec3 pos_cs, vec3 dir_cs, float cos_between_normal_and_ray, float max_len) {
+	reflection_result res = reflection(
 		abs( ( 1 / max( 0.001, abs( cos_between_normal_and_ray ) ) ) ) / 140,
 		pos_cs,
 		dir_cs,
@@ -105,22 +106,22 @@ void main() {
 
 	if(packed_normal.a != 0) {
 
-		reflection_result res = reflect(pos_cs, ref_cs, cos_between_normal_and_ray, 10000);
+		reflection_result res = reflection(pos_cs, ref_cs, cos_between_normal_and_ray, 10000);
 
 		if(res.success) {
 			reflection_color = res.color;
-			ratio = res.a;
+			ratio = 1;//res.a;
 		}
 	}
 
 	vec4 color = mix(texture2D(u_main, _cvv_texcoord), reflection_color, ratio);
 
-	reflection_result res = reflect(0.01, pos_cs, normal_cs, 0.5);
+	/*reflection_result res = reflect(0.01, pos_cs, normal_cs, 0.5);
 
 	mat3 mat = mat3(vec3(normal_cs.y, -normal_cs.x, normal_cs.z), normal_cs, normal_cs);
 	if(res.success) {
 		color = mix(vec4(0), color, clamp(res.len, 0, 0.5)*2);
-	}
+	}*/
 
 	gl_FragData[0] = color;
 }

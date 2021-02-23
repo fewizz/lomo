@@ -1,0 +1,56 @@
+{
+	"programs": [
+		{
+			"name": "dof",
+			"vertexSource": "lomo:shaders/pipeline/simple_full_frame_depth_one.vert",
+			"fragmentSource": "lomo:shaders/pipeline/dof.frag",
+			"samplers": [ "u_main", "u_depth" ]
+		}
+	],
+	"fabulous": {
+		"passes": [
+			{
+				"name": "dof",
+				"program": "dof",
+				"framebuffer": "dof",
+				"samplerImages": [ "composite_main_1", "depth_levels" ]
+			},
+			{
+				"name": "dof",
+				"program": "dof",
+				"framebuffer": "composite_1",
+				"samplerImages": [ "dof", "depth_levels" ]
+			},
+			{
+				"name": "dof",
+				"program": "dof",
+				"framebuffer": "dof",
+				"samplerImages": [ "composite_main_1", "depth_levels" ]
+			},
+			{
+				"name": "dof",
+				"program": "dof",
+				"framebuffer": "solid",
+				"samplerImages": [ "dof", "depth_levels" ]
+			}
+		]
+	},
+	"images": [
+		{
+			"name": "dof",
+			"texParams": [
+				{ "name": "TEXTURE_MIN_FILTER", "val": "LINEAR"},
+				{ "name": "TEXTURE_MAG_FILTER", "val": "LINEAR"},
+				{ "name": "TEXTURE_WRAP_S", "val": "CLAMP"},
+				{ "name": "TEXTURE_WRAP_T", "val": "CLAMP"}
+			]
+		}
+
+	],
+	"framebuffers": [
+		{
+			"name": "dof",
+			"colorAttachments": [ { "image": "dof" } ]
+		}
+	]
+}
