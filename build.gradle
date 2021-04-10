@@ -1,27 +1,16 @@
 plugins {
-	id 'fabric-loom' version '0.6-SNAPSHOT'
+	id "fabric-loom" version "0.7-SNAPSHOT"
 }
 
 repositories {
 	jcenter()
 
-	maven {
-		name = "Fabric"
-		url "https://maven.fabricmc.net/"
-	}
-	maven {
-		name = "dblsaiko"
-		url = "https://maven.dblsaiko.net/"
-	}
-	maven {
-		name = "Cotton"
-		url = "https://server.bbkr.space/artifactory/libs-release/"
-	}
-	maven {
-		name = 'TerraformersMC'
-		url = 'https://maven.terraformersmc.com/'
-	}
-	maven { url 'https://jitpack.io' }
+	maven { url "https://maven.shedaniel.me/" }
+	maven { url "https://maven.fabricmc.net/" }
+	maven { url "https://maven.dblsaiko.net/" }
+	maven { url "https://server.bbkr.space/artifactory/libs-release/" }
+	maven { url "https://maven.terraformersmc.com/releases/" }
+	maven { url "https://jitpack.io" }
 }
 
 sourceCompatibility = JavaVersion.VERSION_1_8
@@ -37,7 +26,7 @@ dependencies {
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
-	modImplementation("com.github.grondag:canvas:${project.canvas_commit}") {
+	modImplementation("com.github.grondag:canvas:${project.canvas_version}") {
 		exclude module: "modmenu"
 	}
 

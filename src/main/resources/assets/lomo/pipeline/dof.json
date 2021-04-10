@@ -10,6 +10,12 @@
 	"fabulous": {
 		"passes": [
 			{
+				"name": "copy",
+				"program": "copy",
+				"framebuffer": "solid",
+				"samplerImages": [ "composite_main_1" ]
+			}
+			/*{
 				"name": "dof_0",
 				"program": "dof",
 				"framebuffer": "solid",

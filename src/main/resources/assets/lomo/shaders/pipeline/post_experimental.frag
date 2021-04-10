@@ -14,18 +14,18 @@ varying vec2 _cvv_texcoord;
 #define E 0.002
 
 float cells_for_level(int lod) {
-	pow(4, level);
+	return pow(4, lod);
 }
 
-float dist_f(float v0, float lod, float d) {
+float dist_f(float v0, int lod, float d) {
 	float cells = cells_for_level(lod);
 	float s = sign(d);
-	float fr = fract(v0/cells)*cells;
+	float fr = fract(v0 / cells) * cells;
 	float C = 1.01;
 
-	if(abs(fr) <= E) return s*size*C;
-	if(s > 0.0) return (size - fr)*C;
-	return -fr*C;
+	if(abs(fr) <= E) return s * cells * C;
+	if(s > 0.0) return (cells - fr) * C;
+	return -fr * C;
 }
 
 float find_a(float a, float b, float p) {
@@ -38,12 +38,18 @@ struct reflection_result {
 	float a;
 };
 
-#define CELL_SIZE 4
-#define LEVELS 5
+#define CELL_SIZE 16
+#define LEVELS 2
 #define LAST_LEVEL ( LEVELS - 1 )
 
 ivec2 texture_coord_for_lod(vec2 coord_lod_0, int lod) {
 	return ivec2(coord_lod_0 / cells_for_level(lod));
+}
+
+float upper_depth(ivec2 coord, int lod) {
+	if(lod < LAST_LEVEL)
+		return texelFetch(u_depth, coord / CELL_SIZE, lod + 1).r;
+	return 0.0;
 }
 
 reflection_result reflection(vec3 pos_cs, vec3 dir_cs, vec2 pos_ws, vec2 dir_ws) {
@@ -90,8 +96,17 @@ reflection_result reflection(vec3 pos_cs, vec3 dir_cs, vec2 pos_ws, vec2 dir_ws)
 	float dist = 1; // 1 - length of dir
 
 	// z of upper cell
-	float upper_depth_ws = 0;
+	//float upper_depth_ws = 0;
 	int lod = LAST_LEVEL;
+
+	// texture coord for current lod
+	ivec2 coord = texture_coord_for_lod(cur, lod);
+
+	// z in camera space
+	float z_cs = z_numerator / (z_denominator + z_denominator_addition * dist);
+	// z in window space
+	float z_ws = z_cam_to_win(z_cs, proj);
+	float upper_depth_ws = 0;
 
 	while(true) {
 		// are we out of framebuffer?
@@ -99,54 +114,29 @@ reflection_result reflection(vec3 pos_cs, vec3 dir_cs, vec2 pos_ws, vec2 dir_ws)
 			return reflection_result(false, vec4(0), 0);
 		}
 
-		// texture coord for current lod
-		ivec2 coord = texture_coord_for_lod(lod);
-
-		// part from math abowe
-		float denom = z_denominator + z_denominator_addition*dist;
-		// z in camera space
-		float z_cs = z_numerator / denom;
-		// z in window space
-		float z_ws = z_cam_to_win(z_cs, proj);
-
 		// are we out of buffer? second case should not be possible, but who knows...
 		if(z_ws >= 1 || z_ws <= 0) return reflection_result(false, vec4(0), 0);
 
-		// should we climb to upper lod?
-		while(z_ws < upper_depth_ws && lod < LAST_LEVEL ) {
-			++lod;
-			coord = texture_coord_for_lod(cur, lod);
-			if(lod < LAST_LEVEL)
-				upper_depth_ws = texelFetch(u_depth, coord, lod).r;
-			else
-				upper_depth_ws = 0;
-		}
-
-		// window space depth for current lod 
-		float depth_ws = -1;
-
-		// should we go down, to lower lod?
-		while(true) {
-			depth_ws = texelFetch(u_depth, coord, lod).r;
-
-			// nope, we higher than cell
-			if(z_ws < depth_ws) break;
-
-			// we hit the ground
-			if(lod == 0) {
-				vec4 color = texelFetch(u_main, coord, 0);
-				float ratio = 1;
-				return reflection_result(true, color, ratio);
-			}
-
+		// should we use lower lod?
+		float depth_ws = texelFetch(u_depth, coord, lod).r;
+		while(z_ws > depth_ws && lod > 0) {
 			--lod;
 			coord = texture_coord_for_lod(cur, lod);
 			upper_depth_ws = depth_ws;
+			depth_ws = texelFetch(u_depth, coord, lod).r;
 		}
 
-		float depth_cs = z_win_to_cam(depth_ws, proj);
-		float a = 0;
+		// should we use higher lod?
+		while(z_ws < upper_depth_ws && lod < LAST_LEVEL) {
+			++lod;
+			coord = texture_coord_for_lod(cur, lod);
+			depth_ws = upper_depth_ws;
+			upper_depth_ws = upper_depth(coord, lod);
+		}
+
 		float dist_add = 0;
+		float new_z_cs = -1;
+		float new_z_ws = -1;
 
 		while(true) {
 			float prim_dist = dist_f(cur[prim], lod, dir[prim]);
@@ -155,15 +145,18 @@ reflection_result reflection(vec3 pos_cs, vec3 dir_cs, vec2 pos_ws, vec2 dir_ws)
 			float sec_to_prim0 = sec_dist / prim_dist;
 
 			if(abs(sec_to_prim0) < abs(sec_to_prim))
-				dist_add = sec_dist*dist_per_sec;
+				dist_add = sec_dist * dist_per_sec;
 			else
-				dist_add = prim_dist*dist_per_prim;
+				dist_add = prim_dist * dist_per_prim;
 
-			denom = ( z_denominator + z_denominator_addition * (dist + dist_add) );
-			float new_z_cs = z_numerator / denom;
-			float new_z_ws = z_cam_to_win(new_z_cs, proj);
+			new_z_cs =
+				z_numerator /
+				(z_denominator + z_denominator_addition * (dist + dist_add));
+			
+			new_z_ws = z_cam_to_win(new_z_cs, proj);
 
-			a = find_a(z_cs, new_z_cs, depth_cs);
+			float depth_cs = z_win_to_cam(depth_ws, proj);
+			float a = find_a(z_cs, new_z_cs, depth_cs);
 
 			bool collides = a <= 1.05;
 
@@ -181,28 +174,34 @@ reflection_result reflection(vec3 pos_cs, vec3 dir_cs, vec2 pos_ws, vec2 dir_ws)
 				if(collides_lod_0) {
 					vec4 color = texelFetch(u_main, coord, 0);
 					float ratio = 1;
-					return reflection_result(true, color/*vec4(0,0,1,0)*/, ratio);
+					return reflection_result(true, color, ratio);
 				}
 
-				a = 1;
 				break;
 			}
 
 			bool backward = new_z_ws <= z_ws;
 			if(!collides || backward) {
-				a = 1;
 				break;
 			}
 
 			--lod;
-
 			coord = texture_coord_for_lod(cur, lod);
 			upper_depth_ws = depth_ws;
 			depth_ws = texelFetch(u_depth, coord, lod).r;
 		}
 
-		cur += dir*dist_add*a;
-		dist += dist_add*a;
+		z_ws = new_z_ws;
+		z_cs = new_z_cs;
+		vec2 prev = cur;
+		cur += dir*dist_add;
+		coord = texture_coord_for_lod(cur, lod);
+		dist += dist_add;
+
+		int cells = int(cells_for_level(lod + 1));
+
+		if(ivec2(prev) / cells != ivec2(cur) / cells)
+			upper_depth_ws = upper_depth(coord, lod);
 	}
 }
 

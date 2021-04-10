@@ -7,9 +7,9 @@
 			"samplers": [ "u_depth" ]
 		},
 		{
-			"name": "depth_level8",
+			"name": "depth_level_16",
 			"vertexSource": "lomo:shaders/pipeline/simple_full_frame_depth_one.vert",
-			"fragmentSource": "lomo:shaders/pipeline/depth_level8.frag",
+			"fragmentSource": "lomo:shaders/pipeline/depth_level_16.frag",
 			"samplers": [ "u_depth" ]
 		},
 		{
@@ -30,21 +30,21 @@
 			},
 			{
 				"name": "depth_1",
-				"program": "depth_level",
+				"program": "depth_level_16",
 				"framebuffer": "depth_level_1",
 				"samplerImages": [ "depth_levels" ],
 				"lod": 1
 			},
-			{
+			/*{
 				"name": "depth_2",
-				"program": "depth_level",
+				"program": "depth_level_16",
 				"framebuffer": "depth_level_2",
 				"samplerImages": [ "depth_levels" ],
 				"lod": 2
 			},
 			{
 				"name": "depth_3",
-				"program": "depth_level",
+				"program": "depth_level_16",
 				"framebuffer": "depth_level_3",
 				"samplerImages": [ "depth_levels" ],
 				"lod": 3
@@ -55,7 +55,7 @@
 				"framebuffer": "depth_level_4",
 				"samplerImages": [ "depth_levels" ],
 				"lod": 4
-			},
+			},*/
 			{
 				"name": "post",
 				"program": "post",

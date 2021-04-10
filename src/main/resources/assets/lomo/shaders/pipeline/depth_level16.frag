@@ -11,7 +11,7 @@ void main() {
 	int lod_from = frxu_lod - 1;
 
 	float min_depth = 1;
-	int mul = int( pow(2, lod_from*4) );
+	int mul = int( pow(2, lod_from * 4) );
 
 	ivec2 orig_size = textureSize(u_depth, 0);
 
@@ -19,7 +19,7 @@ void main() {
 
 	for(int x = 0; x < 16; x++) {
 		for(int y = 0; y < 16; y++) {
-			ivec2 v = ivec2(gl_FragCoord.xy)*16 + ivec2(x, y);
+			ivec2 v = ivec2(gl_FragCoord.xy) * 16 + ivec2(x, y);
 
 			if(v.x * mul >= orig_size.x || v.y * mul >= orig_size.y) continue;
 
