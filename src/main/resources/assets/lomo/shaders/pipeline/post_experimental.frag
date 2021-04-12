@@ -9,7 +9,8 @@ uniform sampler2D u_reflective;
 uniform sampler2D u_main;
 uniform sampler2D u_depth;
 
-varying vec2 _cvv_texcoord;
+in vec2 _cvv_texcoord;
+out vec4 out_color;
 
 #define E 0.002
 
@@ -216,7 +217,7 @@ void main() {
 		mat4 view = frx_viewMatrix();
 		mat4 proj = frx_projectionMatrix();
 
-		float depth_ws = texture2D(u_depth, _cvv_texcoord).r ;
+		float depth_ws = texture(u_depth, _cvv_texcoord).r ;
 		vec3 position_ws = vec3(gl_FragCoord.xy, depth_ws);
 		vec3 position_cs = win_to_cam(position_ws, proj);
 
@@ -242,5 +243,5 @@ void main() {
 		}
 	}
 
-	gl_FragData[0] = mix(texture2D(u_main, _cvv_texcoord), reflection_color, ratio);
+	out_color = mix(texture(u_main, _cvv_texcoord), reflection_color, ratio);
 }

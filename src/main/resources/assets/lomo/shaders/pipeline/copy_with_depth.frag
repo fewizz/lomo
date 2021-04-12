@@ -6,9 +6,10 @@
 uniform sampler2D u_input;
 uniform sampler2D u_input_depth;
 
-varying vec2 _cvv_texcoord;
+in vec2 _cvv_texcoord;
+out vec4 out_color;
 
 void main() {
-	gl_FragData[0] = texture2D(u_input, _cvv_texcoord);
-    gl_FragDepth = vec4(texture2D(u_input_depth, _cvv_texcoord)).r;
+	out_color = texture(u_input, _cvv_texcoord);
+	gl_FragDepth = vec4(texture(u_input_depth, _cvv_texcoord)).r;
 }

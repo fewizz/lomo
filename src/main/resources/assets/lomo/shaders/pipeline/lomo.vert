@@ -5,17 +5,21 @@
   canvas:shaders/pipeline/standard.vert
 ******************************************************/
 
+#include canvas:shaders/pipeline/diffuse.glsl
+#include canvas:shaders/pipeline/varying.glsl
+#include frex:shaders/api/view.glsl
+
+/******************************************************
+  canvas:shaders/pipeline/standard.vert
+******************************************************/
+
 void frx_writePipelineVertex(in frx_VertexData data) {
-	if (frx_modelOriginType() == MODEL_ORIGIN_SCREEN) {
-		vec4 viewCoord = gl_ModelViewMatrix * data.vertex;
-		gl_ClipVertex = viewCoord;
-		gl_FogFragCoord = length(viewCoord.xyz);
-		gl_Position = gl_ProjectionMatrix * viewCoord;
+	if (frx_isGui()) {
+		gl_Position = frx_guiViewProjectionMatrix() * data.vertex;
 	} else {
 		data.vertex += frx_modelToCamera();
 		vec4 viewCoord = frx_viewMatrix() * data.vertex;
-		gl_ClipVertex = viewCoord;
-		gl_FogFragCoord = length(viewCoord.xyz);
+		frx_distance = length(viewCoord.xyz);
 		gl_Position = frx_projectionMatrix() * viewCoord;
 	}
 

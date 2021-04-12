@@ -1,6 +1,8 @@
 {
-"materialVertexShader": "lomo:shaders/pipeline/lomo.vert",
-"materialFragmentShader": "lomo:shaders/pipeline/lomo.frag",
+"materialProgram": {
+	"vertexSource": "lomo:shaders/pipeline/lomo.vert",
+	"fragmentSource": "lomo:shaders/pipeline/lomo.frag"
+},
 
 "drawTargets": {
 	"solidTerrain": "solid",
@@ -73,8 +75,8 @@
 		"texParams": [
 			{ "name": "TEXTURE_MIN_FILTER", "val": "LINEAR" },
 			{ "name": "TEXTURE_MAG_FILTER", "val": "LINEAR" },
-			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP" },
-			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP" }
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
 		]
 	},
 	{
@@ -85,8 +87,8 @@
 		"texParams": [
 			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
 			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
-			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP" },
-			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" },
 			{ "name": "TEXTURE_COMPARE_MODE", "val": "NONE" }
 		]
 	},
@@ -95,8 +97,8 @@
 		"texParams": [
 			{ "name": "TEXTURE_MIN_FILTER", "val": "LINEAR" },
 			{ "name": "TEXTURE_MAG_FILTER", "val": "LINEAR" },
-			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP" },
-			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP" }
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
 		]
 	},
 	{
@@ -107,8 +109,8 @@
 		"texParams": [
 			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
 			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
-			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP" },
-			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" },
 			{ "name": "TEXTURE_COMPARE_MODE", "val": "NONE" }
 		]
 	},
@@ -117,8 +119,8 @@
 		"texParams": [
 			{ "name": "TEXTURE_MIN_FILTER", "val": "LINEAR" },
 			{ "name": "TEXTURE_MAG_FILTER", "val": "LINEAR" },
-			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP" },
-			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP" }
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
 		]
 	},
 	{
@@ -129,8 +131,8 @@
 		"texParams": [
 			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
 			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
-			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP" },
-			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" },
 			{ "name": "TEXTURE_COMPARE_MODE", "val": "NONE" }
 		]
 	},
@@ -139,8 +141,8 @@
 		"texParams": [
 			{ "name": "TEXTURE_MIN_FILTER", "val": "LINEAR" },
 			{ "name": "TEXTURE_MAG_FILTER", "val": "LINEAR" },
-			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP" },
-			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP" }
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
 		]
 	},
 	{
@@ -151,8 +153,8 @@
 		"texParams": [
 			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
 			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
-			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP" },
-			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" },
 			{ "name": "TEXTURE_COMPARE_MODE", "val": "NONE" }
 		]
 	},
@@ -161,8 +163,8 @@
 		"texParams": [
 			{ "name": "TEXTURE_MIN_FILTER", "val": "LINEAR" },
 			{ "name": "TEXTURE_MAG_FILTER", "val": "LINEAR" },
-			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP" },
-			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP" }
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
 		]
 	},
 	{
@@ -173,8 +175,8 @@
 		"texParams": [
 			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
 			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
-			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP" },
-			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" },
 			{ "name": "TEXTURE_COMPARE_MODE", "val": "NONE" }
 		]
 	},
@@ -183,8 +185,8 @@
 		"texParams": [
 			{ "name": "TEXTURE_MIN_FILTER", "val": "LINEAR" },
 			{ "name": "TEXTURE_MAG_FILTER", "val": "LINEAR" },
-			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP" },
-			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP" }
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
 		]
 	},
 	{
@@ -196,8 +198,8 @@
 		"texParams": [
 			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
 			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
-			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP" },
-			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" },
 			{ "name": "TEXTURE_COMPARE_MODE", "val": "NONE" }
 		]
 	},
@@ -206,8 +208,8 @@
 		"texParams": [
 			{ "name": "TEXTURE_MIN_FILTER", "val": "LINEAR" },
 			{ "name": "TEXTURE_MAG_FILTER", "val": "LINEAR" },
-			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP" },
-			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP" }
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
 		]
 	},
 	{
@@ -218,8 +220,8 @@
 		"texParams": [
 			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
 			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
-			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP" },
-			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" },
 			{ "name": "TEXTURE_COMPARE_MODE", "val": "NONE" }
 		]
 	},
@@ -228,8 +230,8 @@
 		"texParams": [
 			{ "name": "TEXTURE_MIN_FILTER", "val": "LINEAR" },
 			{ "name": "TEXTURE_MAG_FILTER", "val": "LINEAR" },
-			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP" },
-			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP" }
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
 		]
 	}
 ],

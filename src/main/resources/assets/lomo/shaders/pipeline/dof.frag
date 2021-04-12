@@ -10,6 +10,7 @@ float sqrt_0_5 = sqrt(0.5);
 /*(float linearalize(float val) {
 	return val*val;
 }*/
+out vec4 out_color;
 
 float focus(float center_depth, ivec2 coord, mat4 proj) {
 	float depth = texelFetch(u_depth, coord, 0).r;
@@ -53,7 +54,7 @@ void main() {
 				resulting_mul += mul;
 			}
 		}
-
-		gl_FragData[0] = resulting_color / resulting_mul;
 	}
+	
+	out_color = resulting_color / resulting_mul;
 }

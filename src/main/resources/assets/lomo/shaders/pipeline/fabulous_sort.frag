@@ -16,7 +16,9 @@ uniform sampler2D weather_depth;
 uniform sampler2D clouds_main;
 uniform sampler2D clouds_depth;
 
-varying vec2 _cvv_texcoord;
+in vec2 _cvv_texcoord;
+out vec4 out_color;
+out vec4 out_depth;
 
 #define NUM_LAYERS 6
 
@@ -53,15 +55,15 @@ vec3 blend(vec3 dst, vec4 src) {
 }
 
 void main() {
-	color_layers[0] = vec4(texture2D(solid_main, _cvv_texcoord).rgb, 1.0);
-	depth_layers[0] = texture2D(solid_depth, _cvv_texcoord).r;
+	color_layers[0] = vec4(texture(solid_main, _cvv_texcoord).rgb, 1.0);
+	depth_layers[0] = texture(solid_depth, _cvv_texcoord).r;
 	active_layers = 1;
 
-	try_insert(texture2D(translucent_main, _cvv_texcoord), texture2D(translucent_depth, _cvv_texcoord).r);
-	try_insert(texture2D(entity_main, _cvv_texcoord), texture2D(entity_depth, _cvv_texcoord).r);
-	try_insert(texture2D(particles_main, _cvv_texcoord), texture2D(particles_depth, _cvv_texcoord).r);
-	try_insert(texture2D(weather_main, _cvv_texcoord), texture2D(weather_depth, _cvv_texcoord).r);
-	try_insert(texture2D(clouds_main, _cvv_texcoord), texture2D(clouds_depth, _cvv_texcoord).r);
+	try_insert(texture(translucent_main, _cvv_texcoord), texture(translucent_depth, _cvv_texcoord).r);
+	try_insert(texture(entity_main, _cvv_texcoord), texture(entity_depth, _cvv_texcoord).r);
+	try_insert(texture(particles_main, _cvv_texcoord), texture(particles_depth, _cvv_texcoord).r);
+	try_insert(texture(weather_main, _cvv_texcoord), texture(weather_depth, _cvv_texcoord).r);
+	try_insert(texture(clouds_main, _cvv_texcoord), texture(clouds_depth, _cvv_texcoord).r);
 
 	vec3 texelAccum = color_layers[0].rgb;
 
@@ -69,8 +71,8 @@ void main() {
 		texelAccum = blend(texelAccum, color_layers[i]);
 	}
 
-	gl_FragData[1] = vec4(depth_layers[active_layers - 1], 0, 0, 1);
-	gl_FragData[0] = vec4(texelAccum.rgb, 1.0);
+	out_depth = vec4(depth_layers[active_layers - 1], 0, 0, 1);
+	out_color = vec4(texelAccum.rgb, 1.0);
 	//depth_layers[active_layers - 1];
 	//gl_FragDepth = texture2D(solid_depth, _cvv_texcoord).r;
 	//gl_FragDepth = texture2D(solid_depth, _cvv_texcoord).r;

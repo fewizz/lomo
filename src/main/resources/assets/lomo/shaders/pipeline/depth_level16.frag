@@ -5,7 +5,8 @@
 
 uniform sampler2D u_depth;
 
-varying vec2 _cvv_texcoord;
+in vec2 _cvv_texcoord;
+out vec4 out_color;
 
 void main() {
 	int lod_from = frxu_lod - 1;
@@ -28,5 +29,5 @@ void main() {
 		}
 	}
 
-	gl_FragData[0] = vec4(min_depth, 0, 0, 1);
+	out_color = vec4(min_depth, 0, 0, 1);
 }

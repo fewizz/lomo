@@ -8,7 +8,8 @@ uniform sampler2D u_translucent_depth;
 uniform sampler2D u_solid;
 uniform sampler2D u_solid_depth;
 
-varying vec2 _cvv_texcoord;
+in vec2 _cvv_texcoord;
+out vec4 out_color;
 
 vec3 blend(vec4 dst, vec4 src) {
 	return (dst.rgb * (1.0 - src.a)) + src.rgb;
@@ -53,6 +54,6 @@ void main() {
 		color = vec4(blend(solid_color, color), 1);
 	}
 
-	gl_FragData[0] = color;
+	out_color = color;
 	gl_FragDepth = translucent_depth;
 }
