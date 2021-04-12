@@ -1,7 +1,3 @@
 {
-	"pipeline.lomo.name": "Lomo",
-	"pipeline.lomo.experimental.name": "Lomo Experimental",
-	"config.lomo.category.reflection": "Reflection",
-	"config.lomo.value.reflection_quality": "Reflection Quality",
-	"config.lomo.help.reflection_quality": ""
+	"pipeline.lomo.name": "Lomo"
 }

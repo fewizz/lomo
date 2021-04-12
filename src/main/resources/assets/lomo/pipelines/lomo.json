@@ -5,8 +5,10 @@
 	"include": [
 		"lomo:pipeline/base.json",
 		"lomo:pipeline/reflection.json",
+		"lomo:pipeline/dof.json",
 		"canvas:pipeline/basic_light_config.json",
 		"canvas:pipeline/fog_config.json",
 		"canvas:pipeline/handheld_light_config.json"
 	]
+
 }
