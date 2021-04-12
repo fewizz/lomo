@@ -39,8 +39,8 @@ struct reflection_result {
 	float a;
 };
 
-#define CELL_SIZE 16
-#define LEVELS 2
+#define CELL_SIZE 4
+#define LEVELS 4
 #define LAST_LEVEL ( LEVELS - 1 )
 
 ivec2 texture_coord_for_lod(vec2 coord_lod_0, int lod) {
