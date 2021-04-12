@@ -5,8 +5,8 @@
 
 /* lomo:material/reflection.frag */
 
+// That's very hacky, not sure how to implement that properly
 void frx_startFragment(inout frx_FragmentData fragData) {
-	//fragData.emissivity = -fragData.emissivity;
 	fragColor[1].a = 1;
 }
 

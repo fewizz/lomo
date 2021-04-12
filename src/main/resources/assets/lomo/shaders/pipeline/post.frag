@@ -41,7 +41,7 @@ struct reflection_result {
 
 #define CELL_SIZE 4
 #define MAX_LEVELS 5
-//#define LAST_LEVEL ( MAX_LEVELS - 1 )
+
 int last_level 
 	= clamp(
 		int(log2(max(frxu_size.x, frxu_size.y)) / 2.0 - 0.5),
@@ -230,8 +230,6 @@ void main() {
 		mat3 rotation = mat3(view);
 		vec3 normal_cs = normalize(rotation * normal);
 
-		//vec3 into_camera = normalize(-position_cs);
-		//float cos_between_normal_and_ray = dot(into_camera, normal_cs);
 		vec3 reflection_dir = reflect(normalize(position_cs), normal_cs);//normal_cs*cos_between_normal_and_ray*2 - into_camera;
 
 		//vec3 reflection_b_ws = cam_to_win(position_cs + reflection_dir/4, proj);
@@ -243,7 +241,10 @@ void main() {
 		if(res.success) {
 			reflection_color = res.color;
 
-			//float sin_between_normal_and_ray = sqrt(1 - cos_between_normal_and_ray*cos_between_normal_and_ray);
+		//#if REFLECTION_SOFT_EDGE = LOMO_REFLECTION_SOFT_EDGE_TRUE
+		//	vec3 into_camera = normalize(-position_cs);
+		//	float cos_between_normal_and_ray = dot(into_camera, normal_cs);
+		//	float sin_between_normal_and_ray = sqrt(1 - cos_between_normal_and_ray*cos_between_normal_and_ray);
 			ratio = 1;//res.a;//*sin_between_normal_and_ray;
 			//return;
 		}

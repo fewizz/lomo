@@ -4,13 +4,13 @@
 			"includeToken": "lomo:reflection_config",
 			"categoryKey": "config.lomo.category.reflection",
 			"options": {
-				"reflection_quality": {
-					"default": "low",
-					"choices": ["potato", "low", "medium", "high"],
+				"reflection_soft_edge": {
+					"default": "true",
+					"choices": ["true", "false"],
 					"enum": true,
-					"prefix": "LOMO_REFLECTION_QUALITY_",
-					"nameKey": "config.lomo.value.reflection_quality",
-					"descriptionKey": "config.lomo.help.reflection_quality"
+					"prefix": "LOMO_REFLECTION_SOFT_EDGE_",
+					"nameKey": "config.lomo.value.reflection_soft_edge",
+					"descriptionKey": "config.lomo.help.reflection_soft_edge"
 				}
 			}
 		}
