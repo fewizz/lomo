@@ -1,5 +1,4 @@
 #include frex:shaders/api/header.glsl
-
 #include lomo:shaders/lib/transform.glsl
 
 uniform sampler2D u_main;

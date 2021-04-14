@@ -1,4 +1,5 @@
-#include frex:shaders/api/header.glsl
+#version 330
+
 #extension GL_ARB_bindless_texture : require
 #include lomo:shaders/lib/transform.glsl
 
@@ -12,27 +13,6 @@ uniform sampler2D u_depth;
 in vec2 _cvv_texcoord;
 out vec4 out_color;
 
-#define E 0.002
-
-float cells_for_level(int lod) {
-	return pow(4, lod);
-}
-
-float dist_f(float v0, int lod, float d) {
-	float cells = cells_for_level(lod);
-	float s = sign(d);
-	float fr = fract(v0 / cells) * cells;
-	float C = 1.01;
-
-	if(abs(fr) <= E) return s * cells * C;
-	if(s > 0.0) return (cells - fr) * C;
-	return -fr * C;
-}
-
-float find_a(float a, float b, float p) {
-	return (p - a) / (b - a);
-}
-
 struct reflection_result {
 	bool success;
 	vec4 color;
@@ -40,14 +20,29 @@ struct reflection_result {
 };
 
 #define CELL_SIZE 4
-#define MAX_LEVELS 5
+#define MAX_LEVELS 4
 
-int last_level 
-	= clamp(
+const int last_level 
+	= MAX_LEVELS;/*clamp(
 		int(log2(max(frxu_size.x, frxu_size.y)) / 2.0 - 0.5),
 		0,
 		MAX_LEVELS
-	);
+	);*/
+float cells_for_level(int lod) {
+	return pow(CELL_SIZE, lod);
+}
+
+float dist_f(float v0, int lod, float d) {
+	float cells = cells_for_level(lod);
+	float s = sign(d);
+	float fr = fract(v0 / cells) * cells;
+	const float E = 0.02;
+	const float C = 1.0 + E;
+
+	if(abs(fr) <= E) return s * cells * C;
+	if(s > 0.0) return (cells - fr) * C;
+	return -fr * C;
+}
 
 ivec2 texture_coord_for_lod(vec2 coord_lod_0, int lod) {
 	return ivec2(coord_lod_0 / cells_for_level(lod));
@@ -59,24 +54,46 @@ float upper_depth(ivec2 coord, int lod) {
 	return 0.0;
 }
 
-reflection_result reflection(vec3 pos_cs, vec3 dir_cs, vec2 pos_ws, vec2 dir_ws) {
+reflection_result reflection0(vec3 dir_ws, vec3 pos_ws) {
+	/*float z =
+		z_cam_to_lin_win(pos_cs.z + dir_cs.z, proj)
+		-
+		cam_to_lin_win(pos_cs.z, proj);*/
+
+	return reflection_result(
+		true,
+		vec4(
+			vec3(dir_ws.z*1000),//abs(dir_ws.z) * 50000),
+			//abs(dir_ws.x),
+			//abs(dir_ws.y),
+			//abs(dir_ws.z) * 50000,
+			1
+		),
+		1
+	);
+
+}
+reflection_result reflection(vec3 dir_ws, vec3 pos_ws) {
 	mat4 proj = frx_projectionMatrix();
-	mat4 view = frx_viewMatrix();
+	//mat4 view = frx_viewMatrix();
 
 	// primary dimension in world space
-	int prim_cs = abs(dir_cs.x) >= abs(dir_cs.y) ? 0 : 1;
+	//int prim_cs = abs(dir_cs.x) >= abs(dir_cs.y) ? 0 : 1;
+	//vec3 position_cs = lin_win_to_cam(pos_ws, proj);
+	//vec3 dir_ws = dir_cam_to_lin_win(position_cs, dir_cs, proj);
 	// z per primary in camera space, needed for math below
-	float z_to_prim = 0.0;
-	if(dir_cs[prim_cs] == 0.0) z_to_prim = 1/0.0000001;
-	else z_to_prim = dir_cs.z / dir_cs[prim_cs];
+	//float z_to_prim = 0.0;
+	//if(dir_cs[prim_cs] == 0.0) z_to_prim = 1/0.0000001;
+	//else z_to_prim = dir_cs.z / dir_cs[prim_cs];
 
 	// it took me whole day
-	float z_numerator = (pos_cs.z - z_to_prim * pos_cs[prim_cs]);
-	float z_denominator = 1.0 + (z_to_prim * ((pos_ws[prim_cs] / frxu_size[prim_cs]) * 2.0 - 1.0 + proj[2][prim_cs]) / proj[prim_cs][prim_cs]);
-	float z_denominator_addition = ((z_to_prim * dir_ws[prim_cs] / frxu_size[prim_cs]) * 2.0) / proj[prim_cs][prim_cs];
+	//pos_cs.z += 0.002;
+	//float z_numerator = (pos_cs.z - z_to_prim * pos_cs[prim_cs]);
+	//float z_denominator = 1.0 + (z_to_prim * ((pos_ws[prim_cs] / frxu_size[prim_cs]) * 2.0 - 1.0 + proj[2][prim_cs]) / proj[prim_cs][prim_cs]);
+	//float z_denominator_addition = ((z_to_prim * dir_ws[prim_cs] / frxu_size[prim_cs]) * 2.0) / proj[prim_cs][prim_cs];
 
 	// window space direction of reflected ray
-	vec2 dir = dir_ws;
+	vec2 dir = normalize(dir_ws.xy);
 
 	// that's possible
 	if(dir.x == 0) { dir.x == 0.0001; dir = normalize(dir); }
@@ -97,36 +114,41 @@ reflection_result reflection(vec3 pos_cs, vec3 dir_cs, vec2 pos_ws, vec2 dir_ws)
 	float dist_per_prim = 1 / dir[prim];
 	float dist_per_sec = 1 / dir[sec];
 
-	// current windows space position
-	vec2 cur = pos_ws.xy + dir;
-	// distance from initial position
 	float dist = 1; // 1 - length of dir
+	// current windows space position
+	vec2 cur = floor(pos_ws.xy) + vec2(0.5) + dir*dist;
+	// distance from initial position
 
 	// z of upper cell
 	//float upper_depth_ws = 0;
-	int lod = last_level;
+	int lod = 0;
 
 	// texture coord for current lod
 	ivec2 coord = texture_coord_for_lod(cur, lod);
 
 	// z in camera space
-	float z_cs = z_numerator / (z_denominator + z_denominator_addition * dist);
+	//float z_cs = z_numerator / (z_denominator + z_denominator_addition * dist);
 	// z in window space
-	float z_ws = z_cam_to_win(z_cs, proj);
+	//float z_origin_ws = pos_ws.z;//texelFetch(u_depth, coord, lod).r - 0.001;
+	float z_ws = pos_ws.z;//z_cam_to_win(z_cs, proj);
 	float upper_depth_ws = 0;
 
+	bool backwards = dir_ws.z <= 0;
+
+	int steps = 0;
 	while(true) {
-		// are we out of framebuffer?
-		if(cur.x < 0 || cur.y <= 0 || cur.x >= frxu_size.x || cur.y >= frxu_size.y ) {
+		// are we out from framebuffer?
+		if(
+			cur.x <= 0 || cur.y <= 0 ||
+			cur.x >= frxu_size.x || cur.y >= frxu_size.y ||
+			z_ws >= 1 || z_ws <= 0
+		) {
 			return reflection_result(false, vec4(0), 0);
 		}
 
-		// are we out of buffer? second case should not be possible, but who knows...
-		if(z_ws >= 1 || z_ws <= 0) return reflection_result(false, vec4(0), 0);
-
 		// should we use lower lod?
 		float depth_ws = texelFetch(u_depth, coord, lod).r;
-		while(z_ws > depth_ws && lod > 0) {
+		while((z_ws > depth_ws || (!backwards && z_ws == depth_ws)) && lod > 0) {
 			--lod;
 			coord = texture_coord_for_lod(cur, lod);
 			upper_depth_ws = depth_ws;
@@ -134,7 +156,7 @@ reflection_result reflection(vec3 pos_cs, vec3 dir_cs, vec2 pos_ws, vec2 dir_ws)
 		}
 
 		// should we use higher lod?
-		while(z_ws < upper_depth_ws && lod < last_level) {
+		while((z_ws < upper_depth_ws || (backwards && z_ws == upper_depth_ws)) && lod < last_level) {
 			++lod;
 			coord = texture_coord_for_lod(cur, lod);
 			depth_ws = upper_depth_ws;
@@ -142,7 +164,7 @@ reflection_result reflection(vec3 pos_cs, vec3 dir_cs, vec2 pos_ws, vec2 dir_ws)
 		}
 
 		float dist_add = 0;
-		float new_z_cs = -1;
+		//float new_z_cs = -1;
 		float new_z_ws = -1;
 
 		while(true) {
@@ -156,41 +178,31 @@ reflection_result reflection(vec3 pos_cs, vec3 dir_cs, vec2 pos_ws, vec2 dir_ws)
 			else
 				dist_add = prim_dist * dist_per_prim;
 
-			new_z_cs =
-				z_numerator /
-				(z_denominator + z_denominator_addition * (dist + dist_add));
+			//new_z_cs =
+			//	z_numerator /
+			//	(z_denominator + z_denominator_addition * (dist + dist_add));
 			
-			new_z_ws = z_cam_to_win(new_z_cs, proj);
+			//new_z_ws = z_cam_to_win(new_z_cs, proj);
+			//float z_per_xy = dir_ws.z / length(dir_ws.xy); 
+			new_z_ws = z_ws + (dist_add*dir_ws.z) / length(dir_ws.xy);
 
-			float depth_cs = z_win_to_cam(depth_ws, proj);
-			float a = find_a(z_cs, new_z_cs, depth_cs);
-
-			bool collides = a <= 1.05;
+			bool collides = new_z_ws > depth_ws;
 
 			if(lod == 0) {
-				bool collides_lod_0 = (
-					// z is below depth, or
-					z_ws >= depth_ws ||
-					(
-						// collides and new z is below depth (concern)
-						collides &&
-						new_z_ws >= depth_ws
-					)
-				);
-
-				if(collides_lod_0) {
+				if(collides) {
 					vec4 color = texelFetch(u_main, coord, 0);
 					float ratio = 1;
-					return reflection_result(true, color, ratio);
+					return reflection_result(
+						true,
+						color,//mix(color, vec4(0, 0, 1, 1), steps/50.0),
+						ratio
+					);
 				}
-
 				break;
 			}
 
-			bool backward = new_z_ws <= z_ws;
-			if(!collides || backward) {
+			if(!collides || backwards)
 				break;
-			}
 
 			--lod;
 			coord = texture_coord_for_lod(cur, lod);
@@ -199,7 +211,7 @@ reflection_result reflection(vec3 pos_cs, vec3 dir_cs, vec2 pos_ws, vec2 dir_ws)
 		}
 
 		z_ws = new_z_ws;
-		z_cs = new_z_cs;
+		//z_cs = new_z_cs;
 		vec2 prev = cur;
 		cur += dir*dist_add;
 		coord = texture_coord_for_lod(cur, lod);
@@ -209,6 +221,9 @@ reflection_result reflection(vec3 pos_cs, vec3 dir_cs, vec2 pos_ws, vec2 dir_ws)
 
 		if(ivec2(prev) / cells != ivec2(cur) / cells)
 			upper_depth_ws = upper_depth(coord, lod);
+
+		if(steps++ > 100)
+			return reflection_result(true, vec4(0), 1);
 	}
 }
 
@@ -223,9 +238,9 @@ void main() {
 		mat4 view = frx_viewMatrix();
 		mat4 proj = frx_projectionMatrix();
 
-		float depth_ws = texture(u_depth, _cvv_texcoord).r ;
+		float depth_ws = texelFetch(u_depth, ivec2(gl_FragCoord.xy), 0).r ;
 		vec3 position_ws = vec3(gl_FragCoord.xy, depth_ws);
-		vec3 position_cs = win_to_cam(position_ws, proj);
+		vec3 position_cs = lin_win_to_cam(position_ws, proj);
 
 		mat3 rotation = mat3(view);
 		vec3 normal_cs = normalize(rotation * normal);
@@ -234,9 +249,16 @@ void main() {
 
 		//vec3 reflection_b_ws = cam_to_win(position_cs + reflection_dir/4, proj);
 
-		vec2 reflection_dir_ws = dir_cam_to_win(position_cs, reflection_dir, proj);//normalize((reflection_b_ws-position_ws).xy);
+		//vec2 reflection_dir_ws = dir_cam_to_win(position_cs, reflection_dir, proj);//normalize((reflection_b_ws-position_ws).xy);
 
-		reflection_result res = reflection(position_cs, reflection_dir, position_ws.xy, reflection_dir_ws);
+		//uint depth_bits = floatBitsToUint(position_ws.z);
+		//depth_bits -= 0xFFu;
+
+		//position_ws.z = uintBitsToFloat(depth_bits);
+
+		vec3 dir_ws = cam_dir_to_lin_win(position_cs, reflection_dir, proj);
+
+		reflection_result res = reflection(dir_ws, position_ws);
 
 		if(res.success) {
 			reflection_color = res.color;

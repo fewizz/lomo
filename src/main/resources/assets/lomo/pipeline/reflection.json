@@ -1,6 +1,12 @@
 {
 	"programs": [
 		{
+			"name": "depth_level_3",
+			"vertexSource": "lomo:shaders/pipeline/simple_full_frame_depth_one.vert",
+			"fragmentSource": "lomo:shaders/pipeline/depth_level3.frag",
+			"samplers": [ "u_depth" ]
+		},
+		{
 			"name": "depth_level_4",
 			"vertexSource": "lomo:shaders/pipeline/simple_full_frame_depth_one.vert",
 			"fragmentSource": "lomo:shaders/pipeline/depth_level4.frag",
@@ -17,16 +23,28 @@
 			"vertexSource": "lomo:shaders/pipeline/simple_full_frame_depth_one.vert",
 			"fragmentSource": "lomo:shaders/pipeline/post.frag",
 			"samplers": [ "u_reflective", "u_main", "u_depth" ]
+		},
+		{
+			"name": "linear_depth",
+			"vertexSource": "lomo:shaders/pipeline/simple_full_frame_depth_one.vert",
+			"fragmentSource": "lomo:shaders/pipeline/linear_depth.frag",
+			"samplers": [ "u_depth" ]
 		}
 	],
 
 	"fabulous": {
 		"passes": [
 			{
+				"name": "linear_depth",
+				"program": "linear_depth",
+				"framebuffer": "linear_depth",
+				"samplerImages": [ "composite_depth_0" ]
+			},
+			{
 				"name": "depth_0",
 				"program": "copy",
 				"framebuffer": "depth_level_0",
-				"samplerImages": [ "composite_depth_0" ]
+				"samplerImages": [ "linear_depth" ]
 			},
 			{
 				"name": "depth_1",
@@ -57,7 +75,7 @@
 				"lod": 4
 			},
 			{
-				"name": "depth_4",
+				"name": "depth_5",
 				"program": "depth_level_4",
 				"framebuffer": "depth_level_5",
 				"samplerImages": [ "depth_levels" ],
@@ -94,6 +112,18 @@
 				{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE"},
 				{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE"}
 			]
+		},
+		{
+			"name": "linear_depth",
+			"internalFormat": "GL_R32F",
+			"pixelFormat": "RED",
+			"pixelDataType": "FLOAT",
+			"texParams": [
+				{ "name": "TEXTURE_MIN_FILTER", "val": "LINEAR"},
+				{ "name": "TEXTURE_MAG_FILTER", "val": "LINEAR"},
+				{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE"},
+				{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE"}
+			]
 		}
 	],
 
@@ -125,6 +155,10 @@
 		{
 			"name": "depth_level_5",
 			"colorAttachments": [ { "image": "depth_levels", "lod": 5 } ]
+		},
+		{
+			"name": "linear_depth",
+			"colorAttachments": [ { "image": "linear_depth" } ]
 		}/*,
 		{
 			"name": "depth_level_6",
