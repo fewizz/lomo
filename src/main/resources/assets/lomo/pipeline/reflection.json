@@ -35,16 +35,10 @@
 	"fabulous": {
 		"passes": [
 			{
-				"name": "linear_depth",
-				"program": "linear_depth",
-				"framebuffer": "linear_depth",
-				"samplerImages": [ "composite_depth_0" ]
-			},
-			{
 				"name": "depth_0",
 				"program": "copy",
 				"framebuffer": "depth_level_0",
-				"samplerImages": [ "linear_depth" ]
+				"samplerImages": [ "composite_depth_0" ]
 			},
 			{
 				"name": "depth_1",

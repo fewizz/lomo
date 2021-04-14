@@ -86,17 +86,6 @@ vec3 cam_to_win(vec3 cam, mat4 m) {
 	return ndc_to_win(cam_to_ndc(cam, m));
 }
 
-//
-vec2 cam_dir_to_win(vec3 pos, vec3 cam_dir, mat4 proj) {
-	// black magic that took me 1 hour
-	return normalize(
-		vec2(
-			(cam_dir.x-cam_dir.z*pos.x/pos.z )*frxu_size.x*proj[0][0],
-			(cam_dir.y-cam_dir.z*pos.y/pos.z )*frxu_size.y*proj[1][1]
-		)
-	);
-}
-
 float near(mat4 proj) {
 	return -ndc_z_to_cam(-1, proj);
 }
@@ -123,35 +112,10 @@ float linearalize_win_z(float win_z, mat4 proj) {
 	return dist_from_near / nf_diff;
 }
 
-float cam_z_to_lin_win(float cam_z, mat4 proj) {
-	vec2 nf = near_far(proj);
-	return (-cam_z - nf[0]) / (nf[1] - nf[0]);
-}
-
-vec3 cam_to_lin_win(vec3 cam, mat4 proj) {
-	vec3 ndc = cam_to_ndc(cam, proj);
-
-	return vec3(
-		ndc_to_win(ndc.xy),
-		cam_z_to_lin_win(cam.z, proj)
-	);
-}
-
-vec3 lin_win_to_cam(vec3 lin_win, mat4 proj) {
-	vec2 ndc = win_xy_to_ndc(lin_win.xy);
-
-	vec2 nf = near_far(proj);
-
-	float cam_z = -(nf[0] + lin_win.z*( nf[1] - nf[0] ));
-
-	return vec3(ndc_xy_to_cam(ndc, cam_z, proj), cam_z);
-}
-
-vec3 cam_dir_to_lin_win(vec3 pos_cs, vec3 dir_cs, mat4 proj) {
-	vec3 a = cam_to_lin_win(pos_cs, proj);
-	vec3 b = cam_to_lin_win(pos_cs + dir_cs*0.1, proj);
-	return //normalize(
+vec3 cam_dir_to_win(vec3 pos_cs, vec3 dir_cs, mat4 proj) {
+	vec3 a = cam_to_win(pos_cs, proj);
+	vec3 b = cam_to_win(pos_cs + dir_cs*10, proj);
+	return normalize(
 		b - a
-	//)
-	;
+	);
 }
