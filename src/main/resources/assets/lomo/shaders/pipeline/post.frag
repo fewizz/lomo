@@ -22,14 +22,7 @@ struct reflection_result {
 const int last_level = 5;
 
 float cells_for_level(int lod) {
-	switch(lod) {
-		case 0 : return 1.0;
-		case 1 : return 4.0;
-		case 2 : return 4.0*4.0;
-		case 3 : return 4.0*4.0*4.0;
-		case 4 : return 4.0*4.0*4.0*4.0;
-		case 5 : return 4.0*4.0*4.0*4.0*4.0;
-	}
+	return pow(CELL_SIZE, lod);
 }
 
 float dist_f(float v0, int lod, float d) {
@@ -55,11 +48,13 @@ float upper_depth(ivec2 coord, int lod) {
 }
 
 reflection_result reflection(vec3 dir_ws, vec3 pos_ws) {
-	vec2 dir = normalize(dir_ws.xy);
-
 	// that's possible
-	if(dir.x == 0) { dir.x == 0.0001; dir = normalize(dir); }
-	if(dir.y == 0) { dir.y == 0.0001; dir = normalize(dir); }
+	for(int d = 0; d < 3; d++) {
+		if(dir_ws[d] == 0.0) {
+			dir_ws[d] == 0.0001; dir_ws = normalize(dir_ws);
+		}
+	}
+	vec2 dir = normalize(dir_ws.xy);
 
 	// primary dimension in window space
 	int prim = abs(dir.x) >= abs(dir.y) ? 0 : 1;
@@ -69,34 +64,25 @@ reflection_result reflection(vec3 dir_ws, vec3 pos_ws) {
 	ivec2 idir = ivec2(sign(dir));
 
 	float sec_to_prim = dir[sec] / dir[prim];
-	float dist_per_prim = 1 / dir[prim];
-	float dist_per_sec = 1 / dir[sec];
+	float dist_per_prim = 1.0 / dir[prim];
+	float dist_per_sec = 1.0 / dir[sec];
 
 	// current windows space position
-	vec2 cur = floor(pos_ws.xy) + vec2(0.5) + dir;
+	vec2 cur = floor(pos_ws.xy) + vec2(0.5);
 
 	// texture coord for current lod
 	int lod = 0;
 	ivec2 coord = texture_coord_for_lod(cur, lod);
 
 	float z_ws = pos_ws.z;
-	float upper_depth_ws = 0;
+	float upper_depth_ws = 0.0;
 
-	bool backwards = dir_ws.z <= 0;
+	bool backwards = dir_ws.z <= 0.0;
 	float dir_ws_xy_length = length(dir_ws.xy);
 	float dir_ws_z_per_xy = dir_ws.z / dir_ws_xy_length;
 
 	int steps = 0;
 	while(true) {
-		// are we out from framebuffer?
-		if(
-			cur.x <= 0 || cur.y <= 0 ||
-			cur.x >= frxu_size.x || cur.y >= frxu_size.y ||
-			z_ws >= 1 || z_ws <= 0
-		) {
-			return reflection_result(false, vec4(0), 0);
-		}
-
 		// should we use lower lod?
 		float depth_ws = texelFetch(u_depth, coord, lod).r;
 		while((z_ws > depth_ws || (!backwards && z_ws == depth_ws)) && lod > 0) {
@@ -130,16 +116,43 @@ reflection_result reflection(vec3 dir_ws, vec3 pos_ws) {
 
 			new_z_ws = z_ws + dist_add*dir_ws_z_per_xy;
 
-			bool collides = new_z_ws > depth_ws;
+			bool collides = new_z_ws >= depth_ws;
 
+			// yeah, i could simplify this and next statement
+			// but AMD driver crashes because of that :concern:
 			if(lod == 0) {
 				if(collides) {
+					//float exact_z = 
+					vec4 packed_normal = texelFetch(u_reflective, coord, 0);
+					vec3 normal = normalize((packed_normal.xyz - 0.5) * 2);
+
+					mat3 rotation = mat3(frx_viewMatrix());
+					vec3 normal_cs = normalize(rotation * normal);
+					vec3 normal_ws = cam_dir_to_win(
+						win_to_cam(vec3(cur+dir*dist_add, new_z_ws), frx_projectionMatrix()),
+						normal_cs,
+						frx_projectionMatrix()
+					);
+
+					//vec3 dir_cs = win_dir_to_cam(vec3(cur, z_ws), dir_ws, frx_projectionMatrix());
+
+					//float normal_z_per_xy = normal_ws.z / length(normal_ws.xy);
+					float diff = new_z_ws - depth_ws;
+
+					if(
+						(backwards && abs(diff) > abs(dir_ws_z_per_xy)*2)
+						||
+						(!backwards && z_ws > depth_ws)
+					) {//abs(diff) > abs(normal_z_per_xy)*4 ) {
+						return reflection_result(true, vec4(0), 0 );
+					}
+
 					vec4 color = texelFetch(u_main, coord, 0);
-					float ratio = 1;
+					//float ratio = 1;*/
 					return reflection_result(
 						true,
-						color,
-						ratio
+						color,//vec4(dir_cs, 1.0),
+						1
 					);
 				}
 				break;
@@ -148,8 +161,8 @@ reflection_result reflection(vec3 dir_ws, vec3 pos_ws) {
 			if(!collides || backwards)
 				break;
 
-			// We collided cell.
-			// Need to repeat for smaller lod, from same position
+			// we collided cell.
+			// need to repeat for smaller lod, from same position
 			--lod;
 			coord = texture_coord_for_lod(cur, lod);
 			upper_depth_ws = depth_ws;
@@ -166,8 +179,14 @@ reflection_result reflection(vec3 dir_ws, vec3 pos_ws) {
 		if(ivec2(prev) / cells != ivec2(cur) / cells)
 			upper_depth_ws = upper_depth(coord, lod);
 
-		if(steps++ > 100)
-			return reflection_result(true, vec4(0), 1);
+		// are we out from framebuffer?
+		if(
+			cur.x <= 0.0         || cur.y <= 0.0         ||
+			cur.x >= frxu_size.x || cur.y >= frxu_size.y ||
+			z_ws  >= 1.0         || z_ws  <= 0.0
+		) {
+			return reflection_result(false, vec4(0.0), 0.0);
+		}
 	}
 }
 
@@ -192,6 +211,10 @@ void main() {
 		vec3 reflection_dir = reflect(normalize(position_cs), normal_cs);
 
 		vec3 dir_ws = cam_dir_to_win(position_cs, reflection_dir, proj);
+
+		// applying z offset
+		float z_per_xy = dir_ws.z / length(dir_ws.xy);
+		position_ws.z -= abs(z_per_xy)*3 + 0.00001;
 
 		reflection_result res = reflection(dir_ws, position_ws);
 

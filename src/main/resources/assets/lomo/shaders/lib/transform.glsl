@@ -3,6 +3,10 @@
 
 /* lomo:lib/transform.frag */
 
+vec4 mat_row(mat4 m, int r) {
+	return vec4(m[0][r], m[1][r], m[2][r], m[3][r]);
+}
+
 // win to ndc
 vec2 win_xy_to_ndc(vec2 win_xy) {
 	return (win_xy / frxu_size) * 2.0 - 1.0;
@@ -36,19 +40,17 @@ vec3 ndc_to_win(vec3 ndc) {
 }
 
 // cam to ndc
+vec4 cam_to_ndc(vec4 cam, mat4 m) {
+	return m*cam;
+}
+
 float cam_z_to_ndc(float cam_z, mat4 m) {
 	return (cam_z * m[2][2] + m[3][2]) / (-cam_z);
 }
 
 vec3 cam_to_ndc(vec3 cam, mat4 m) {
-	vec2 xy = vec2(
-		cam.x * m[0][0] + cam.z * m[2][0],
-		cam.y * m[1][1] + cam.z * m[2][1]
-	);
-
-	xy /= -cam.z;
-	
-	return vec3(xy, cam_z_to_ndc(cam.z, m));
+	vec4 res = cam_to_ndc(vec4(cam, 1.0), m);
+	return res.xyz / res.w;
 }
 
 // ndc to cam
@@ -64,8 +66,8 @@ vec2 ndc_xy_to_cam(vec2 ndc_xy, float cam_z, mat4 proj) {
 }
 
 vec3 ndc_to_cam(vec3 ndc, mat4 proj) {
-	float cam_z = ndc_z_to_cam(ndc.z, proj);
-	return vec3(ndc_xy_to_cam(ndc.xy, cam_z, proj), cam_z);
+	vec4 v = inverse(proj)*vec4(ndc, 1.0);
+	return v.xyz / v.w;
 }
 
 // win to cam
@@ -112,10 +114,19 @@ float linearalize_win_z(float win_z, mat4 proj) {
 	return dist_from_near / nf_diff;
 }
 
+// some dark magic
 vec3 cam_dir_to_win(vec3 pos_cs, vec3 dir_cs, mat4 proj) {
-	vec3 a = cam_to_win(pos_cs, proj);
-	vec3 b = cam_to_win(pos_cs + dir_cs*10, proj);
+	vec4 las_row = mat_row(proj, 3);
+
+	float aw = dot(vec4(pos_cs, 1.0), las_row);
+	float bw = dot(vec4(dir_cs, 0.0), las_row);
+
+	vec4 res = proj * vec4(-bw * pos_cs + dir_cs * aw, -bw);
+
 	return normalize(
-		b - a
+		vec3(
+			res.xy * frxu_size,
+			res.z
+		)
 	);
 }
