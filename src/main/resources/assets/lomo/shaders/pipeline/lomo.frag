@@ -9,13 +9,9 @@
 #include canvas:basic_light_config
 #include canvas:handheld_light_config
 
-#include lomo:shaders/pipeline/lomo_frag_outputs.glsl
+#include lomo:shaders/pipeline/lomo_frag_header.glsl
 
 /* lomo:pipeline/lomo.frag */
-
-#define TARGET_BASECOLOR 0
-//#define TARGET_EMISSIVE  1
-#define TARGET_NORMAL 1
 
 #ifdef SHADOW_MAP_PRESENT
 varying vec4 shadowPos;
@@ -79,7 +75,6 @@ vec4 light(frx_FragmentData fragData) {
 }
 
 frx_FragmentData frx_createPipelineFragment() {
-	fragColor[TARGET_NORMAL] = vec4((frx_normal + 1)/2, 0); // Yep, that's hacky
 #ifdef VANILLA_LIGHTING
 	return frx_FragmentData (
 		texture(frxs_baseColor, frx_texcoord, frx_matUnmippedFactor() * -4.0),
@@ -128,6 +123,11 @@ void frx_writePipelineFragment(in frx_FragmentData fragData) {
 	}
 
 	fragColor[TARGET_BASECOLOR] = p_fog(a);
+	fragColor[TARGET_NORMAL] = vec4(
+		(fragData.vertexNormal + 1.0)/2.0,
+		reflectivity
+	);
+
 	gl_FragDepth = gl_FragCoord.z;
 	//gl_FragData[TARGET_EMISSIVE] = vec4(fragData.emissivity * a.a, 0.0, 0.0, 1.0);
 }

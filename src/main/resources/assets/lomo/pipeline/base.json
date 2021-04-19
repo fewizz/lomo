@@ -227,6 +227,9 @@
 	},
 	{
 		"name": "normal",
+		"internalFormat": "GL_RGBA32F",
+		"pixelFormat": "RGBA",
+		"pixelDataType": "FLOAT",
 		"texParams": [
 			{ "name": "TEXTURE_MIN_FILTER", "val": "LINEAR" },
 			{ "name": "TEXTURE_MAG_FILTER", "val": "LINEAR" },

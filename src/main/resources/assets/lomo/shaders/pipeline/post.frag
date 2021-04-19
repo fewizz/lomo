@@ -16,6 +16,7 @@ struct reflection_result {
 	bool success;
 	vec4 color;
 	vec3 position;
+	vec3 normal;
 };
 
 #define CELL_SIZE 4
@@ -26,7 +27,7 @@ const int last_level = 5;
 float dist_f(float v0, float cell_size, float d) {
 	float s = sign(d);
 	float fr = fract(v0 / cell_size) * cell_size;
-	const float E = 0.001;
+	const float E = 0.01;
 	const float C = 1.0 + E;
 
 	if(fr <= E) return s * cell_size * C;
@@ -177,14 +178,15 @@ reflection_result reflection(vec3 dir, vec3 pos) {
 							( backwards && next.z > depth_ws+f*4)
 						)
 					) {
-						return reflection_result(false, vec4(0), vec3(0) );
+						return reflection_result(false, vec4(0), vec3(0), vec3(0));
 					}
 
 					vec4 color = texelFetch(u_main, coord, 0);
 					return reflection_result(
 						true,
 						color,
-						mid
+						mid,
+						normal_cs
 					);
 				}
 				break;
@@ -210,14 +212,13 @@ reflection_result reflection(vec3 dir, vec3 pos) {
 			upper_depth_ws = upper_depth(coord, lod);
 
 		if(
+			++steps > 80 ||
 			pos.x <= 0.0 || pos.x >= frxu_size.x ||
 			pos.y <= 0.0 || pos.y >= frxu_size.y ||
 			pos.z <= 0.0 || pos.z >= 1.0
 		) {
-			return reflection_result(false, vec4(0.0), vec3(0));
+			return reflection_result(false, vec4(0.0), vec3(0), vec3(0));
 		}
-
-		if(++steps > 80) return reflection_result(false, vec4(0.0), vec3(0));
 	}
 }
 
@@ -243,7 +244,7 @@ void main() {
 
 		// applying z offset, dumb'ish
 		float z_per_xy = dir_ws.z / length(dir_ws.xy);
-		position_ws.z -= abs(z_per_xy)*3 + 0.0001;
+		position_ws.z -= abs(z_per_xy)*3;
 
 		reflection_result res = reflection(dir_ws, position_ws);
 
@@ -255,6 +256,9 @@ void main() {
 				ratio = 1;
 			else
 				ratio = smoothstep(0, 0.5, v);
+
+			ratio *= length(cross(reflection_dir, normal_cs));
+			//ratio *= packed_normal.a;
 		}
 	}
 
