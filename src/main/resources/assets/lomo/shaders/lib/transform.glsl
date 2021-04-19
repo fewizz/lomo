@@ -68,6 +68,8 @@ vec2 ndc_xy_to_cam(vec2 ndc_xy, float cam_z, mat4 proj) {
 vec3 ndc_to_cam(vec3 ndc, mat4 proj) {
 	vec4 v = inverse(proj)*vec4(ndc, 1.0);
 	return v.xyz / v.w;
+	//float cam_z = ndc_z_to_cam(ndc.z, proj);
+	//return vec3(ndc_xy_to_cam(ndc.xy, cam_z, proj), cam_z);
 }
 
 // win to cam
@@ -128,5 +130,44 @@ vec3 cam_dir_to_win(vec3 pos_cs, vec3 dir_cs, mat4 proj) {
 			res.xy * frxu_size,
 			res.z
 		)
+	);
+}
+
+float max4(float a, float b, float c, float d) {
+	return max(max(a, b), max(c, d));
+}
+
+float plane_z(
+	vec3 d1,
+	vec3 d2,
+	vec2 xy
+) {
+	return
+	(xy.y*determinant(mat2(d1.xz, d2.xz)) - xy.x*determinant(mat2(d1.yz, d2.yz)))
+	/
+	determinant(mat2(d1.xy, d2.xy));
+}
+
+float farthest(
+	vec3 position,
+	vec3 normal,
+	mat4 proj
+) {
+	vec3 x = vec3(
+		1, 0, -normal.x/normal.z
+	);
+
+	vec3 y = vec3(
+		0, 1, -normal.y/normal.z
+	);
+
+	vec3 x_ws = cam_dir_to_win(position, x, proj);
+	vec3 y_ws = cam_dir_to_win(position, y, proj);
+
+	return max4(
+		plane_z(x_ws, y_ws, vec2(-0.5, -0.5)),
+		plane_z(x_ws, y_ws, vec2(-0.5,  0.5)),
+		plane_z(x_ws, y_ws, vec2( 0.5, -0.5)),
+		plane_z(x_ws, y_ws, vec2( 0.5,  0.5))
 	);
 }
