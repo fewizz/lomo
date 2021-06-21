@@ -46,6 +46,10 @@ void cell_pos_init(inout cell_pos pos, vec2 dir, int ival) {
 	pos.t = dist_per_axis_path * axis_path;
 }
 
+float next_cell_dist(cell_pos pos) {
+	return pos.t.x < pos.t.y ? pos.t.x : pos.t.y;
+}
+
 float next_cell(inout cell_pos pos, vec2 dir, int ival) {
 	float fval = float(ival);
 	vec2 s = sign(dir);
@@ -156,7 +160,6 @@ void lod_decrease(inout ref_ctx ctx) {
 }
 
 reflection_result reflection(vec3 dir, vec3 pos_ws) {
-	// that's possible
 	dir = avoid_zero_components(dir);
 
 	ref_ctx ctx = ref_ctx(
@@ -167,55 +170,62 @@ reflection_result reflection(vec3 dir, vec3 pos_ws) {
 		0.0
 	);
 	cell_pos_init(ctx.pos, ctx.dir_xy, current_size(ctx.lod));
-	ctx.lower_depth = lower_depth_value(ctx);
 	ctx.upper_depth = upper_depth_value(ctx);
+	ctx.lower_depth = lower_depth_value(ctx);
+
+	while(ctx.lod < last_level && ctx.pos.z < ctx.upper_depth)
+		lod_increase(ctx);
 
 	bool backwards = dir.z <= 0.0;
 	float dir_xy_length = length(dir.xy);
 	float dir_z_per_xy = dir.z / dir_xy_length;
 
 	int steps = 0;
+
 	while(true) {
-		while(ctx.lod > 0 && ctx.pos.z >= ctx.lower_depth)
+		cell_pos next = ctx.pos;
+		float dist = next_cell(next, ctx.dir_xy, current_size(ctx.lod));
+		next.z += dist * dir_z_per_xy;
+
+		bool collides = ctx.pos.z >= ctx.lower_depth || next.z >= ctx.lower_depth;
+
+		if(collides) {
+			if(ctx.lod == 0) break;
+
+			float mul = (ctx.lower_depth - ctx.pos.z) / (next.z - ctx.pos.z);
+
 			lod_decrease(ctx);
 
-		while(ctx.lod < last_level && ctx.pos.z < ctx.upper_depth)
-			lod_increase(ctx);
+			if(!backwards && mul > 0.0 && mul < 1.0) {
+				dist *= mul;
+				float dist0 = 0.0;
 
-		while(true) {
-			cell_pos next = ctx.pos;
-			float dist = next_cell(next, ctx.dir_xy, current_size(ctx.lod));
-			next.z += dist * dir_z_per_xy;
+				while(next_cell_dist(ctx.pos) < dist - dist0)
+					dist0 += next_cell(ctx.pos, ctx.dir_xy, current_size(ctx.lod));
 
-			bool collides = ctx.pos.z >= ctx.lower_depth || next.z >= ctx.lower_depth;
-
-			if(!collides) {
-				ctx.pos = next;
+				ctx.pos.z += dist0 * dir_z_per_xy;
 				ctx.lower_depth = lower_depth_value(ctx);
-				ctx.upper_depth = upper_depth_value(ctx);
-				break;
-			};
-
-			if(ctx.lod > 0) {
-				lod_decrease(ctx);
-				continue;
 			}
-			
-			vec4 packed_normal = texelFetch(u_reflective, next.outer, 0);
-			vec3 normal = normalize((packed_normal.xyz - 0.5) * 2);
+		}
+		else {
+			cell_pos prev = ctx.pos;
+			ctx.pos = next;
 
-			vec3 normal_cs = raw_normal_to_cam(normal, frx_viewMatrix());
+			ctx.lower_depth = lower_depth_value(ctx);
 
-			return reflection_result(
-				true,
-				texelFetch(u_main, next.outer, 0),
-				vec3(next.outer, next.z),
-				normal_cs
-			);
+			if((prev.outer / cell_size) != (next.outer / cell_size)) {
+				ctx.upper_depth = upper_depth_value(ctx);
+
+				while(ctx.lod < last_level && ctx.pos.z < ctx.upper_depth)
+					lod_increase(ctx);
+				
+				while(ctx.lod > 0 && ctx.pos.z >= ctx.lower_depth)
+					lod_decrease(ctx);
+			}
 		}
 
 		if(
-			++steps > 200 ||
+			++steps > 100 ||
 			any(lessThan(ctx.pos.outer, ivec2(0))) ||
 			any(greaterThanEqual(ctx.pos.outer, frxu_size.xy)) ||
 			ctx.pos.z < 0 || ctx.pos.z > 1
@@ -223,6 +233,18 @@ reflection_result reflection(vec3 dir, vec3 pos_ws) {
 			return reflection_result(true, vec4(0.0, 0.0, 1.0, 1.0), vec3(0), vec3(0));
 		}
 	}
+
+	vec4 packed_normal = texelFetch(u_reflective, ctx.pos.outer, 0);
+	vec3 normal = normalize((packed_normal.xyz - 0.5) * 2);
+
+	vec3 normal_cs = raw_normal_to_cam(normal, frx_viewMatrix());
+
+	return reflection_result(
+		true,
+		texelFetch(u_main, ctx.pos.outer, 0),
+		vec3(ctx.pos.outer, ctx.pos.z),
+		normal_cs
+	);
 }
 
 void main() {
