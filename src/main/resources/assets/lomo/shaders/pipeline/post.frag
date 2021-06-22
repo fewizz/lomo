@@ -1,22 +1,24 @@
 #include frex:shaders/api/header.glsl
+#extension GL_ARB_explicit_attrib_location : require
 #include lomo:shaders/lib/transform.glsl
 #include lomo:shaders/lib/math.glsl
 
-/* lomo:pipeline/post.frag */
+// lomo:post.frag
 
 uniform sampler2D u_reflective;
+uniform sampler2D u_sorted;
+uniform sampler2D u_sorted_depth;
+uniform sampler2D u_sorted_without_translucent;
+uniform sampler2D u_sorted_without_translucent_depth;
+uniform sampler2D u_translucent;
 
-uniform sampler2D u_main;
-uniform sampler2D u_depth;
-
-in vec2 _cvv_texcoord;
+in vec2 vs_uv;
 out vec4 out_color;
 
-struct reflection_result {
+struct fb_traversal_result {
 	bool success;
-	vec4 color;
-	vec3 position;
-	vec3 normal;
+	ivec2 pos;
+	float z;
 };
 
 const int last_level = 4;
@@ -131,35 +133,52 @@ struct ref_ctx {
 	float upper_depth;
 };
 
-float depth_value(ivec2 pos, int lod) {
-	return texelFetch(u_depth, pos >> (power*lod), lod).r;
+float depth_value(ivec2 pos, int lod, sampler2D s) {
+	return texelFetch(s, pos >> (power*lod), lod).r;
 }
 
-float upper_depth_value(inout ref_ctx ctx) {
+float upper_depth_value(ref_ctx ctx, sampler2D s) {
 	if(ctx.lod < last_level)
-		return depth_value(ctx.pos.outer, ctx.lod + 1);
+		return depth_value(ctx.pos.outer, ctx.lod + 1, s);
 	return 0.0;
 }
 
-float lower_depth_value(inout ref_ctx ctx) {
-	return depth_value(ctx.pos.outer, ctx.lod);
+float lower_depth_value(ref_ctx ctx, sampler2D s) {
+	return depth_value(ctx.pos.outer, ctx.lod, s);
 }
 
-void lod_increase(inout ref_ctx ctx) {
+void lod_increase(inout ref_ctx ctx, sampler2D s) {
 	++ctx.lod;
 	cell_pos_init(ctx.pos, ctx.dir_xy, current_size(ctx.lod));
 	ctx.lower_depth = ctx.upper_depth;
-	ctx.upper_depth = upper_depth_value(ctx);
+	ctx.upper_depth = upper_depth_value(ctx, s);
 }
 
-void lod_decrease(inout ref_ctx ctx) {
+void lod_decrease(inout ref_ctx ctx, sampler2D s) {
 	--ctx.lod;
 	cell_pos_init(ctx.pos, ctx.dir_xy, current_size(ctx.lod));
 	ctx.upper_depth = ctx.lower_depth;
-	ctx.lower_depth = lower_depth_value(ctx);
+	ctx.lower_depth = lower_depth_value(ctx, s);
 }
 
-reflection_result reflection(vec3 dir, vec3 pos_ws) {
+void find_lowest_lod(inout ref_ctx ctx, sampler2D s) {
+	while(ctx.lod > 0 && ctx.pos.z >= ctx.lower_depth)
+		lod_decrease(ctx, s);
+}
+
+void find_uppest_lod(inout ref_ctx ctx, sampler2D s) {
+	while(ctx.lod < last_level && ctx.pos.z < ctx.upper_depth)
+		lod_increase(ctx, s);
+}
+
+bool is_out_of_fb(cell_pos pos) {
+	return
+		any(lessThan(pos.outer, ivec2(0))) ||
+		any(greaterThanEqual(pos.outer, frxu_size.xy)) ||
+		pos.z < 0 || pos.z > 1;
+}
+
+fb_traversal_result traverse_fb(vec3 dir, vec3 pos_ws, sampler2D s) {
 	dir = avoid_zero_components(dir);
 
 	ref_ctx ctx = ref_ctx(
@@ -170,11 +189,10 @@ reflection_result reflection(vec3 dir, vec3 pos_ws) {
 		0.0
 	);
 	cell_pos_init(ctx.pos, ctx.dir_xy, current_size(ctx.lod));
-	ctx.upper_depth = upper_depth_value(ctx);
-	ctx.lower_depth = lower_depth_value(ctx);
+	ctx.upper_depth = upper_depth_value(ctx, s);
+	ctx.lower_depth = lower_depth_value(ctx, s);
 
-	while(ctx.lod < last_level && ctx.pos.z < ctx.upper_depth)
-		lod_increase(ctx);
+	find_uppest_lod(ctx, s);
 
 	bool backwards = dir.z <= 0.0;
 	float dir_xy_length = length(dir.xy);
@@ -194,7 +212,7 @@ reflection_result reflection(vec3 dir, vec3 pos_ws) {
 
 			float mul = (ctx.lower_depth - ctx.pos.z) / (next.z - ctx.pos.z);
 
-			lod_decrease(ctx);
+			lod_decrease(ctx, s);
 
 			if(!backwards && mul > 0.0 && mul < 1.0) {
 				dist *= mul;
@@ -204,60 +222,53 @@ reflection_result reflection(vec3 dir, vec3 pos_ws) {
 					dist0 += next_cell(ctx.pos, ctx.dir_xy, current_size(ctx.lod));
 
 				ctx.pos.z += dist0 * dir_z_per_xy;
-				ctx.lower_depth = lower_depth_value(ctx);
+				ctx.lower_depth = lower_depth_value(ctx, s);
 			}
 		}
 		else {
 			cell_pos prev = ctx.pos;
 			ctx.pos = next;
 
-			ctx.lower_depth = lower_depth_value(ctx);
+			ctx.lower_depth = lower_depth_value(ctx, s);
 
 			if((prev.outer / cell_size) != (next.outer / cell_size)) {
-				ctx.upper_depth = upper_depth_value(ctx);
+				ctx.upper_depth = upper_depth_value(ctx, s);
 
-				while(ctx.lod < last_level && ctx.pos.z < ctx.upper_depth)
-					lod_increase(ctx);
-				
-				while(ctx.lod > 0 && ctx.pos.z >= ctx.lower_depth)
-					lod_decrease(ctx);
+				find_uppest_lod(ctx, s);
+				find_lowest_lod(ctx, s);
 			}
 		}
 
-		if(
-			++steps > 100 ||
-			any(lessThan(ctx.pos.outer, ivec2(0))) ||
-			any(greaterThanEqual(ctx.pos.outer, frxu_size.xy)) ||
-			ctx.pos.z < 0 || ctx.pos.z > 1
-		) {
-			return reflection_result(true, vec4(0.0, 0.0, 1.0, 1.0), vec3(0), vec3(0));
+		if(is_out_of_fb(ctx.pos)) {
+			return fb_traversal_result(false, ivec2(0), 0.0);
+		}
+
+		if(++steps == 100) {
+			return fb_traversal_result(false, ivec2(0), 0.0);
 		}
 	}
 
-	vec4 packed_normal = texelFetch(u_reflective, ctx.pos.outer, 0);
-	vec3 normal = normalize((packed_normal.xyz - 0.5) * 2);
-
-	vec3 normal_cs = raw_normal_to_cam(normal, frx_viewMatrix());
-
-	return reflection_result(
+	return fb_traversal_result(
 		true,
-		texelFetch(u_main, ctx.pos.outer, 0),
-		vec3(ctx.pos.outer, ctx.pos.z),
-		normal_cs
+		ctx.pos.outer,
+		ctx.pos.z
 	);
 }
 
 void main() {
 	vec4 color = vec4(0);
-	float ratio = 0;
+	float ratio = 0.0;
 	
-	vec4 packed_normal = texture2D(u_reflective, _cvv_texcoord);
+	vec4 packed_normal = texture2D(u_reflective, vs_uv);
+	vec4 color0 = texture(u_sorted, vs_uv);
+	vec4 tr = texture(u_translucent, vs_uv);
+
 	if(packed_normal.a != 0) {
 		vec3 normal = normalize((packed_normal.xyz - 0.5) * 2);
 		mat4 view = frx_viewMatrix();
 		mat4 proj = frx_projectionMatrix();
 
-		float depth_ws = texelFetch(u_depth, ivec2(gl_FragCoord.xy), 0).r ;
+		float depth_ws = texelFetch(u_sorted_depth, ivec2(gl_FragCoord.xy), 0).r ;
 		vec3 position_ws = vec3(gl_FragCoord.xy, depth_ws);
 		vec3 position_cs = win_to_cam(position_ws, proj);
 
@@ -271,22 +282,13 @@ void main() {
 		float z_per_xy = dir_ws.z / length(dir_ws.xy);
 		position_ws.z -= abs(z_per_xy)*3;
 
-		reflection_result res = reflection(dir_ws, position_ws);
+		fb_traversal_result res = traverse_fb(dir_ws, position_ws, u_sorted_depth);
 
 		if(res.success) {
-			color = res.color;
-			/*vec2 p = abs((res.position.xy / frxu_size) * 2.0 - 1.0);
-			float v = 1.0 - max(p.x, p.y);
-			if(v > 0.5)
-				ratio = 1;
-			else
-				ratio = smoothstep(0, 0.5, v);*/
-
-			//ratio *= length(cross(reflection_dir, normal_cs));
-			//ratio *= packed_normal.a;
-			ratio = 1.0;
+			color = texelFetch(u_sorted, res.pos, 0);
+			ratio = 0.5;
 		}
 	}
 
-	out_color = mix(texture(u_main, _cvv_texcoord), color, ratio);
+	out_color = mix(color0, color, ratio);
 }

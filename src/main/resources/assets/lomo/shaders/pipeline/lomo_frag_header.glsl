@@ -1,4 +1,4 @@
-/* lomo:lomo_frag_outputs.glsl */
+/* lomo:lomo_frag_header.glsl */
 
 #define TARGET_BASECOLOR 0
 //#define TARGET_EMISSIVE  1

@@ -11,7 +11,7 @@
 
 #include lomo:shaders/pipeline/lomo_frag_header.glsl
 
-/* lomo:pipeline/lomo.frag */
+// lomo:lomo.frag
 
 #ifdef SHADOW_MAP_PRESENT
 varying vec4 shadowPos;
