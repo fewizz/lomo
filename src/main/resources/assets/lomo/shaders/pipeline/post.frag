@@ -15,8 +15,13 @@ uniform sampler2D u_translucent;
 in vec2 vs_uv;
 out vec4 out_color;
 
+#define TRAVERSAL_SUCCESS 0
+#define TRAVERSAL_UNDER 1
+#define TRAVERSAL_OUT_OF_FB 2
+#define TRAVERSAL_TOO_LONG 3
+
 struct fb_traversal_result {
-	bool success;
+	int code;
 	ivec2 pos;
 	float z;
 };
@@ -52,7 +57,8 @@ float next_cell_dist(cell_pos pos) {
 	return pos.t.x < pos.t.y ? pos.t.x : pos.t.y;
 }
 
-float next_cell(inout cell_pos pos, vec2 dir, int ival) {
+float next_cell(inout cell_pos pos, vec2 dir, int lod) {
+	int ival = current_size(lod);
 	float fval = float(ival);
 	vec2 s = sign(dir);
 	float dist = 0.0;
@@ -202,7 +208,7 @@ fb_traversal_result traverse_fb(vec3 dir, vec3 pos_ws, sampler2D s) {
 
 	while(true) {
 		cell_pos next = ctx.pos;
-		float dist = next_cell(next, ctx.dir_xy, current_size(ctx.lod));
+		float dist = next_cell(next, ctx.dir_xy, ctx.lod);
 		next.z += dist * dir_z_per_xy;
 
 		bool collides = ctx.pos.z >= ctx.lower_depth || next.z >= ctx.lower_depth;
@@ -219,7 +225,7 @@ fb_traversal_result traverse_fb(vec3 dir, vec3 pos_ws, sampler2D s) {
 				float dist0 = 0.0;
 
 				while(next_cell_dist(ctx.pos) < dist - dist0)
-					dist0 += next_cell(ctx.pos, ctx.dir_xy, current_size(ctx.lod));
+					dist0 += next_cell(ctx.pos, ctx.dir_xy, ctx.lod);
 
 				ctx.pos.z += dist0 * dir_z_per_xy;
 				ctx.lower_depth = lower_depth_value(ctx, s);
@@ -240,16 +246,16 @@ fb_traversal_result traverse_fb(vec3 dir, vec3 pos_ws, sampler2D s) {
 		}
 
 		if(is_out_of_fb(ctx.pos)) {
-			return fb_traversal_result(false, ivec2(0), 0.0);
+			return fb_traversal_result(TRAVERSAL_OUT_OF_FB, ivec2(0), 0.0);
 		}
 
 		if(++steps == 100) {
-			return fb_traversal_result(false, ivec2(0), 0.0);
+			return fb_traversal_result(TRAVERSAL_TOO_LONG, ivec2(0), 0.0);
 		}
 	}
 
 	return fb_traversal_result(
-		true,
+		TRAVERSAL_SUCCESS,
 		ctx.pos.outer,
 		ctx.pos.z
 	);
@@ -271,11 +277,10 @@ void main() {
 		float depth_ws = texelFetch(u_sorted_depth, ivec2(gl_FragCoord.xy), 0).r ;
 		vec3 position_ws = vec3(gl_FragCoord.xy, depth_ws);
 		vec3 position_cs = win_to_cam(position_ws, proj);
-
+		vec3 incidence_cs = normalize(position_cs);
 		vec3 normal_cs = raw_normal_to_cam(normal, view);
 
-		vec3 reflection_dir = reflect(normalize(position_cs), normal_cs);
-
+		vec3 reflection_dir = reflect(incidence_cs, normal_cs);
 		vec3 dir_ws = cam_dir_to_win(position_cs, reflection_dir, proj);
 
 		// applying z offset, dumb'ish
@@ -284,10 +289,37 @@ void main() {
 
 		fb_traversal_result res = traverse_fb(dir_ws, position_ws, u_sorted_depth);
 
-		if(res.success) {
+		if(res.code == TRAVERSAL_SUCCESS) {
 			color = texelFetch(u_sorted, res.pos, 0);
-			ratio = 0.5;
 		}
+
+		float n1 = 1.0;
+		float n2 = 1.3333;
+		vec3 refraction_dir = refract(incidence_cs, normal_cs, n1 / n2);
+		dir_ws = cam_dir_to_win(position_cs, refraction_dir, proj);
+		res = traverse_fb(dir_ws, position_ws, u_sorted_without_translucent_depth);
+
+		if(res.code == TRAVERSAL_SUCCESS) {
+			color0 = texelFetch(u_sorted_without_translucent, res.pos, 0);
+		}
+
+		float cosi = abs(dot(normal_cs, reflection_dir));
+		float cost = abs(dot(-normal_cs, refraction_dir));
+
+		float refl_coeff =
+			pow((n1*cosi - n2*cost) / (n1*cosi + n2*cost), 2.0)
+			+
+			pow((n2*cosi - n1*cost) / (n2*cosi + n1*cost), 2.0);
+			
+		refl_coeff /= 2.0;
+
+		float refr_coeff =
+			pow(2.0 * n1*cosi / (n1 * cosi + n2 * cost), 2.0)
+			+
+			pow(2.0 * n1*cosi / (n2 * cosi + n1 * cost), 2.0);
+		refr_coeff /= 2.0;
+
+		ratio = refl_coeff / (refl_coeff + refr_coeff);
 	}
 
 	out_color = mix(color0, color, ratio);

@@ -4,14 +4,14 @@
 #include frex:shaders/lib/noise/noise4d.glsl
 #include lomo:shaders/lib/transform.glsl
 
-/* lomo:material/water.glsl */
+// lomo:material/water.glsl
 
 // not the best way for doing this, should be replaced
 float lomo_water_h(vec3 pos) {
 	float t = frx_renderSeconds();
 	pos.xy += t;
 	return snoise(
-		vec4(pos/4.0, t)
+		vec4(pos/8.0, t)
 	) / 48.0;
 }
 

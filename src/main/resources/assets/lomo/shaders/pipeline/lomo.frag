@@ -1,6 +1,7 @@
 #include canvas:shaders/pipeline/fog.glsl
 #include canvas:shaders/pipeline/diffuse.glsl
 #include canvas:shaders/pipeline/varying.glsl
+#include canvas:shaders/pipeline/glint.glsl
 #include frex:shaders/lib/math.glsl
 #include frex:shaders/lib/color.glsl
 #include frex:shaders/api/world.glsl
@@ -100,21 +101,31 @@ frx_FragmentData frx_createPipelineFragment() {
 
 void frx_writePipelineFragment(in frx_FragmentData fragData) {
 	vec4 a = fragData.spriteColor * fragData.vertexColor;
-	a *= mix(light(fragData), frx_emissiveColor(), fragData.emissivity);
 
-#if AO_SHADING_MODE != AO_MODE_NONE
-	if (fragData.ao) {
-		a *= aoFactor(fragData.light, fragData.aoShade);
+	if (frx_isGui() && !frx_isHand()) {
+		if (fragData.diffuse) {
+			float df = p_diffuseGui(frx_normal);
+			df = df + (1.0 - df) * fragData.emissivity;
+			a *= vec4(df, df, df, 1.0);
+		}
+	} else {
+		// TODO: put back
+		a *= mix(light(fragData), frx_emissiveColor(), fragData.emissivity);
+
+	#if AO_SHADING_MODE != AO_MODE_NONE
+		if (fragData.ao) {
+			a *= aoFactor(fragData.light, fragData.aoShade);
+		}
+	#endif
+
+	#if DIFFUSE_SHADING_MODE == DIFFUSE_MODE_NORMAL
+		if (fragData.diffuse) {
+			float df = pv_diffuse + (1.0 - pv_diffuse) * fragData.emissivity;
+
+			a *= vec4(df, df, df, 1.0);
+		}
+	#endif
 	}
-#endif
-
-#if DIFFUSE_SHADING_MODE == DIFFUSE_MODE_NORMAL
-	if (fragData.diffuse) {
-		float df = pv_diffuse + (1.0 - pv_diffuse) * fragData.emissivity;
-
-		a *= vec4(df, df, df, 1.0);
-	}
-#endif
 
 	if (frx_matFlash()) {
 		a = a * 0.25 + 0.75;
@@ -122,10 +133,13 @@ void frx_writePipelineFragment(in frx_FragmentData fragData) {
 		a = vec4(0.25 + a.r * 0.75, a.g * 0.75, a.b * 0.75, a.a);
 	}
 
+	glintify(a, frx_matGlint());
+
 	fragColor[TARGET_BASECOLOR] = p_fog(a);
 	fragColor[TARGET_NORMAL] = vec4(
 		(fragData.vertexNormal + 1.0)/2.0,
 		reflectivity
+
 	);
 
 	gl_FragDepth = gl_FragCoord.z;

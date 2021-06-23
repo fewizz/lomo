@@ -1,21 +1,13 @@
 #include canvas:shaders/pipeline/diffuse.glsl
 #include canvas:shaders/pipeline/varying.glsl
-
-/******************************************************
-  canvas:shaders/pipeline/standard.vert
-******************************************************/
-
-#include canvas:shaders/pipeline/diffuse.glsl
-#include canvas:shaders/pipeline/varying.glsl
 #include frex:shaders/api/view.glsl
 
-/******************************************************
-  canvas:shaders/pipeline/standard.vert
-******************************************************/
+// lomo:lomo.vert
 
 void frx_writePipelineVertex(in frx_VertexData data) {
 	if (frx_isGui()) {
 		gl_Position = frx_guiViewProjectionMatrix() * data.vertex;
+		frx_distance = length(gl_Position.xyz);
 	} else {
 		data.vertex += frx_modelToCamera();
 		vec4 viewCoord = frx_viewMatrix() * data.vertex;
