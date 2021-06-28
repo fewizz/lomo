@@ -25,160 +25,92 @@ layout(location = 1) out vec4 out_lag_finder;
 
 struct fb_traversal_result {
 	int code;
-	ivec2 pos;
+	uvec2 pos;
 	float z;
 };
 
-const int last_level = 4;
+const uint power = 2u;
+//const uint cell_size = 1u << power;
+const uint last_level = 4u;
 
-const int power = 2;
-const int cell_size = 1 << power;
-
-int current_size(int lod) {
-	return 1 << (power*lod);
-}
+const uint inner_bits = 8u;
+const uint max_inner_value = 1u << inner_bits;
+//const uint cell_bits = inner_bits + power;
+const uint dir_bits = 10u;//32u - 1u - (inner_bits + last_level*power);
+const uint max_dir_value = 1u << dir_bits;
+//const uint max_cell_value = 1u << cell_bits;
+//const uint mask = max_cell_value - 1u;
 
 struct cell_pos {
-	ivec2 outer;
-	vec2 inner;
+	uvec2 m;
+	uvec2 t;
 	float z;
-	vec2 t;
+	uint level;
 };
 
-void cell_pos_init(inout cell_pos pos, vec2 dir, int ival) {
-	ivec2 axis_path_outer = -(pos.outer & (ival - 1));
-	
-	if(dir.x > 0.0) axis_path_outer.x += ival;
-	if(dir.y > 0.0) axis_path_outer.y += ival;
-	
-	vec2 dist_per_axis_path = vec2(1.0) / dir;
-	vec2 axis_path = vec2(axis_path_outer) - pos.inner;
-	pos.t = dist_per_axis_path * axis_path;
+uint cell_bits(uint level) { return inner_bits + power * level; }
+uint max_cell_value(uint level) { return 1u << cell_bits(level); }
+uint mask(uint level) { return max_cell_value(level) - 1u; }
+
+uvec2 outer(cell_pos pos) {
+	return pos.m / max_inner_value;
 }
+
+uint dist_negative(uint coord, uint level) {
+	return (coord & mask(level)) + 1u;
+}
+
+uint dist_positive(uint coord, uint level) {
+	return max_cell_value(level) - (coord & mask(level));
+}
+
+#define CELL_POS_INIT(__name,__x,__y) \
+void __name (inout cell_pos pos, uvec2 dir) { \
+	pos.t.x = __x (pos.m.x, pos.level); \
+	pos.t.y = __y (pos.m.y, pos.level); \
+	pos.t <<= dir_bits; \
+	pos.t /= dir; \
+}
+
+CELL_POS_INIT(cell_pos_init_ru,dist_positive,dist_positive)
+CELL_POS_INIT(cell_pos_init_rd,dist_positive,dist_negative)
+CELL_POS_INIT(cell_pos_init_lu,dist_negative,dist_positive)
+CELL_POS_INIT(cell_pos_init_ld,dist_negative,dist_negative)
 
 float next_cell_dist(cell_pos pos) {
-	return pos.t.x < pos.t.y ? pos.t.x : pos.t.y;
+	return float(pos.t.x < pos.t.y ? pos.t.x : pos.t.y) / float(max_inner_value);
 }
 
-float next_cell_ru(inout cell_pos pos, vec2 dir, int lod) {
-	int ival = current_size(lod);
-	float fval = float(ival);
-	float dist = 0.0;
-	
-	if(pos.t.x < pos.t.y) {
-		float du_path = dir.y * pos.t.x + pos.inner.y;
-		pos.outer += ivec2( -(pos.outer.x % ival) + ival, int(du_path) );
-		pos.inner = vec2( 0.0, fract(du_path) );
-		dist = pos.t.x;
-		pos.t = vec2(fval / dir.x, pos.t.y - pos.t.x);
-	}
-	else if(pos.t.y < pos.t.x) {
-		float lr_path = dir.x * pos.t.y + pos.inner.x;
-		pos.outer += ivec2( int(lr_path), -(pos.outer.y % ival) + ival );
-		pos.inner = vec2( fract(lr_path), 0.0 );
-		dist = pos.t.y;
-		pos.t = vec2(pos.t.x - pos.t.y, fval / dir.y);
-	}
-	else {
-		pos.outer += -(pos.outer % ival) + ival;
-		pos.inner = vec2(0.0);
-		dist = pos.t.x;
-		pos.t = fval / dir;
-	}
+void add(inout uint a, uint b) { a += b; }
+void sub(inout uint a, uint b) { a -= b; }
 
-	return dist;
+#define NEXT_CELL(__name,__x_func,__y_func,__x_dist_func,__y_dist_func) \
+float __name (inout cell_pos pos, uvec2 dir) { \
+	uint cs = max_cell_value(pos.level); \
+	uint dist = 0u; \
+	if(pos.t.x < pos.t.y) { \
+		uint x_d = __x_dist_func (pos.m.x, pos.level); \
+		__x_func (pos.m.x, x_d); \
+		__y_func (pos.m.y, x_d * dir.y / dir.x); \
+		dist = x_d * max_dir_value / dir.x; \
+		pos.t.x += cs * max_dir_value / dir.x; \
+	} \
+	else { \
+		uint y_d = __y_dist_func (pos.m.y, pos.level); \
+		__y_func (pos.m.y, y_d); \
+		__x_func (pos.m.x, y_d * dir.x / dir.y); \
+		dist = y_d * max_dir_value / dir.y; \
+		pos.t.y += cs * max_dir_value / dir.y; \
+	} \
+	return float(dist) / float(max_inner_value); \
 }
 
-float next_cell_rd(inout cell_pos pos, vec2 dir, int lod) {
-	int ival = current_size(lod);
-	float fval = float(ival);
-	float dist = 0.0;
-	
-	if(pos.t.x < pos.t.y) {
-		float du_path = dir.y * pos.t.x + pos.inner.y;
-		pos.outer += ivec2( -(pos.outer.x % ival) + ival, int(floor(du_path)) );
-		pos.inner = vec2(0.0, fract(du_path));
-		dist = pos.t.x;
-		pos.t = vec2(fval / dir.x, pos.t.y - pos.t.x);
-	}
-	else if(pos.t.y < pos.t.x) {
-		float lr_path = dir.x * pos.t.y + pos.inner.x;
-		pos.outer += ivec2( int(floor(lr_path)), -(pos.outer.y % ival) - 1 );
-		pos.inner = vec2(fract(lr_path), 1.0);
-		dist = pos.t.y;
-		pos.t = vec2(pos.t.x - pos.t.y, fval / -dir.y);
-	}
-	else {
-		pos.outer -= pos.outer % ival;
-		pos.outer += ivec2( ival, - 1 );
-		pos.inner = vec2(0.0, 1.0);
-		dist = pos.t.x;
-		pos.t = fval / vec2(dir.x, -dir.y);
-	}
+NEXT_CELL(next_cell_ru,add,add, dist_positive, dist_positive)
+NEXT_CELL(next_cell_rd,add,sub, dist_positive, dist_negative)
+NEXT_CELL(next_cell_lu,sub,add, dist_negative, dist_positive)
+NEXT_CELL(next_cell_ld,sub,sub, dist_negative, dist_negative)
 
-	return dist;
-}
-
-float next_cell_lu(inout cell_pos pos, vec2 dir, int lod) {
-	int ival = current_size(lod);
-	float fval = float(ival);
-	float dist = 0.0;
-	
-	if(pos.t.x < pos.t.y) {
-		float du_path = dir.y * pos.t.x + pos.inner.y;
-		pos.outer += ivec2( -(pos.outer.x % ival) + -1, int(floor(du_path)) );
-		pos.inner = vec2( 1.0, fract(du_path) );
-		dist = pos.t.x;
-		pos.t = vec2( fval / -dir.x, pos.t.y - pos.t.x ) ;
-	}
-	else if(pos.t.y < pos.t.x) {
-		float lr_path = dir.x * pos.t.y + pos.inner.x;
-		pos.outer += ivec2( int(floor(lr_path)), -(pos.outer.y % ival) + ival );
-		pos.inner = vec2(fract(lr_path), 0.0);
-		dist = pos.t.y;
-		pos.t = vec2(pos.t.x - pos.t.y, fval / dir.y);
-	}
-	else {
-		pos.outer -= pos.outer % ival;
-		pos.outer += ivec2(-1, ival);
-		pos.inner = vec2(1.0, 0.0);
-		dist = pos.t.x;
-		pos.t = fval / vec2(dir.y, -dir.x);
-	}
-
-	return dist;
-}
-
-float next_cell_ld(inout cell_pos pos, vec2 dir, int lod) {
-	int ival = current_size(lod);
-	float fval = float(ival);
-	float dist = 0.0;
-	
-	if(pos.t.x < pos.t.y) {
-		float du_path = dir.y * pos.t.x + pos.inner.y;
-		pos.outer += ivec2( -(pos.outer.x % ival) - 1, int(floor(du_path)) );
-		pos.inner = vec2( 1.0, fract(du_path) );
-		dist = pos.t.x;
-		pos.t = vec2( -fval / dir.x, pos.t.y - pos.t.x );
-	}
-	else if(pos.t.y < pos.t.x) {
-		float lr_path = dir.x * pos.t.y + pos.inner.x;
-		pos.outer += ivec2( int(floor(lr_path)), -(pos.outer.y % ival) - 1 );
-		pos.inner = vec2( fract(lr_path), 1.0 );
-		dist = pos.t.y;
-		pos.t = vec2( pos.t.x - pos.t.y, -fval / dir.y );
-	}
-	else {
-		pos.outer += -(pos.outer % ival) - 1;
-		pos.inner = vec2(1.0);
-		dist = 0.0;
-		pos.t = -fval / dir;
-	}
-
-	return dist;
-}
-
-float next_cell_straight(inout cell_pos pos, vec2 dir, int lod) {
+/*float next_cell_straight(inout cell_pos pos, vec2 dir, int lod) {
 	int ival = current_size(lod);
 	float fval = float(ival);
 	float dist = 0.0;
@@ -213,42 +145,49 @@ float next_cell_straight(inout cell_pos pos, vec2 dir, int lod) {
 	}
 
 	return dist;
+}*/
+
+float depth_value(uvec2 m, uint level, sampler2D s) {
+	return texelFetch(s, ivec2(m >> cell_bits(level)), int(level)).r;
 }
 
-float depth_value(ivec2 pos, int lod, sampler2D s) {
-	return texelFetch(s, pos >> (power*lod), lod).r;
+float upper_depth_value(cell_pos pos, sampler2D s) {
+	return pos.level < last_level ? depth_value(pos.m, pos.level + 1u, s) : 0.0;
 }
 
-#define UPPER_DEPTH_VALUE ( lod < last_level ? depth_value(pos.outer, lod + 1, s) : 0.0 )
-#define LOWER_DEPTH_VALUE depth_value(pos.outer, lod, s)
+float lower_depth_value(cell_pos pos, sampler2D s) {
+	return depth_value(pos.m, pos.level, s);
+}
 
-#define LOD_INCREASE { \
-	++lod; \
-	cell_pos_init(pos, dir_xy, current_size(lod)); \
+#define LOD_INCREASE(__init_func) { \
+	++pos.level; \
+	__init_func (pos, udir); \
 	lower_depth = upper_depth; \
-	upper_depth = UPPER_DEPTH_VALUE; \
+	upper_depth = upper_depth_value(pos, s); \
 }
 
-#define LOD_DECREASE { \
-	--lod; \
-	cell_pos_init(pos, dir_xy, current_size(lod)); \
+#define LOD_DECREASE(__init_func) { \
+	--pos.level; \
+	__init_func (pos, udir); \
 	upper_depth = lower_depth; \
-	lower_depth = LOWER_DEPTH_VALUE; \
+	lower_depth = lower_depth_value(pos, s); \
 }
 
-#define FIND_LOWEST_LOD { \
-	while(lod > 0 && pos.z >= lower_depth) \
-		LOD_DECREASE \
+#define FIND_LOWEST_LOD(__init_func) { \
+	while(pos.level > 0u && pos.z >= lower_depth) { \
+		LOD_DECREASE(__init_func) \
+	} \
 }
 
-#define FIND_UPPEST_LOD { \
-	while(lod < last_level && pos.z < upper_depth) \
-		LOD_INCREASE \
+#define FIND_UPPEST_LOD(__init_func) { \
+	while(pos.level < last_level && pos.z < upper_depth) { \
+		LOD_INCREASE(__init_func) \
+	} \
 }
 
 // finds farthest pixel z point in window space
 // for camera-space position, normal
-float farthest_z(
+/*float farthest_z(
 	// fract(position) should be == vec3(0.5)
 	vec3 position,
 	vec3 normal,
@@ -271,9 +210,9 @@ float farthest_z(
 		plane_z(x_ws, y_ws, vec2( 0.5, -0.5)),
 		plane_z(x_ws, y_ws, vec2( 0.5,  0.5))
 	);
-}
+}*/
 
-void guess(inout fb_traversal_result res, sampler2D sd, sampler2D sn) {
+/*void guess(inout fb_traversal_result res, sampler2D sd, sampler2D sn) {
 	vec4 packed_normal = texelFetch(sn, res.pos, 0);
 	vec3 normal = normalize((packed_normal.xyz * 0.5) + 0.5);
 	vec3 normal_cs = raw_normal_to_cam(normal, frx_viewMatrix());
@@ -300,81 +239,82 @@ void guess(inout fb_traversal_result res, sampler2D sd, sampler2D sn) {
 		//return reflection_result(false, vec4(0), vec3(0), vec3(0));
 		res.code = TRAVERSAL_SUCCESS;
 	}
-}
+}*/
 
 bool is_out_of_fb(cell_pos pos) {
 	return
-		any(lessThan(pos.outer, ivec2(0))) ||
-		any(greaterThanEqual(pos.outer, frxu_size.xy)) ||
+		any(lessThan(outer(pos), uvec2(0u))) ||
+		any(greaterThanEqual(outer(pos), uvec2(frxu_size.xy))) ||
 		pos.z < 0 || pos.z > 1;
 }
 
-#define TRAVERSE_FUNC(__name, __next_func) \
+#define TRAVERSE_FUNC(__name, __next_func, __init_func) \
 fb_traversal_result __name (vec3 dir, vec3 pos_ws, sampler2D s) { \
-	cell_pos pos = cell_pos(ivec2(pos_ws.xy), vec2(0.5), pos_ws.z, vec2(0.0)); \
-	int lod = 0; \
+	cell_pos pos = cell_pos( \
+		uvec2(pos_ws.xy) * max_inner_value + (max_inner_value >> 1u), \
+		uvec2(0u), \
+		pos_ws.z, \
+		0u \
+	); \
 	vec2 dir_xy = normalize(dir.xy);\
-	cell_pos_init(pos, dir_xy, current_size(lod)); \
-	float upper_depth = UPPER_DEPTH_VALUE; \
-	float lower_depth = LOWER_DEPTH_VALUE; \
-	FIND_UPPEST_LOD \
+	uvec2 udir = uvec2(abs(dir_xy) * float(max_dir_value)); \
+	__init_func (pos, udir); \
+	float upper_depth = upper_depth_value(pos, s); \
+	float lower_depth = lower_depth_value(pos, s); \
+	FIND_UPPEST_LOD(__init_func) \
 	float dir_xy_length = length(dir.xy); \
 	float dir_z_per_xy = dir.z / dir_xy_length; \
 	bool backwards = dir.z < 0.0; \
 	int steps = 0; \
 	while(true) { \
 		cell_pos next = pos; \
-		float dist = __next_func (next, dir_xy, lod); \
+		float dist = __next_func (next, udir); \
 		next.z += dist * dir_z_per_xy; \
 		bool under = next.z >= lower_depth; \
 		if(under) { \
+			if(pos.level == 0u) { \
+				return fb_traversal_result(TRAVERSAL_SUCCESS, outer(next), next.z); \
+			} \
 			float mul = (lower_depth - pos.z) / (next.z - pos.z); \
-			bool collides = !backwards && mul > 0.0 && mul < 1.0; \
-			if(lod == 0) { \
-				return fb_traversal_result(collides ? TRAVERSAL_SUCCESS : TRAVERSAL_UNDER, next.outer, next.z); \
-			} \
-			LOD_DECREASE \
-			if(collides) { \
-				dist *= mul; \
-				float dist0 = 0.0; \
-				int steps = 8; \
-				while(--steps > 0 && next_cell_dist(pos) < dist - dist0) \
-					dist0 += __next_func (pos, dir_xy, lod); \
-				pos.z += dist0 * dir_z_per_xy; \
-				lower_depth = LOWER_DEPTH_VALUE; \
-			} \
+			dist *= mul; \
+			pos.m = uvec2(ivec2(pos.m) + ivec2(float(max_inner_value) * dist * dir_xy)); \
+			pos.z = lower_depth; \
+			LOD_DECREASE(__init_func) \
 		} \
 		else { \
 			cell_pos prev = pos; \
 			pos = next; \
-			lower_depth = LOWER_DEPTH_VALUE; \
-			if((prev.outer / cell_size) != (next.outer / cell_size)) { \
-				upper_depth = UPPER_DEPTH_VALUE; \
-				FIND_UPPEST_LOD \
-				FIND_LOWEST_LOD \
+			if(( prev.m >> cell_bits(pos.level + 1u) ) != ( pos.m >> cell_bits(pos.level + 1u) )) { \
+				upper_depth = upper_depth_value(pos, s); \
 			} \
+			FIND_UPPEST_LOD(__init_func) \
+			\
+			lower_depth = lower_depth_value(pos, s); \
+			FIND_LOWEST_LOD(__init_func) \
+			if(pos.level == 0u && pos.z >= lower_depth) \
+				return fb_traversal_result(TRAVERSAL_UNDER, outer(pos), pos.z); \
 		} \
-		if(is_out_of_fb(pos)) return fb_traversal_result(TRAVERSAL_OUT_OF_FB, ivec2(0), 0.0); \
-		if(++steps == 100) { \
+		if(is_out_of_fb(pos)) return fb_traversal_result(TRAVERSAL_OUT_OF_FB, uvec2(0u), 0.0); \
+		if(++steps == 50) { \
 			out_lag_finder = vec4(1.0, 0.0, 0.0, 0.0); \
-			return fb_traversal_result(TRAVERSAL_TOO_LONG, ivec2(0), 0.0); \
+			return fb_traversal_result(TRAVERSAL_TOO_LONG, uvec2(0u), 0.0); \
 		} \
 	} \
 }
 
-TRAVERSE_FUNC(traverse_fb_ru, next_cell_ru)
-TRAVERSE_FUNC(traverse_fb_rd, next_cell_rd)
-TRAVERSE_FUNC(traverse_fb_lu, next_cell_lu)
-TRAVERSE_FUNC(traverse_fb_ld, next_cell_ld)
-TRAVERSE_FUNC(traverse_fb_straight, next_cell_straight)
+TRAVERSE_FUNC(traverse_fb_ru, next_cell_ru, cell_pos_init_ru)
+TRAVERSE_FUNC(traverse_fb_rd, next_cell_rd, cell_pos_init_rd)
+TRAVERSE_FUNC(traverse_fb_lu, next_cell_lu, cell_pos_init_lu)
+TRAVERSE_FUNC(traverse_fb_ld, next_cell_ld, cell_pos_init_ld)
+//TRAVERSE_FUNC(traverse_fb_straight, next_cell_straight)
 
 fb_traversal_result traverse_fb(vec3 dir, vec3 pos, sampler2D s) {
 	if(dir.x == 0.0 && dir.y == 0.0) {
-		ivec2 ipos = ivec2(pos.xy);
-		return fb_traversal_result(TRAVERSAL_SUCCESS, ipos, texelFetch(s, ipos, 0).r);
+		uvec2 upos = uvec2(pos.xy);
+		return fb_traversal_result(TRAVERSAL_SUCCESS, upos, texelFetch(s, ivec2(upos), 0).r);
 	}
 
-	if(dir.x == 0.0 || dir.y == 0.0) return traverse_fb_straight(dir, pos, s);
+	if(dir.x == 0.0 || dir.y == 0.0) return fb_traversal_result(TRAVERSAL_OUT_OF_FB, uvec2(0u), 0.0); //traverse_fb_straight(dir, pos, s);
 
 	if(dir.x > 0.0) {
 		if(dir.y > 0.0) return traverse_fb_ru(dir, pos, s);
@@ -413,25 +353,25 @@ void main() {
 		position_ws.z -= abs(z_per_xy)*3;
 
 		fb_traversal_result res = traverse_fb(dir_ws, position_ws, u_sorted_depth);
-		if(res.code == TRAVERSAL_UNDER)
-			guess(res, u_sorted_depth, u_sorted_normal);
+		//if(res.code == TRAVERSAL_UNDER)
+		//	guess(res, u_sorted_depth, u_sorted_normal);
 
-		if(res.code == TRAVERSAL_SUCCESS) {
-			color = texelFetch(u_sorted, res.pos, 0);
+		if(res.code == TRAVERSAL_SUCCESS || res.code == TRAVERSAL_UNDER) {
+			color = texelFetch(u_sorted, ivec2(res.pos), 0);
 		}
 
 		float n1 = frx_viewFlag(FRX_CAMERA_IN_FLUID) ? 1.3333 : 1.0;
 		float n2 = frx_viewFlag(FRX_CAMERA_IN_FLUID) ? 1.0 : 1.3333;
 		vec3 refraction_dir = refract(incidence_cs, normal_cs, n1 / n2);
 		dir_ws = cam_dir_to_win(position_cs, refraction_dir, proj);
-		res = traverse_fb(dir_ws, position_ws, u_solid_depth);
-		if(res.code == TRAVERSAL_UNDER)
-			guess(res, u_solid_depth, u_solid_normal);
-		if(res.code == TRAVERSAL_SUCCESS) {
-			color0 = texelFetch(u_solid, res.pos, 0);
-		}
+		//res = traverse_fb(dir_ws, position_ws, u_solid_depth);
+		//if(res.code == TRAVERSAL_UNDER)
+		//	guess(res, u_solid_depth, u_solid_normal);
+		//if(res.code == TRAVERSAL_SUCCESS) {
+		//	color0 = texelFetch(u_solid, ivec2(res.pos), 0);
+		//}
 
-		float cosi = abs(dot(normal_cs, reflection_dir));
+		/*float cosi = abs(dot(normal_cs, reflection_dir));
 		float cost = abs(dot(-normal_cs, refraction_dir));
 
 		float refl_coeff =
@@ -447,7 +387,7 @@ void main() {
 			pow(2.0 * n1*cosi / (n2 * cosi + n1 * cost), 2.0);
 		refr_coeff /= 2.0;*/
 
-		ratio = refl_coeff;// / (refl_coeff + refr_coeff);
+		ratio = 1.0;//refl_coeff;// / (refl_coeff + refr_coeff);
 	}
 
 	out_color = mix(color0, color, ratio);

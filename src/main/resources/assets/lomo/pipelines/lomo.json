@@ -69,6 +69,12 @@
 		"samplers": [ "u_depth_0", "u_depth_1" ]
 	},
 	{
+		"name": "depth_levels_16",
+		"vertexSource": "lomo:shaders/pipeline/full_frame_depth_1.vert",
+		"fragmentSource": "lomo:shaders/pipeline/depth_levels_16.frag",
+		"samplers": [ "u_depth_0", "u_depth_1" ]
+	},
+	{
 		"name": "post",
 		"vertexSource": "lomo:shaders/pipeline/full_frame_depth_1.vert",
 		"fragmentSource": "lomo:shaders/pipeline/post.frag",
