@@ -3,6 +3,7 @@
 #include lomo:shaders/lib/transform.glsl
 #include lomo:shaders/lib/math.glsl
 #include frex:shaders/api/view.glsl
+#include frex:shaders/api/world.glsl
 
 // lomo:post.frag
 
@@ -12,6 +13,8 @@ uniform sampler2D u_solid_depth;
 uniform sampler2D u_sorted;
 uniform sampler2D u_sorted_normal;
 uniform sampler2D u_sorted_depth;
+
+uniform sampler2D u_translucent;
 
 in vec2 vs_uv;
 
@@ -30,16 +33,12 @@ struct fb_traversal_result {
 };
 
 const uint power = 2u;
-//const uint cell_size = 1u << power;
 const uint last_level = 4u;
 
 const uint inner_bits = 8u;
 const uint max_inner_value = 1u << inner_bits;
-//const uint cell_bits = inner_bits + power;
-const uint dir_bits = 10u;//32u - 1u - (inner_bits + last_level*power);
+const uint dir_bits = 10u;
 const uint max_dir_value = 1u << dir_bits;
-//const uint max_cell_value = 1u << cell_bits;
-//const uint mask = max_cell_value - 1u;
 
 struct cell_pos {
 	uvec2 m;
@@ -64,7 +63,7 @@ uint dist_positive(uint coord, uint level) {
 	return max_cell_value(level) - (coord & mask(level));
 }
 
-#define CELL_POS_INIT(__name,__x,__y) \
+#define CELL_POS_INIT(__name, __x, __y) \
 void __name (inout cell_pos pos, uvec2 dir) { \
 	pos.t.x = __x (pos.m.x, pos.level); \
 	pos.t.y = __y (pos.m.y, pos.level); \
@@ -72,10 +71,21 @@ void __name (inout cell_pos pos, uvec2 dir) { \
 	pos.t /= dir; \
 }
 
-CELL_POS_INIT(cell_pos_init_ru,dist_positive,dist_positive)
-CELL_POS_INIT(cell_pos_init_rd,dist_positive,dist_negative)
-CELL_POS_INIT(cell_pos_init_lu,dist_negative,dist_positive)
-CELL_POS_INIT(cell_pos_init_ld,dist_negative,dist_negative)
+CELL_POS_INIT(cell_pos_init_ru, dist_positive, dist_positive)
+CELL_POS_INIT(cell_pos_init_rd, dist_positive, dist_negative)
+CELL_POS_INIT(cell_pos_init_lu, dist_negative, dist_positive)
+CELL_POS_INIT(cell_pos_init_ld, dist_negative, dist_negative)
+
+#define CELL_POS_INIT_STRAIGHT(__name, __element, __dist_func) \
+void __name (inout cell_pos pos, uvec2 dir) { \
+	pos.t = uvec2(0u - 1u); \
+	pos.t. __element = __dist_func (pos.m. __element , pos.level); \
+}
+
+CELL_POS_INIT_STRAIGHT(cell_pos_init_u, y, dist_positive)
+CELL_POS_INIT_STRAIGHT(cell_pos_init_r, x, dist_positive)
+CELL_POS_INIT_STRAIGHT(cell_pos_init_d, y, dist_negative)
+CELL_POS_INIT_STRAIGHT(cell_pos_init_l, x, dist_negative)
 
 float next_cell_dist(cell_pos pos) {
 	return float(pos.t.x < pos.t.y ? pos.t.x : pos.t.y) / float(max_inner_value);
@@ -110,42 +120,17 @@ NEXT_CELL(next_cell_rd,add,sub, dist_positive, dist_negative)
 NEXT_CELL(next_cell_lu,sub,add, dist_negative, dist_positive)
 NEXT_CELL(next_cell_ld,sub,sub, dist_negative, dist_negative)
 
-/*float next_cell_straight(inout cell_pos pos, vec2 dir, int lod) {
-	int ival = current_size(lod);
-	float fval = float(ival);
-	float dist = 0.0;
+#define NEXT_CELL_STRAIGHT(__name, __element, __func, __dist_func) \
+float __name (inout cell_pos pos, uvec2 dir) { \
+	uint dist = __dist_func(pos.m. __element , pos.level); \
+	__func(pos.m. __element , dist); \
+	return float(dist) / float(max_inner_value); \
+}
 
-	if(dir.x != 0.0) {
-		dist = pos.t.x;
-		pos.t.x = fval;
-		pos.t.y = 100000000.;
-
-		if(dir.x > 0.0) {
-			pos.outer.x += ival - (pos.outer.x % ival);
-			pos.inner.x = 0.0;
-		}
-		else {
-			pos.outer.x -= (pos.outer.x % ival) + 1;
-			pos.inner.x = 1.0;
-		}
-	}
-	else {
-		dist = pos.t.y;
-		pos.t.y = fval;
-		pos.t.x = 100000000.;
-
-		if(dir.y > 0.0) {
-			pos.outer.y += ival - (pos.outer.y % ival);
-			pos.inner.y = 0.0;
-		}
-		else {
-			pos.outer.y -= (pos.outer.y % ival) + 1;
-			pos.inner.y = 1.0;
-		}
-	}
-
-	return dist;
-}*/
+NEXT_CELL_STRAIGHT(next_cell_u, y, add, dist_positive)
+NEXT_CELL_STRAIGHT(next_cell_r, x, add, dist_positive)
+NEXT_CELL_STRAIGHT(next_cell_d, y, sub, dist_negative)
+NEXT_CELL_STRAIGHT(next_cell_l, x, sub, dist_negative)
 
 float depth_value(uvec2 m, uint level, sampler2D s) {
 	return texelFetch(s, ivec2(m >> cell_bits(level)), int(level)).r;
@@ -185,62 +170,6 @@ float lower_depth_value(cell_pos pos, sampler2D s) {
 	} \
 }
 
-// finds farthest pixel z point in window space
-// for camera-space position, normal
-/*float farthest_z(
-	// fract(position) should be == vec3(0.5)
-	vec3 position,
-	vec3 normal,
-	mat4 proj
-) {
-	vec3 x = vec3(
-		1, 0, -normal.x/normal.z
-	);
-
-	vec3 y = vec3(
-		0, 1, -normal.y/normal.z
-	);
-
-	vec3 x_ws = cam_dir_to_win(position, x, proj);
-	vec3 y_ws = cam_dir_to_win(position, y, proj);
-
-	return max4(
-		plane_z(x_ws, y_ws, vec2(-0.5, -0.5)),
-		plane_z(x_ws, y_ws, vec2(-0.5,  0.5)),
-		plane_z(x_ws, y_ws, vec2( 0.5, -0.5)),
-		plane_z(x_ws, y_ws, vec2( 0.5,  0.5))
-	);
-}*/
-
-/*void guess(inout fb_traversal_result res, sampler2D sd, sampler2D sn) {
-	vec4 packed_normal = texelFetch(sn, res.pos, 0);
-	vec3 normal = normalize((packed_normal.xyz * 0.5) + 0.5);
-	vec3 normal_cs = raw_normal_to_cam(normal, frx_viewMatrix());
-	//vec3 pos = 
-	//vec3 mid = (pos + next)/2.0;
-	//vec2 mid_center_ws = floor(mid.xy) + vec2(0.5);
-	vec3 normal_origin_ws = 
-		vec3(
-			vec2(res.pos) + vec2(0.5),
-			res.z
-		);
-	vec3 normal_origin_cs = win_to_cam(normal_origin_ws, frx_projectionMatrix());
-
-	float f = farthest_z(normal_origin_cs, normal_cs, frx_projectionMatrix());
-	float d = texelFetch(sd, res.pos, 0).r;
-	if(
-		//length(packed_normal.xyz) > 0.5
-		//&&
-		//(
-		//	res.z < res.z+f*4)
-		//)
-		res.z < d + f*4
-	) {
-		//return reflection_result(false, vec4(0), vec3(0), vec3(0));
-		res.code = TRAVERSAL_SUCCESS;
-	}
-}*/
-
 bool is_out_of_fb(cell_pos pos) {
 	return
 		any(lessThan(outer(pos), uvec2(0u))) ||
@@ -279,9 +208,12 @@ fb_traversal_result __name (vec3 dir, vec3 pos_ws, sampler2D s) { \
 			dist *= mul; \
 			pos.m = uvec2(ivec2(pos.m) + ivec2(float(max_inner_value) * dist * dir_xy)); \
 			pos.z = lower_depth; \
-			LOD_DECREASE(__init_func) \
+			FIND_LOWEST_LOD(__init_func) \
 		} \
 		else { \
+			if(pos.level == 0u && pos.z >= lower_depth) \
+				return fb_traversal_result(TRAVERSAL_UNDER, outer(pos), pos.z); \
+			\
 			cell_pos prev = pos; \
 			pos = next; \
 			if(( prev.m >> cell_bits(pos.level + 1u) ) != ( pos.m >> cell_bits(pos.level + 1u) )) { \
@@ -291,11 +223,9 @@ fb_traversal_result __name (vec3 dir, vec3 pos_ws, sampler2D s) { \
 			\
 			lower_depth = lower_depth_value(pos, s); \
 			FIND_LOWEST_LOD(__init_func) \
-			if(pos.level == 0u && pos.z >= lower_depth) \
-				return fb_traversal_result(TRAVERSAL_UNDER, outer(pos), pos.z); \
 		} \
 		if(is_out_of_fb(pos)) return fb_traversal_result(TRAVERSAL_OUT_OF_FB, uvec2(0u), 0.0); \
-		if(++steps == 50) { \
+		if(++steps == 100) { \
 			out_lag_finder = vec4(1.0, 0.0, 0.0, 0.0); \
 			return fb_traversal_result(TRAVERSAL_TOO_LONG, uvec2(0u), 0.0); \
 		} \
@@ -306,7 +236,11 @@ TRAVERSE_FUNC(traverse_fb_ru, next_cell_ru, cell_pos_init_ru)
 TRAVERSE_FUNC(traverse_fb_rd, next_cell_rd, cell_pos_init_rd)
 TRAVERSE_FUNC(traverse_fb_lu, next_cell_lu, cell_pos_init_lu)
 TRAVERSE_FUNC(traverse_fb_ld, next_cell_ld, cell_pos_init_ld)
-//TRAVERSE_FUNC(traverse_fb_straight, next_cell_straight)
+
+TRAVERSE_FUNC(traverse_fb_u, next_cell_u, cell_pos_init_u)
+TRAVERSE_FUNC(traverse_fb_r, next_cell_r, cell_pos_init_r)
+TRAVERSE_FUNC(traverse_fb_d, next_cell_d, cell_pos_init_d)
+TRAVERSE_FUNC(traverse_fb_l, next_cell_l, cell_pos_init_l)
 
 fb_traversal_result traverse_fb(vec3 dir, vec3 pos, sampler2D s) {
 	if(dir.x == 0.0 && dir.y == 0.0) {
@@ -314,7 +248,15 @@ fb_traversal_result traverse_fb(vec3 dir, vec3 pos, sampler2D s) {
 		return fb_traversal_result(TRAVERSAL_SUCCESS, upos, texelFetch(s, ivec2(upos), 0).r);
 	}
 
-	if(dir.x == 0.0 || dir.y == 0.0) return fb_traversal_result(TRAVERSAL_OUT_OF_FB, uvec2(0u), 0.0); //traverse_fb_straight(dir, pos, s);
+	if(dir.x == 1.0)
+		return traverse_fb_r(dir, pos, s);
+	if(dir.x == -1.0)
+		return traverse_fb_l(dir, pos, s);
+
+	if(dir.y == 1.0)
+		return traverse_fb_u(dir, pos, s);
+	if(dir.y == -1.0)
+		return traverse_fb_d(dir, pos, s);
 
 	if(dir.x > 0.0) {
 		if(dir.y > 0.0) return traverse_fb_ru(dir, pos, s);
@@ -335,59 +277,50 @@ void main() {
 	vec4 color0 = texture(u_sorted, vs_uv);
 
 	if(normal4.a != 0.0) {
-		vec3 normal = normal4.rgb * 2.0 - 1.0;//normalize((packed_normal.xyz - 0.5) * 2);
-		mat4 view = frx_viewMatrix();
-		mat4 proj = frx_projectionMatrix();
+		vec3 normal = normal4.rgb * 2.0 - 1.0;
+		vec3 normal_cs = raw_normal_to_cam(normal);
 
 		float depth_ws = texelFetch(u_sorted_depth, ivec2(gl_FragCoord.xy), 0).r ;
 		vec3 position_ws = vec3(gl_FragCoord.xy, depth_ws);
-		vec3 position_cs = win_to_cam(position_ws, proj);
+		vec3 position_cs = win_to_cam(position_ws);
+
 		vec3 incidence_cs = normalize(position_cs);
-		vec3 normal_cs = raw_normal_to_cam(normal, view);
+		vec3 reflection_dir = normalize(reflect(incidence_cs, normal_cs));
 
-		vec3 reflection_dir = reflect(incidence_cs, normal_cs);
-		vec3 dir_ws = cam_dir_to_win(position_cs, reflection_dir, proj);
+		float refl_coeff = 1.0;
 
-		// applying z offset, dumb'ish
-		float z_per_xy = dir_ws.z / length(dir_ws.xy);
-		position_ws.z -= abs(z_per_xy)*3;
+		float tr = texture2D(u_translucent, vs_uv).a;
 
-		fb_traversal_result res = traverse_fb(dir_ws, position_ws, u_sorted_depth);
-		//if(res.code == TRAVERSAL_UNDER)
-		//	guess(res, u_sorted_depth, u_sorted_normal);
+		if(tr > 0.0 && tr < 1.0) {
+			float n1 = frx_viewFlag(FRX_CAMERA_IN_FLUID) ? 1.3333 : 1.0;
+			float n2 = frx_viewFlag(FRX_CAMERA_IN_FLUID) ? 1.0 : 1.3333;
+			vec3 refraction_dir = refract(incidence_cs, normal_cs, n1 / n2);
 
-		if(res.code == TRAVERSAL_SUCCESS || res.code == TRAVERSAL_UNDER) {
-			color = texelFetch(u_sorted, ivec2(res.pos), 0);
+			float cosi = abs(dot(normal_cs, reflection_dir));
+			float cost = abs(dot(-normal_cs, refraction_dir));
+
+			refl_coeff =
+				pow((n1*cosi - n2*cost) / (n1*cosi + n2*cost), 2.0)
+				+
+				pow((n2*cosi - n1*cost) / (n2*cosi + n1*cost), 2.0);
+
+			refl_coeff /= 2.0;
 		}
 
-		float n1 = frx_viewFlag(FRX_CAMERA_IN_FLUID) ? 1.3333 : 1.0;
-		float n2 = frx_viewFlag(FRX_CAMERA_IN_FLUID) ? 1.0 : 1.3333;
-		vec3 refraction_dir = refract(incidence_cs, normal_cs, n1 / n2);
-		dir_ws = cam_dir_to_win(position_cs, refraction_dir, proj);
-		//res = traverse_fb(dir_ws, position_ws, u_solid_depth);
-		//if(res.code == TRAVERSAL_UNDER)
-		//	guess(res, u_solid_depth, u_solid_normal);
-		//if(res.code == TRAVERSAL_SUCCESS) {
-		//	color0 = texelFetch(u_solid, ivec2(res.pos), 0);
-		//}
+		if(refl_coeff > 0) {
+			vec3 dir_ws = cam_dir_to_win(position_cs, reflection_dir);
 
-		/*float cosi = abs(dot(normal_cs, reflection_dir));
-		float cost = abs(dot(-normal_cs, refraction_dir));
+			// applying z offset, dumb'ish
+			float z_per_xy = dir_ws.z / length(dir_ws.xy);
+			position_ws.z -= abs(z_per_xy)*3;
 
-		float refl_coeff =
-			pow((n1*cosi - n2*cost) / (n1*cosi + n2*cost), 2.0)
-			+
-			pow((n2*cosi - n1*cost) / (n2*cosi + n1*cost), 2.0);
-			
-		refl_coeff /= 2.0;
+			fb_traversal_result res = traverse_fb(dir_ws, position_ws, u_sorted_depth);
 
-		/*float refr_coeff =
-			pow(2.0 * n1*cosi / (n1 * cosi + n2 * cost), 2.0)
-			+
-			pow(2.0 * n1*cosi / (n2 * cosi + n1 * cost), 2.0);
-		refr_coeff /= 2.0;*/
-
-		ratio = 1.0;//refl_coeff;// / (refl_coeff + refr_coeff);
+			if(res.code == TRAVERSAL_SUCCESS || res.code == TRAVERSAL_UNDER) {
+				color = texelFetch(u_sorted, ivec2(res.pos), 0);
+				ratio = refl_coeff;
+			}
+		}
 	}
 
 	out_color = mix(color0, color, ratio);

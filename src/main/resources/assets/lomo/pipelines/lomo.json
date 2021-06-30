@@ -80,7 +80,8 @@
 		"fragmentSource": "lomo:shaders/pipeline/post.frag",
 		"samplers": [
 			"u_solid", "u_solid_normal", "u_solid_depth",
-			"u_sorted", "u_sorted_normal", "u_sorted_depth"
+			"u_sorted", "u_sorted_normal", "u_sorted_depth",
+			"u_translucent"
 		]
 	}
 ],
@@ -138,7 +139,8 @@
 			"framebuffer": "post_result",
 			"samplerImages": [
 				"solid", "solid_normal", "solid_depth_levels",
-				"sorted", "sorted_normal", "depth_levels"
+				"sorted", "sorted_normal", "depth_levels",
+				"translucent_0"
 			]
 		},
 		{

@@ -139,5 +139,4 @@ void frx_writePipelineFragment(in frx_FragmentData fragData) {
 	out_data[1] = vec4(fragData.vertexNormal * 0.5 + 0.5, reflectivity);
 
 	gl_FragDepth = gl_FragCoord.z;
-	//gl_FragData[TARGET_EMISSIVE] = vec4(fragData.emissivity * a.a, 0.0, 0.0, 1.0);
 }
