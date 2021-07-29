@@ -15,25 +15,31 @@
 },
 
 "drawTargets": {
-	"solidTerrain": "solid_with_depth_and_normal",
-	"translucentTerrain": "translucent_0_cnd",
-	"translucentEntity": "translucent_1_cnd",
-	"weather": "solid_with_depth_and_normal",
-	"clouds": "solid_with_depth_and_normal",
-	"translucentParticles": "translucent_1_cnd"
+	"solidTerrain": "solid_cnd",
+	"translucentTerrain": "translucent_cnd",
+	"translucentEntity": "entity_cnd",
+	"weather": "weather_cnd",
+	"clouds": "cloud_cnd",
+	"translucentParticles": "particle_cnd"
 },
 
 "fabulousTargets": {
-	"entity": "translucent_1_cnd",
-	"particles": "translucent_1_cnd",
-	"weather": "translucent_1_cnd",
-	"clouds": "translucent_1_cd",
-	"translucent": "translucent_1_cd"
+	"entity": "entity_cnd",
+	"particles": "particle_cnd",
+	"weather": "weather_cnd",
+	"clouds": "cloud_cnd",
+	"translucent": "translucent_cnd"
 },
 
-"defaultFramebuffer": "solid_with_depth",
+"defaultFramebuffer": "default_cd",
 
 "programs": [
+	{
+		"name": "sky",
+		"vertexSource": "lomo:shaders/pipeline/full_frame_depth_1.vert",
+		"fragmentSource": "lomo:shaders/pipeline/sky.frag",
+		"samplers": [ "u_solid_d" ]
+	},
 	{
 		"name": "copy",
 		"vertexSource": "lomo:shaders/pipeline/full_frame_depth_1.vert",
@@ -51,9 +57,12 @@
 		"vertexSource": "lomo:shaders/pipeline/full_frame_depth_1.vert",
 		"fragmentSource": "lomo:shaders/pipeline/sort.frag",
 		"samplers": [
-			"u_solid", "u_solid_normal", "u_solid_depth",
-			"u_translucent_0", "u_translucent_0_normal", "u_translucent_0_depth",
-			"u_translucent_1", "u_translucent_1_normal", "u_translucent_1_depth"
+			"u_solid_c", "u_solid_n", "u_solid_d",
+			"u_translucent_c", "u_translucent_n", "u_translucent_d",
+			"u_entity_c", "u_entity_n", "u_entity_d",
+			"u_weather_c", "u_weather_n", "u_weather_d",
+			"u_cloud_c", "u_cloud_n", "u_cloud_d",
+			"u_particle_c", "u_particle_n", "u_particle_d"
 		]
 	},
 	{
@@ -63,15 +72,15 @@
 		"samplers": [ "u_depth_0", "u_depth_1" ]
 	},
 	{
-		"name": "depth_levels_4",
+		"name": "depth_level_4",
 		"vertexSource": "lomo:shaders/pipeline/full_frame_depth_1.vert",
-		"fragmentSource": "lomo:shaders/pipeline/depth_levels_4.frag",
+		"fragmentSource": "lomo:shaders/pipeline/depth_level_4.frag",
 		"samplers": [ "u_depth_0", "u_depth_1" ]
 	},
 	{
-		"name": "depth_levels_16",
+		"name": "depth_level_16",
 		"vertexSource": "lomo:shaders/pipeline/full_frame_depth_1.vert",
-		"fragmentSource": "lomo:shaders/pipeline/depth_levels_16.frag",
+		"fragmentSource": "lomo:shaders/pipeline/depth_level_16.frag",
 		"samplers": [ "u_depth_0", "u_depth_1" ]
 	},
 	{
@@ -89,57 +98,72 @@
 "fabulous": {
 	"passes": [
 		{
+			"name": "sky",
+			"program" : "sky",
+			"framebuffer": "solid_cnd",
+			"samplerImages": [ "solid_d" ]
+		},
+		{
 			"name": "sort",
 			"program": "sort",
-			"framebuffer": "sorted",
+			"framebuffer": "sorted_cnd",
 			"samplerImages": [
-				"solid", "solid_normal", "solid_depth",
-				"translucent_0", "translucent_0_normal", "translucent_0_depth",
-				"translucent_1", "translucent_1_normal", "translucent_1_depth"
+				"solid_c", "solid_n", "solid_d",
+				"translucent_c", "translucent_n", "translucent_d",
+				"entity_c", "entity_n", "entity_d",
+				"weather_c", "weather_n", "weather_d",
+				"cloud_c", "cloud_n", "cloud_d",
+				"particle_c", "particle_n", "particle_d"
 			]
 		},
 		{
-			"name": "depth_0",
+			"name": "level_0",
 			"program": "copy_2_depth",
-			"framebuffer": "depth_level_0",
-			"samplerImages": [ "sorted_depth", "solid_depth" ],
+			"framebuffer": "level_0_d",
+			"samplerImages": [ "sorted_d", "solid_d" ],
 			"lod": 0
 		},
 		{
-			"name": "depth_1",
-			"program": "depth_levels_4",
-			"framebuffer": "depth_level_1",
-			"samplerImages": [ "depth_levels", "solid_depth_levels" ],
+			"name": "level_1",
+			"program": "depth_level_4",
+			"framebuffer": "level_1_d",
+			"samplerImages": [ "level_d", "solid_level_d" ],
 			"lod": 1
 		},
 		{
-			"name": "depth_2",
-			"program": "depth_levels_4",
-			"framebuffer": "depth_level_2",
-			"samplerImages": [ "depth_levels", "solid_depth_levels" ],
+			"name": "level_2",
+			"program": "depth_level_4",
+			"framebuffer": "level_2_d",
+			"samplerImages": [ "level_d", "solid_level_d" ],
 			"lod": 2
 		},
 		{
-			"name": "depth_3",
-			"program": "depth_levels_4",
-			"framebuffer": "depth_level_3",
-			"samplerImages": [ "depth_levels", "solid_depth_levels" ],
+			"name": "level_3",
+			"program": "depth_level_4",
+			"framebuffer": "level_3_d",
+			"samplerImages": [ "level_d", "solid_level_d" ],
 			"lod": 3
 		},
 		{
-			"name": "depth_4",
-			"program": "depth_levels_4",
-			"framebuffer": "depth_level_4",
-			"samplerImages": [ "depth_levels", "solid_depth_levels" ],
+			"name": "level_4",
+			"program": "depth_level_4",
+			"framebuffer": "level_4_d",
+			"samplerImages": [ "level_d", "solid_level_d" ],
 			"lod": 4
 		},
 		{
+			"name": "copy",
+			"program": "copy_with_depth",
+			"framebuffer": "default_cd",
+			"samplerImages": [ "sorted_c", "sorted_d" ]
+		}
+		/*{
 			"name": "post",
 			"program": "post",
 			"framebuffer": "post_result",
 			"samplerImages": [
-				"solid", "solid_normal", "solid_depth_levels",
-				"sorted", "sorted_normal", "depth_levels",
+				"solid", "solid_normal", "solid_depth_level",
+				"sorted", "sorted_normal", "depth_level",
 				"translucent_0"
 			]
 		},
@@ -150,13 +174,13 @@
 			"samplerImages": [
 				"post_result"
 			]
-		}
+		}*/
 	]
 },
 
 "images": [
 	{
-		"name": "solid",
+		"name": "default_c",
 		"texParams": [
 			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
 			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
@@ -165,28 +189,7 @@
 		]
 	},
 	{
-		"name": "post_result",
-		"texParams": [
-			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
-			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
-			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
-			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
-		]
-	},
-	{
-		"name": "solid_normal",
-		"internalFormat": "GL_RGBA16F",
-		"pixelFormat": "RGBA",
-		"pixelDataType": "FLOAT",
-		"texParams": [
-			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
-			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
-			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
-			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
-		]
-	},
-	{
-		"name": "solid_depth",
+		"name": "default_d",
 		"internalFormat": "DEPTH_COMPONENT",
 		"pixelFormat": "DEPTH_COMPONENT",
 		"pixelDataType": "FLOAT",
@@ -199,7 +202,7 @@
 		]
 	},
 	{
-		"name": "translucent_0",
+		"name": "solid_c",
 		"texParams": [
 			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
 			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
@@ -208,7 +211,7 @@
 		]
 	},
 	{
-		"name": "translucent_0_normal",
+		"name": "solid_n",
 		"internalFormat": "GL_RGBA16F",
 		"pixelFormat": "RGBA",
 		"pixelDataType": "FLOAT",
@@ -220,7 +223,7 @@
 		]
 	},
 	{
-		"name": "translucent_0_depth",
+		"name": "solid_d",
 		"internalFormat": "DEPTH_COMPONENT",
 		"pixelFormat": "DEPTH_COMPONENT",
 		"pixelDataType": "FLOAT",
@@ -233,7 +236,7 @@
 		]
 	},
 	{
-		"name": "translucent_1",
+		"name": "translucent_c",
 		"texParams": [
 			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
 			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
@@ -242,7 +245,7 @@
 		]
 	},
 	{
-		"name": "translucent_1_normal",
+		"name": "translucent_n",
 		"internalFormat": "GL_RGBA16F",
 		"pixelFormat": "RGBA",
 		"pixelDataType": "FLOAT",
@@ -254,7 +257,7 @@
 		]
 	},
 	{
-		"name": "translucent_1_depth",
+		"name": "translucent_d",
 		"internalFormat": "DEPTH_COMPONENT",
 		"pixelFormat": "DEPTH_COMPONENT",
 		"pixelDataType": "FLOAT",
@@ -267,7 +270,7 @@
 		]
 	},
 	{
-		"name": "sorted",
+		"name": "entity_c",
 		"texParams": [
 			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
 			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
@@ -276,7 +279,7 @@
 		]
 	},
 	{
-		"name": "sorted_normal",
+		"name": "entity_n",
 		"internalFormat": "GL_RGBA16F",
 		"pixelFormat": "RGBA",
 		"pixelDataType": "FLOAT",
@@ -288,7 +291,143 @@
 		]
 	},
 	{
-		"name": "sorted_depth",
+		"name": "entity_d",
+		"internalFormat": "DEPTH_COMPONENT",
+		"pixelFormat": "DEPTH_COMPONENT",
+		"pixelDataType": "FLOAT",
+		"texParams": [
+			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_COMPARE_MODE", "val": "NONE" }
+		]
+	},
+	{
+		"name": "weather_c",
+		"texParams": [
+			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
+		]
+	},
+	{
+		"name": "weather_n",
+		"internalFormat": "GL_RGBA16F",
+		"pixelFormat": "RGBA",
+		"pixelDataType": "FLOAT",
+		"texParams": [
+			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
+		]
+	},
+	{
+		"name": "weather_d",
+		"internalFormat": "DEPTH_COMPONENT",
+		"pixelFormat": "DEPTH_COMPONENT",
+		"pixelDataType": "FLOAT",
+		"texParams": [
+			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_COMPARE_MODE", "val": "NONE" }
+		]
+	},
+	{
+		"name": "cloud_c",
+		"texParams": [
+			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
+		]
+	},
+	{
+		"name": "cloud_n",
+		"internalFormat": "GL_RGBA16F",
+		"pixelFormat": "RGBA",
+		"pixelDataType": "FLOAT",
+		"texParams": [
+			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
+		]
+	},
+	{
+		"name": "cloud_d",
+		"internalFormat": "DEPTH_COMPONENT",
+		"pixelFormat": "DEPTH_COMPONENT",
+		"pixelDataType": "FLOAT",
+		"texParams": [
+			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_COMPARE_MODE", "val": "NONE" }
+		]
+	},
+	{
+		"name": "sorted_c",
+		"texParams": [
+			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
+		]
+	},
+	{
+		"name": "particle_n",
+		"internalFormat": "GL_RGBA16F",
+		"pixelFormat": "RGBA",
+		"pixelDataType": "FLOAT",
+		"texParams": [
+			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
+		]
+	},
+	{
+		"name": "particle_d",
+		"internalFormat": "DEPTH_COMPONENT",
+		"pixelFormat": "DEPTH_COMPONENT",
+		"pixelDataType": "FLOAT",
+		"texParams": [
+			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_COMPARE_MODE", "val": "NONE" }
+		]
+	},
+	{
+		"name": "particle_c",
+		"texParams": [
+			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
+		]
+	},
+	{
+		"name": "sorted_n",
+		"internalFormat": "GL_RGBA16F",
+		"pixelFormat": "RGBA",
+		"pixelDataType": "FLOAT",
+		"texParams": [
+			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
+		]
+	},
+	{
+		"name": "sorted_d",
 		"internalFormat": "GL_R32F",
 		"pixelFormat": "RED",
 		"pixelDataType": "FLOAT",
@@ -301,7 +440,7 @@
 		]
 	},
 	{
-		"name": "depth_levels",
+		"name": "level_d",
 		"lod": 4,
 		"internalFormat": "GL_R32F",
 		"pixelFormat": "RED",
@@ -314,7 +453,7 @@
 		]
 	},
 	{
-		"name": "solid_depth_levels",
+		"name": "solid_level_d",
 		"lod": 4,
 		"internalFormat": "GL_R32F",
 		"pixelFormat": "RED",
@@ -342,112 +481,126 @@
 
 "framebuffers": [
 	{
-		"name": "solid",
+		"name": "default_c",
 		"colorAttachments": [
-			{ "image": "solid", "clearColor": "c:" }
+			{ "image": "default_c" }
 		]
 	},
 	{
-		"name": "solid_with_depth",
+		"name": "default_cd",
 		"colorAttachments": [
-			{ "image": "solid", "clearColor": "c:" }
+			{ "image": "default_c", "clearColor": "c:" }
 		],
-		"depthAttachment": { "image": "solid_depth", "clearDepth": "c:" }
+		"depthAttachment": { "image": "default_d", "clearDepth": "c:" }
 	},
 	{
-		"name": "solid_with_depth_and_normal",
+		"name": "solid_c",
 		"colorAttachments": [
-			{ "image": "solid", "clearColor": "c:" },
-			{ "image": "solid_normal", "clearColor": "c:" }
+			{ "image": "solid_c" }
+		]
+	},
+	{
+		"name": "solid_cnd",
+		"colorAttachments": [
+			{ "image": "solid_c", "clearColor": "c:" },
+			{ "image": "solid_n", "clearColor": "c:" }
 		],
-		"depthAttachment": { "image": "solid_depth", "clearDepth": "c:" }
+		"depthAttachment": { "image": "solid_d", "clearDepth": "c:" }
 	},
 	{
-		"name": "translucent_0_cd",
+		"name": "entity_cnd",
 		"colorAttachments": [
-			{ "image": "translucent_0", "clearColor": "c:" }
+			{ "image": "entity_c", "clearColor": "c:" },
+			{ "image": "entity_n", "clearColor": "c:" }
 		],
-		"depthAttachment": { "image": "translucent_0_depth", "clearDepth": "c:" }
+		"depthAttachment": { "image": "entity_d", "clearDepth": "c:" }
 	},
 	{
-		"name": "translucent_0_cnd",
+		"name": "weather_cnd",
 		"colorAttachments": [
-			{ "image": "translucent_0", "clearColor": "c:" },
-			{ "image": "translucent_0_normal", "clearColor": "c:" }
+			{ "image": "weather_c", "clearColor": "c:" },
+			{ "image": "weather_n", "clearColor": "c:" }
 		],
-		"depthAttachment": { "image": "translucent_0_depth", "clearDepth": "c:" }
+		"depthAttachment": { "image": "weather_d", "clearDepth": "c:" }
 	},
 	{
-		"name": "translucent_1_cd",
+		"name": "cloud_cnd",
 		"colorAttachments": [
-			{ "image": "translucent_1", "clearColor": "c:" }
+			{ "image": "cloud_c", "clearColor": "c:" },
+			{ "image": "cloud_n", "clearColor": "c:" }
 		],
-		"depthAttachment": { "image": "translucent_1_depth", "clearDepth": "c:" }
+		"depthAttachment": { "image": "cloud_d", "clearDepth": "c:" }
 	},
 	{
-		"name": "translucent_1_cnd",
+		"name": "particle_cnd",
 		"colorAttachments": [
-			{ "image": "translucent_1", "clearColor": "c:" },
-			{ "image": "translucent_1_normal", "clearColor": "c:" }
+			{ "image": "particle_c", "clearColor": "c:" },
+			{ "image": "particle_n", "clearColor": "c:" }
 		],
-		"depthAttachment": { "image": "translucent_1_depth", "clearDepth": "c:" }
+		"depthAttachment": { "image": "particle_d", "clearDepth": "c:" }
 	},
 	{
-		"name": "sorted",
+		"name": "translucent_cnd",
 		"colorAttachments": [
-			{ "image": "sorted", "clearColor": "c:" },
-			{ "image": "sorted_depth", "clearColor": 4294967295 },
-			{ "image": "sorted_normal", "clearColor": "c:" }
+			{ "image": "translucent_c", "clearColor": "c:" },
+			{ "image": "translucent_n", "clearColor": "c:" }
+		],
+		"depthAttachment": { "image": "translucent_d", "clearDepth": "c:" }
+	},
+	{
+		"name": "sorted_cnd",
+		"colorAttachments": [
+			{ "image": "sorted_c", "clearColor": "c:" },
+			{ "image": "sorted_d", "clearColor": 4294967295 },
+			{ "image": "sorted_n", "clearColor": "c:" }
 		]
 	},
 	{
-		"name": "depth_level_0",
+		"name": "level_0_d",
 		"colorAttachments": [
-			{ "image": "depth_levels", "lod": 0 },
-			{ "image": "solid_depth_levels", "lod": 0 }
+			{ "image": "level_d", "lod": 0 },
+			{ "image": "solid_level_d", "lod": 0 }
 		]
 	},
 	{
-		"name": "depth_level_1",
+		"name": "level_1_d",
 		"colorAttachments": [
-			{ "image": "depth_levels", "lod": 1 },
-			{ "image": "solid_depth_levels", "lod": 1 }
+			{ "image": "level_d", "lod": 1 },
+			{ "image": "solid_level_d", "lod": 1 }
 		]
 	},
 	{
-		"name": "depth_level_2",
+		"name": "level_2_d",
 		"colorAttachments": [
-			{ "image": "depth_levels", "lod": 2 },
-			{ "image": "solid_depth_levels", "lod": 2 }
+			{ "image": "level_d", "lod": 2 },
+			{ "image": "solid_level_d", "lod": 2 }
 		]
 	},
 	{
-		"name": "depth_level_3",
+		"name": "level_3",
 		"colorAttachments": [
-			{ "image": "depth_levels", "lod": 3 },
-			{ "image": "solid_depth_levels", "lod": 3 }
+			{ "image": "level_d", "lod": 3 },
+			{ "image": "solid_level_d", "lod": 3 }
 		]
 	},
 	{
-		"name": "depth_level_4",
+		"name": "level_4",
 		"colorAttachments": [
-			{ "image": "depth_levels", "lod": 4 },
-			{ "image": "solid_depth_levels", "lod": 4 }
-		]
-	},
-	{
-		"name": "post_result",
-		"colorAttachments": [
-			{ "image": "post_result", "clearColor": "c:" }, { "image": "lag_finder", "clearColor": "c:" }
+			{ "image": "level_d", "lod": 4 },
+			{ "image": "solid_level_d", "lod": 4 }
 		]
 	}
 ],
 
 "beforeWorldRender": {
 	"passes": [
-		{ "name": "clear_solid", "framebuffer": "solid_with_depth_and_normal", "program": "frex_clear" },
-		{ "name": "clear_translucent_0_cnd", "framebuffer": "translucent_0_cnd", "program": "frex_clear" },
-		{ "name": "clear_translucent_1_cnd", "framebuffer": "translucent_1_cnd", "program": "frex_clear" }
+		{ "name": "clear_default", "framebuffer": "default_cd", "program": "frex_clear" },
+		{ "name": "clear_solid", "framebuffer": "solid_cnd", "program": "frex_clear" },
+		{ "name": "clear_entity", "framebuffer": "entity_cnd", "program": "frex_clear" },
+		{ "name": "clear_translucent", "framebuffer": "translucent_cnd", "program": "frex_clear" },
+		{ "name": "clear_weather", "framebuffer": "weather_cnd", "program": "frex_clear" },
+		{ "name": "clear_cloud", "framebuffer": "cloud_cnd", "program": "frex_clear" },
+		{ "name": "clear_particle", "framebuffer": "particle_cnd", "program": "frex_clear" }
 	]
 }
 

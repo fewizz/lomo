@@ -4,25 +4,37 @@
 
 // lomo:sort.frag
 
-uniform sampler2D u_solid;
-uniform sampler2D u_solid_normal;
-uniform sampler2D u_solid_depth;
+uniform sampler2D u_solid_c;
+uniform sampler2D u_solid_n;
+uniform sampler2D u_solid_d;
 
-uniform sampler2D u_translucent_0;
-uniform sampler2D u_translucent_0_normal;
-uniform sampler2D u_translucent_0_depth;
+uniform sampler2D u_translucent_c;
+uniform sampler2D u_translucent_n;
+uniform sampler2D u_translucent_d;
 
-uniform sampler2D u_translucent_1;
-uniform sampler2D u_translucent_1_normal;
-uniform sampler2D u_translucent_1_depth;
+uniform sampler2D u_entity_c;
+uniform sampler2D u_entity_n;
+uniform sampler2D u_entity_d;
+
+uniform sampler2D u_weather_c;
+uniform sampler2D u_weather_n;
+uniform sampler2D u_weather_d;
+
+uniform sampler2D u_cloud_c;
+uniform sampler2D u_cloud_n;
+uniform sampler2D u_cloud_d;
+
+uniform sampler2D u_particle_c;
+uniform sampler2D u_particle_n;
+uniform sampler2D u_particle_d;
 
 in vec2 vs_uv;
 
-layout(location = 0) out vec4 out_sorted_color;
-layout(location = 1) out vec4 out_sorted_depth;
-layout(location = 2) out vec4 out_sorted_normal;
+layout(location = 0) out vec4 out_sorted_c;
+layout(location = 1) out vec4 out_sorted_d;
+layout(location = 2) out vec4 out_sorted_n;
 
-#define NUM_LAYERS 3
+#define NUM_LAYERS 6
 
 vec4 color_layers[NUM_LAYERS];
 float depth_layers[NUM_LAYERS];
@@ -64,13 +76,17 @@ vec3 blend(vec3 dst, vec4 src) {
 }
 
 void main() {
-	color_layers[0] = vec4(texture(u_solid, vs_uv).rgb, 1.0);
-	depth_layers[0] = texture(u_solid_depth, vs_uv).r;
-	normal_layers[0] = texture(u_solid_normal, vs_uv);
+	color_layers[0] = vec4(texture(u_solid_c, vs_uv).rgb, 1.0);
+	depth_layers[0] = texture(u_solid_d, vs_uv).r;
+	normal_layers[0] = texture(u_solid_n, vs_uv);
+
 	active_layers = 1;
 
-	try_insert(texture(u_translucent_0, vs_uv), texture(u_translucent_0_depth, vs_uv).r, texture(u_translucent_0_normal, vs_uv));
-	try_insert(texture(u_translucent_1, vs_uv), texture(u_translucent_1_depth, vs_uv).r, texture(u_translucent_1_normal, vs_uv));
+	try_insert(texture(u_translucent_c, vs_uv), texture(u_translucent_d, vs_uv).r, texture(u_translucent_n, vs_uv));
+	try_insert(texture(u_entity_c, vs_uv), texture(u_entity_d, vs_uv).r, texture(u_entity_n, vs_uv));
+	try_insert(texture(u_particle_c, vs_uv), texture(u_particle_d, vs_uv).r, texture(u_particle_n, vs_uv));
+	try_insert(texture(u_weather_c, vs_uv), texture(u_weather_d, vs_uv).r, texture(u_weather_n, vs_uv));
+	try_insert(texture(u_cloud_c, vs_uv), texture(u_cloud_d, vs_uv).r, texture(u_cloud_n, vs_uv));
 
 	vec3 accum = color_layers[0].rgb;
 
@@ -78,9 +94,9 @@ void main() {
 		accum = blend(accum, color_layers[i]);
 	}
 
-	out_sorted_color = vec4(accum.rgb, 1.0);
-	out_sorted_depth = vec4(depth_layers[active_layers - 1], 0, 0, 1);
-	out_sorted_normal = normal_layers[active_layers - 1];
+	out_sorted_c = vec4(accum.rgb, 1.0);
+	out_sorted_d = vec4(depth_layers[active_layers - 1], 0, 0, 1);
+	out_sorted_n = normal_layers[active_layers - 1];
 }
 
 

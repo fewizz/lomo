@@ -9,6 +9,7 @@
 #include frex:shaders/api/material.glsl
 #include canvas:basic_light_config
 #include canvas:handheld_light_config
+#include lomo:shaders/lib/sky.glsl
 
 // lomo:lomo.frag
 
@@ -56,6 +57,12 @@ vec4 light(frx_FragmentData fragData) {
 #else
 	result = texture(frxs_lightmap, fragData.light);
 #endif
+
+	//vec3 cam = win_to_cam(gl_FragCoord.xyz);
+	//vec3 dir = normalize(mat3(frx_inverseViewMatrix()) * fragData.vertexNormal);
+	vec3 n = fragData.vertexNormal;
+	n.y += 2.0;
+	result *= vec4(sky_color(normalize(n))*2.0, 1.0);
 
 #if HANDHELD_LIGHT_RADIUS != 0
 	vec4 held = frx_heldLight();

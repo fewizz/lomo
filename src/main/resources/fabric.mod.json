@@ -11,11 +11,8 @@
 	"environment": "client",
 	"entrypoints": { "main": [ "ru.fewizz.lomo.Lomo" ] },
 	"depends": {
-		"fabricloader": ">=0.7.4",
+		"fabricloader": ">=0.11.0",
 		"fabric": "*",
-		"minecraft": "1.17"
-	},
-	"suggests": {
-		"another-mod": "*"
+		"minecraft": "1.17.x"
 	}
 }
