@@ -1,5 +1,4 @@
 #include frex:shaders/api/header.glsl
-#extension GL_ARB_explicit_attrib_location : require
 #include lomo:shaders/lib/transform.glsl
 #include lomo:shaders/lib/math.glsl
 #include frex:shaders/api/view.glsl
@@ -7,19 +6,17 @@
 
 // lomo:post.frag
 
-uniform sampler2D u_solid;
-uniform sampler2D u_solid_normal;
-uniform sampler2D u_solid_depth;
-uniform sampler2D u_sorted;
-uniform sampler2D u_sorted_normal;
-uniform sampler2D u_sorted_depth;
+uniform sampler2D u_solid_c;
+uniform sampler2D u_solid_n;
+uniform sampler2D u_solid_d;
+uniform sampler2D u_sorted_c;
+uniform sampler2D u_sorted_n;
+uniform sampler2D u_sorted_d;
 
-uniform sampler2D u_translucent;
+uniform sampler2D u_translucent_c;
 
-in vec2 vs_uv;
-
-layout(location = 0) out vec4 out_color;
-layout(location = 1) out vec4 out_lag_finder;
+out vec4 out_color;
+out vec4 out_lag_finder;
 
 #define TRAVERSAL_SUCCESS 0
 #define TRAVERSAL_UNDER 1
@@ -273,23 +270,28 @@ void main() {
 	vec4 color = vec4(0);
 	float ratio = 0.0;
 	
-	vec4 normal4 = texture2D(u_sorted_normal, vs_uv);
-	vec4 color0 = texture(u_sorted, vs_uv);
+	vec4 normal4 = texelFetch(u_sorted_n, ivec2(gl_FragCoord.xy), 0);
+	vec4 color0 = texelFetch(u_sorted_c, ivec2(gl_FragCoord.xy), 0);
 
-	if(normal4.a != 0.0) {
-		vec3 normal = normal4.rgb * 2.0 - 1.0;
-		vec3 normal_cs = raw_normal_to_cam(normal);
-
-		float depth_ws = texelFetch(u_sorted_depth, ivec2(gl_FragCoord.xy), 0).r ;
+	if(length(normal4.rgb * 2.0 - 1.0) > 0.9) {
+		float depth_ws = texelFetch(u_sorted_d, ivec2(gl_FragCoord.xy), 0).r ;
 		vec3 position_ws = vec3(gl_FragCoord.xy, depth_ws);
 		vec3 position_cs = win_to_cam(position_ws);
 
-		vec3 incidence_cs = normalize(position_cs);
-		vec3 reflection_dir = normalize(reflect(incidence_cs, normal_cs));
+		vec3 normal = normal4.rgb * 2.0 - 1.0;
+		vec3 normal_cs = raw_normal_to_cam(normal);
+
+		vec3 incidence_cs = normalize(position_cs - win_to_cam(vec3(gl_FragCoord.xy, 0)));
+		vec3 reflection_dir = normalize(
+			reflect(
+				incidence_cs,
+				normal_cs
+			)
+		);
 
 		float refl_coeff = 1.0;
 
-		float tr = texture2D(u_translucent, vs_uv).a;
+		/*float tr = texelFetch(u_translucent_c, ivec2(gl_FragCoord.xy), 0).a;
 
 		if(tr > 0.0 && tr < 1.0) {
 			float n1 = frx_viewFlag(FRX_CAMERA_IN_FLUID) ? 1.3333 : 1.0;
@@ -305,19 +307,19 @@ void main() {
 				pow((n2*cosi - n1*cost) / (n2*cosi + n1*cost), 2.0);
 
 			refl_coeff /= 2.0;
-		}
+		}*/
 
 		if(refl_coeff > 0) {
-			vec3 dir_ws = cam_dir_to_win(position_cs, reflection_dir);
+			vec3 dir_ws = cam_dir_to_win(position_cs, reflection_dir, frx_projectionMatrix);
 
 			// applying z offset, dumb'ish
 			float z_per_xy = dir_ws.z / length(dir_ws.xy);
 			position_ws.z -= abs(z_per_xy)*3;
 
-			fb_traversal_result res = traverse_fb(dir_ws, position_ws, u_sorted_depth);
+			fb_traversal_result res = traverse_fb(dir_ws, position_ws, u_sorted_d);
 
 			if(res.code == TRAVERSAL_SUCCESS || res.code == TRAVERSAL_UNDER) {
-				color = texelFetch(u_sorted, ivec2(res.pos), 0);
+				color = texelFetch(u_sorted_c, ivec2(res.pos), 0);
 				ratio = refl_coeff;
 			}
 		}

@@ -1,5 +1,5 @@
 #include frex:shaders/api/header.glsl
-#extension GL_ARB_explicit_attrib_location : require
+//#extension GL_ARB_explicit_attrib_location : require
 #include canvas:shaders/pipeline/pipeline.glsl
 
 // lomo:sort.frag
@@ -28,11 +28,9 @@ uniform sampler2D u_particle_c;
 uniform sampler2D u_particle_n;
 uniform sampler2D u_particle_d;
 
-in vec2 vs_uv;
-
-layout(location = 0) out vec4 out_sorted_c;
-layout(location = 1) out vec4 out_sorted_d;
-layout(location = 2) out vec4 out_sorted_n;
+out vec4 out_sorted_c;
+out vec4 out_sorted_d;
+out vec4 out_sorted_n;
 
 #define NUM_LAYERS 6
 
@@ -76,17 +74,39 @@ vec3 blend(vec3 dst, vec4 src) {
 }
 
 void main() {
-	color_layers[0] = vec4(texture(u_solid_c, vs_uv).rgb, 1.0);
-	depth_layers[0] = texture(u_solid_d, vs_uv).r;
-	normal_layers[0] = texture(u_solid_n, vs_uv);
+	ivec2 coord = ivec2(gl_FragCoord.xy);
+
+	color_layers[0] = vec4(texelFetch(u_solid_c, coord, 0).rgb, 1.0);
+	depth_layers[0] = texelFetch(u_solid_d, coord, 0).r;
+	normal_layers[0] = texelFetch(u_solid_n, coord, 0);
 
 	active_layers = 1;
 
-	try_insert(texture(u_translucent_c, vs_uv), texture(u_translucent_d, vs_uv).r, texture(u_translucent_n, vs_uv));
-	try_insert(texture(u_entity_c, vs_uv), texture(u_entity_d, vs_uv).r, texture(u_entity_n, vs_uv));
-	try_insert(texture(u_particle_c, vs_uv), texture(u_particle_d, vs_uv).r, texture(u_particle_n, vs_uv));
-	try_insert(texture(u_weather_c, vs_uv), texture(u_weather_d, vs_uv).r, texture(u_weather_n, vs_uv));
-	try_insert(texture(u_cloud_c, vs_uv), texture(u_cloud_d, vs_uv).r, texture(u_cloud_n, vs_uv));
+	try_insert(
+		texelFetch(u_translucent_c, coord, 0),
+		texelFetch(u_translucent_d, coord, 0).r,
+		texelFetch(u_translucent_n, coord, 0)
+	);
+	try_insert(
+		texelFetch(u_entity_c, coord, 0),
+		texelFetch(u_entity_d, coord, 0).r,
+		texelFetch(u_entity_n, coord, 0)
+	);
+	try_insert(
+		texelFetch(u_particle_c, coord, 0),
+		texelFetch(u_particle_d, coord, 0).r,
+		texelFetch(u_particle_n, coord, 0)
+	);
+	try_insert(
+		texelFetch(u_weather_c, coord, 0),
+		texelFetch(u_weather_d, coord, 0).r,
+		texelFetch(u_weather_n, coord, 0)
+	);
+	try_insert(
+		texelFetch(u_cloud_c, coord, 0),
+		texelFetch(u_cloud_d, coord, 0).r,
+		texelFetch(u_cloud_n, coord, 0)
+	);
 
 	vec3 accum = color_layers[0].rgb;
 

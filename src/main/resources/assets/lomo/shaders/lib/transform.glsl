@@ -34,54 +34,67 @@ vec3 ndc_to_win(vec3 ndc) {
 	);
 }
 
-vec4 cam_to_ndc(vec4 cam) {
-	return frx_projectionMatrix() * cam;
+vec4 cam_to_ndc(vec4 cam, mat4 projMat) {
+	return projMat * cam;
 }
 
-vec3 cam_to_ndc(vec3 cam) {
-	vec4 res = cam_to_ndc(vec4(cam, 1.0));
+vec4 cam_to_ndc(vec4 cam) {
+	return cam_to_ndc(cam, frx_projectionMatrix);
+}
+
+vec3 cam_to_ndc(vec3 cam, mat4 projMat) {
+	vec4 res = cam_to_ndc(vec4(cam, 1.0), projMat);
 	return res.xyz / res.w;
 }
 
-vec3 ndc_to_cam(vec3 ndc) {
-	vec4 v = frx_inverseProjectionMatrix() * vec4(ndc, 1.0);
+vec3 cam_to_ndc(vec3 cam) {
+	return cam_to_ndc(cam, frx_projectionMatrix);
+}
+
+vec3 ndc_to_cam(vec3 ndc, mat4 invProj) {
+	vec4 v = invProj * vec4(ndc, 1.0);
 	return v.xyz / v.w;
 }
 
+vec3 ndc_to_cam(vec3 ndc) {
+	return ndc_to_cam(ndc, frx_inverseProjectionMatrix);
+}
+
+vec3 win_to_cam(vec3 win, mat4 invProj) {
+	return ndc_to_cam(win_to_ndc(win), invProj);
+}
+
 vec3 win_to_cam(vec3 win) {
-	return ndc_to_cam(win_to_ndc(win));
+	return win_to_cam(win, frx_inverseProjectionMatrix);
+}
+
+vec3 cam_to_win(vec3 cam, mat4 projMat) {
+	return ndc_to_win(cam_to_ndc(cam, projMat));
 }
 
 vec3 cam_to_win(vec3 cam) {
-	return ndc_to_win(cam_to_ndc(cam));
+	return cam_to_win(cam, frx_projectionMatrix);
 }
 
-vec4 mat_row(mat4 m, int r) {
-	return vec4(m[0][r], m[1][r], m[2][r], m[3][r]);
+vec3 cam_dir_to_win(vec3 pos_cs, vec3 dir_cs, mat4 projMat) {
+	vec4 pos_c = projMat * vec4(pos_cs, 1.0);
+	vec4 pos_dir_c = projMat * vec4(pos_cs + dir_cs, 1.0);
+	vec3 X =
+	  pos_dir_c.xyz / pos_dir_c.w
+	  -
+	  pos_c.xyz / pos_c.w;
+
+	X.xy *= vec2(frxu_size);
+
+	return normalize(X);
 }
 
-// some dark magic
-// TODO broken
-vec3 cam_dir_to_win(vec3 pos_cs, vec3 dir_cs) {
-	mat4 proj = frx_projectionMatrix();
-
-	vec4 las_row = mat_row(proj, 3);
-
-	float aw = dot(vec4(pos_cs, 1.0), las_row);
-	float bw = dot(vec4(dir_cs, 0.0), las_row);
-
-	vec4 res = proj * vec4(-bw * pos_cs + dir_cs * aw, -bw);
-
+vec3 raw_normal_to_cam(vec3 raw_normal, mat4 viewMat) {
 	return normalize(
-		vec3(
-			res.xy * frxu_size,
-			res.z
-		)
+		(mat3(viewMat) * vec3(raw_normal))
 	);
 }
 
 vec3 raw_normal_to_cam(vec3 raw_normal) {
-	return normalize(
-		mat3(frx_viewMatrix()) * raw_normal
-	);
+	return raw_normal_to_cam(raw_normal, frx_viewMatrix);
 }

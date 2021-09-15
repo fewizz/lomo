@@ -15,7 +15,7 @@ float lomo_water_h(vec3 pos) {
 	) / 48.0;
 }
 
-void frx_startFragment(inout frx_FragmentData fragData) {
+void frx_materialFragment() {
 	vec3 pos = frx_vertex.xyz / frx_vertex.w + frx_modelOriginWorldPos();
 
 	float y_orig = lomo_water_h(pos);
@@ -24,10 +24,10 @@ void frx_startFragment(inout frx_FragmentData fragData) {
 	x_off.y += lomo_water_h(pos + x_off) - y_orig;
 	z_off.y += lomo_water_h(pos + z_off) - y_orig;
 
-	fragData.vertexNormal = normalize(cross(z_off, x_off));
+	frx_vertexNormal = normalize(cross(z_off, x_off));
 
-	fragData.spriteColor = fragData.spriteColor*0.25 + vec4(0, 1, 1, 0)*0.75;
-	fragData.spriteColor.a = 0.4;
+	frx_fragColor = frx_vertexColor*0.25 + vec4(0, 1, 1, 0)*0.75;
+	frx_vertexColor.a = 0.4;
 
 	reflectivity = 1.0;
 }

@@ -19,6 +19,12 @@ out vec4 out_data[2];
 varying vec4 shadowPos;
 #endif
 
+#if HANDHELD_LIGHT_RADIUS != 0
+flat in float _cvInnerAngle;
+flat in float _cvOuterAngle;
+in vec4 _cvViewVertex;
+#endif
+
 #if AO_SHADING_MODE != AO_MODE_NONE
 vec4 aoFactor(vec2 lightCoord, float ao) {
 
@@ -43,33 +49,39 @@ vec4 aoFactor(vec2 lightCoord, float ao) {
 }
 #endif
 
-vec4 light(frx_FragmentData fragData) {
+vec4 light() {
 	vec4 result;
 
 #if DIFFUSE_SHADING_MODE == DIFFUSE_MODE_SKY_ONLY
-	if (fragData.diffuse) {
-		vec4 block = texture(frxs_lightmap, vec2(fragData.light.x, 0.03125));
-		vec4 sky = texture(frxs_lightmap, vec2(0.03125, fragData.light.y));
+	if (frx_fragEnableDiffuse) {
+		vec4 block = texture(frxs_lightmap, vec2(frx_fragLight.x, 0.03125));
+		vec4 sky = texture(frxs_lightmap, vec2(0.03125, frx_fragLight.y));
 		result = max(block, sky * pv_diffuse);
 	} else {
-		result = texture(frxs_lightmap, fragData.light);
+		result = texture(frxs_lightmap, frx_fragLight.xy);
 	}
 #else
-	result = texture(frxs_lightmap, fragData.light);
+	result = texture(frxs_lightmap, frx_fragLight.xy);
 #endif
 
-	//vec3 cam = win_to_cam(gl_FragCoord.xyz);
-	//vec3 dir = normalize(mat3(frx_inverseViewMatrix()) * fragData.vertexNormal);
-	vec3 n = fragData.vertexNormal;
-	n.y += 2.0;
-	result *= vec4(sky_color(normalize(n))*2.0, 1.0);
-
 #if HANDHELD_LIGHT_RADIUS != 0
-	vec4 held = frx_heldLight();
+	vec4 held = frx_heldLight;
 
-	if (held.w > 0.0 && !frx_isGui()) {
+	if (held.w > 0.0 && (!frx_isGui || frx_isHand)) {
 		float d = clamp(frx_distance / (held.w * HANDHELD_LIGHT_RADIUS), 0.0, 1.0);
 		d = 1.0 - d * d;
+
+		// handle spot lights
+		if (_cvInnerAngle != 0.0) {
+			float distSq = _cvViewVertex.x * _cvViewVertex.x + _cvViewVertex.y * _cvViewVertex.y;
+			float innerLimitSq = _cvInnerAngle * frx_distance;
+			innerLimitSq *= innerLimitSq;
+			float outerLimitSq = _cvOuterAngle * frx_distance;
+			outerLimitSq *= outerLimitSq;
+
+			d = distSq < innerLimitSq ? d :
+					distSq < outerLimitSq ? d * (1.0 - (distSq - innerLimitSq) / (outerLimitSq - innerLimitSq)) : 0.0;
+		}
 
 		vec4 maxBlock = texture(frxs_lightmap, vec2(0.96875, 0.03125));
 
@@ -82,68 +94,41 @@ vec4 light(frx_FragmentData fragData) {
 	return result;
 }
 
-frx_FragmentData frx_createPipelineFragment() {
-#ifdef VANILLA_LIGHTING
-	return frx_FragmentData (
-		texture(frxs_baseColor, frx_texcoord, frx_matUnmippedFactor() * -4.0),
-		frx_color,
-		frx_matEmissive() ? 1.0 : 0.0,
-		!frx_matDisableDiffuse(),
-		!frx_matDisableAo(),
-		frx_normal,
-		pv_lightcoord,
-		pv_ao
-	);
-#else
-	return frx_FragmentData (
-		texture2D(frxs_baseColor, frx_texcoord, frx_matUnmippedFactor() * -4.0),
-		frx_color,
-		frx_matEmissive() ? 1.0 : 0.0,
-		!frx_matDisableDiffuse(),
-		!frx_matDisableAo(),
-		frx_normal
-	);
-#endif
-}
+void frx_pipelineFragment() {
+	vec4 a = frx_fragColor;
 
-void frx_writePipelineFragment(in frx_FragmentData fragData) {
-	vec4 a = fragData.spriteColor * fragData.vertexColor;
-
-	if (frx_isGui() && !frx_isHand()) {
-		if (fragData.diffuse) {
-			float df = p_diffuseGui(frx_normal);
-			df = df + (1.0 - df) * fragData.emissivity;
+	if (frx_isGui && !frx_isHand) {
+		if (frx_fragEnableDiffuse) {
+			float df = p_diffuseGui(frx_vertexNormal);
+			df = df + (1.0 - df) * frx_fragEmissive;
 			a *= vec4(df, df, df, 1.0);
 		}
 	} else {
-		// TODO: put back
-		a *= mix(light(fragData), frx_emissiveColor(), fragData.emissivity);
+		a *= mix(light(), frx_emissiveColor, frx_fragEmissive);
 
 	#if AO_SHADING_MODE != AO_MODE_NONE
-		if (fragData.ao) {
-			a *= aoFactor(fragData.light, fragData.aoShade);
-		}
+		a *= frx_fragEnableAo ? aoFactor(frx_fragLight.xy, frx_fragLight.z) : vec4(1.0);
 	#endif
 
 	#if DIFFUSE_SHADING_MODE == DIFFUSE_MODE_NORMAL
-		if (fragData.diffuse) {
-			float df = pv_diffuse + (1.0 - pv_diffuse) * fragData.emissivity;
+		if (frx_fragEnableDiffuse) {
+			float df = pv_diffuse + (1.0 - pv_diffuse) * frx_fragEmissive;
 
 			a *= vec4(df, df, df, 1.0);
 		}
 	#endif
 	}
 
-	if (frx_matFlash()) {
+	if (frx_matFlash == 1) {
 		a = a * 0.25 + 0.75;
-	} else if (frx_matHurt()) {
+	} else if (frx_matHurt == 1) {
 		a = vec4(0.25 + a.r * 0.75, a.g * 0.75, a.b * 0.75, a.a);
 	}
 
-	glintify(a, frx_matGlint());
+	glintify(a, float(frx_matGlint));
 
 	out_data[0] = p_fog(a);
-	out_data[1] = vec4(fragData.vertexNormal * 0.5 + 0.5, reflectivity);
+	out_data[1] = vec4(frx_vertexNormal * 0.5 + 0.5, reflectivity);
 
 	gl_FragDepth = gl_FragCoord.z;
 }

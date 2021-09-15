@@ -1,5 +1,5 @@
 plugins {
-	id "fabric-loom" version "0.8-SNAPSHOT"
+	id "fabric-loom" version "0.10-SNAPSHOT"
 }
 
 repositories {
@@ -26,7 +26,7 @@ dependencies {
 	modImplementation("grondag:canvas-mc117-1.17:${project.canvas_version}") {
 		exclude module: "modmenu"
 	}
-	modImplementation "grondag:bitraster:1.0.7"
+	modImplementation "grondag:bitraster:1.5.47"
 
 	modImplementation "com.terraformersmc:modmenu:${project.modmenu_version}"
 }

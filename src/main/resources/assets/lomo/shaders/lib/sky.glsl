@@ -65,7 +65,7 @@ mat3 rotate(float angle, vec3 v) {
 }
 
 vec3 sky_color(vec3 dir) {
-	float t = frx_skyAngleRadians() + 3.14 / 2.0;
+	float t = frx_skyAngleRadians + 3.14 / 2.0;
 
 	float h = 6400000;
 

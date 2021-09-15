@@ -1,5 +1,4 @@
 #include frex:shaders/api/header.glsl
-#extension GL_ARB_explicit_attrib_location : require
 #include canvas:shaders/pipeline/pipeline.glsl
 
 /* lomo:depth_levels_4.frag */
@@ -7,10 +6,8 @@
 uniform sampler2D u_depth_0;
 uniform sampler2D u_depth_1;
 
-in vec2 vs_uv;
-
-layout(location = 0) out vec4 out_depth_0;
-layout(location = 1) out vec4 out_depth_1;
+out vec4 out_depth_0;
+out vec4 out_depth_1;
 
 float depth(sampler2D s) {
 	int lod = frxu_lod;

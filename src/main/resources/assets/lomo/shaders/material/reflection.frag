@@ -4,6 +4,6 @@
 
 // lomo:material/reflection.frag
 
-void frx_startFragment(inout frx_FragmentData fragData) {
+void frx_materialFragment() {
 	reflectivity = 1.0;
 }

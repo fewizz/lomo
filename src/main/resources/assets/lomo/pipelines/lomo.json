@@ -88,9 +88,9 @@
 		"vertexSource": "lomo:shaders/pipeline/full_frame_depth_1.vert",
 		"fragmentSource": "lomo:shaders/pipeline/post.frag",
 		"samplers": [
-			"u_solid", "u_solid_normal", "u_solid_depth",
-			"u_sorted", "u_sorted_normal", "u_sorted_depth",
-			"u_translucent"
+			"u_solid_c", "u_solid_n", "u_solid_d",
+			"u_sorted_c", "u_sorted_n", "u_sorted_d",
+			"u_translucent_c"
 		]
 	}
 ],
@@ -156,18 +156,18 @@
 			"program": "copy_with_depth",
 			"framebuffer": "default_cd",
 			"samplerImages": [ "sorted_c", "sorted_d" ]
-		}
-		/*{
-			"name": "post",
-			"program": "post",
-			"framebuffer": "post_result",
-			"samplerImages": [
-				"solid", "solid_normal", "solid_depth_level",
-				"sorted", "sorted_normal", "depth_level",
-				"translucent_0"
-			]
 		},
 		{
+			"name": "post",
+			"program": "post",
+			"framebuffer": "post",
+			"samplerImages": [
+				"solid_c", "solid_n", "solid_level_d",
+				"sorted_c", "sorted_n", "level_d",
+				"translucent_c"
+			]
+		}
+		/*{
 			"name": "copy_result",
 			"program": "copy",
 			"framebuffer": "solid",
@@ -476,6 +476,15 @@
 			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
 			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
 		]
+	},
+	{
+		"name": "post_c",
+		"texParams": [
+			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
+		]
 	}
 ],
 
@@ -577,17 +586,24 @@
 		]
 	},
 	{
-		"name": "level_3",
+		"name": "level_3_d",
 		"colorAttachments": [
 			{ "image": "level_d", "lod": 3 },
 			{ "image": "solid_level_d", "lod": 3 }
 		]
 	},
 	{
-		"name": "level_4",
+		"name": "level_4_d",
 		"colorAttachments": [
 			{ "image": "level_d", "lod": 4 },
 			{ "image": "solid_level_d", "lod": 4 }
+		]
+	},
+	{
+		"name": "post",
+		"colorAttachments": [
+			{ "image": "post_c" },
+			{ "image": "lag_finder" }
 		]
 	}
 ],
