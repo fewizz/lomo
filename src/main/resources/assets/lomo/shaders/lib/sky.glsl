@@ -24,10 +24,8 @@ vec2 ray_sphere_distance(ray r, sphere s) {
 
 	if(d >= 0) {
 		float xl = (-b - sqrt(d)) / (2.0 * a);
-		//if(xl > 0) return xl;
 
 		float xr = (-b + sqrt(d)) / (2.0 * a);
-		//if(xr > 0) return xr;
 		return vec2(xl, xr);
 	}
 

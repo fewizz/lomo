@@ -2,6 +2,7 @@
 
 "nameKey": "pipeline.lomo.name",
 "descriptionKey": "pipeline.canvas_basic.desc",
+"enablePBR": true,
 
 "include": [
 	"canvas:pipeline/basic_light_config.json",
@@ -31,7 +32,7 @@
 	"translucent": "translucent_cnd"
 },
 
-"defaultFramebuffer": "default_cd",
+"defaultFramebuffer": "solid_cd",
 
 "programs": [
 	{
@@ -97,12 +98,12 @@
 
 "fabulous": {
 	"passes": [
-		{
+		/*{
 			"name": "sky",
 			"program" : "sky",
-			"framebuffer": "solid_cnd",
+			"framebuffer": "sky_c",
 			"samplerImages": [ "solid_d" ]
-		},
+		},*/
 		{
 			"name": "sort",
 			"program": "sort",
@@ -152,15 +153,9 @@
 			"lod": 4
 		},
 		{
-			"name": "copy",
-			"program": "copy_with_depth",
-			"framebuffer": "default_cd",
-			"samplerImages": [ "sorted_c", "sorted_d" ]
-		},
-		{
 			"name": "post",
 			"program": "post",
-			"framebuffer": "post",
+			"framebuffer": "solid_c",
 			"samplerImages": [
 				"solid_c", "solid_n", "solid_level_d",
 				"sorted_c", "sorted_n", "level_d",
@@ -179,7 +174,7 @@
 },
 
 "images": [
-	{
+	/*{
 		"name": "default_c",
 		"texParams": [
 			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
@@ -187,8 +182,8 @@
 			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
 			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
 		]
-	},
-	{
+	},*/
+	/*{
 		"name": "default_d",
 		"internalFormat": "DEPTH_COMPONENT",
 		"pixelFormat": "DEPTH_COMPONENT",
@@ -200,7 +195,7 @@
 			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" },
 			{ "name": "TEXTURE_COMPARE_MODE", "val": "NONE" }
 		]
-	},
+	},*/
 	{
 		"name": "solid_c",
 		"texParams": [
@@ -414,6 +409,15 @@
 			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
 		]
 	},
+	/*{
+		"name": "sky_c",
+		"texParams": [
+			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
+		]
+	},*/
 	{
 		"name": "sorted_n",
 		"internalFormat": "GL_RGBA16F",
@@ -489,7 +493,7 @@
 ],
 
 "framebuffers": [
-	{
+	/*{
 		"name": "default_c",
 		"colorAttachments": [
 			{ "image": "default_c" }
@@ -501,12 +505,19 @@
 			{ "image": "default_c", "clearColor": "c:" }
 		],
 		"depthAttachment": { "image": "default_d", "clearDepth": "c:" }
-	},
+	},*/
 	{
 		"name": "solid_c",
 		"colorAttachments": [
 			{ "image": "solid_c" }
 		]
+	},
+	{
+		"name": "solid_cd",
+		"colorAttachments": [
+			{ "image": "solid_c" }
+		],
+		"depthAttachment": { "image": "solid_d", "clearDepth": "c:" }
 	},
 	{
 		"name": "solid_cnd",
@@ -605,12 +616,18 @@
 			{ "image": "post_c" },
 			{ "image": "lag_finder" }
 		]
-	}
+	}/*,
+	{
+		"name": "sky_c",
+		"colorAttachments": [
+			{ "image": "sky_c" }
+		]
+	}*/
 ],
 
 "beforeWorldRender": {
 	"passes": [
-		{ "name": "clear_default", "framebuffer": "default_cd", "program": "frex_clear" },
+		//{ "name": "clear_default", "framebuffer": "default_cd", "program": "frex_clear" },
 		{ "name": "clear_solid", "framebuffer": "solid_cnd", "program": "frex_clear" },
 		{ "name": "clear_entity", "framebuffer": "entity_cnd", "program": "frex_clear" },
 		{ "name": "clear_translucent", "framebuffer": "translucent_cnd", "program": "frex_clear" },

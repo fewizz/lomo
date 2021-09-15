@@ -128,7 +128,16 @@ void frx_pipelineFragment() {
 	glintify(a, float(frx_matGlint));
 
 	out_data[0] = p_fog(a);
-	out_data[1] = vec4(frx_vertexNormal * 0.5 + 0.5, reflectivity);
+	if(
+		frx_renderTargetSolid ||
+		frx_renderTargetTranslucent ||
+		frx_renderTargetParticles ||
+		frx_renderTargetEntity
+	)
+		out_data[1] = vec4(frx_fragNormal * 0.5 + 0.5, reflectivity);
+	else {
+		out_data[1] = vec4(0);
+	}
 
 	gl_FragDepth = gl_FragCoord.z;
 }

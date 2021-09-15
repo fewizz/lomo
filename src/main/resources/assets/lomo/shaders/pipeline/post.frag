@@ -16,7 +16,7 @@ uniform sampler2D u_sorted_d;
 uniform sampler2D u_translucent_c;
 
 out vec4 out_color;
-out vec4 out_lag_finder;
+//out vec4 out_lag_finder;
 
 #define TRAVERSAL_SUCCESS 0
 #define TRAVERSAL_UNDER 1
@@ -223,7 +223,6 @@ fb_traversal_result __name (vec3 dir, vec3 pos_ws, sampler2D s) { \
 		} \
 		if(is_out_of_fb(pos)) return fb_traversal_result(TRAVERSAL_OUT_OF_FB, uvec2(0u), 0.0); \
 		if(++steps == 100) { \
-			out_lag_finder = vec4(1.0, 0.0, 0.0, 0.0); \
 			return fb_traversal_result(TRAVERSAL_TOO_LONG, uvec2(0u), 0.0); \
 		} \
 	} \
@@ -266,14 +265,14 @@ fb_traversal_result traverse_fb(vec3 dir, vec3 pos, sampler2D s) {
 }
 
 void main() {
-	out_lag_finder = vec4(0.0, 0.0, 0.0, 0.0);
+	//out_lag_finder = vec4(0.0, 0.0, 0.0, 0.0);
 	vec4 color = vec4(0);
 	float ratio = 0.0;
 	
 	vec4 normal4 = texelFetch(u_sorted_n, ivec2(gl_FragCoord.xy), 0);
 	vec4 color0 = texelFetch(u_sorted_c, ivec2(gl_FragCoord.xy), 0);
 
-	if(length(normal4.rgb * 2.0 - 1.0) > 0.9) {
+	if(normal4.a > 0.01) {
 		float depth_ws = texelFetch(u_sorted_d, ivec2(gl_FragCoord.xy), 0).r ;
 		vec3 position_ws = vec3(gl_FragCoord.xy, depth_ws);
 		vec3 position_cs = win_to_cam(position_ws);
@@ -291,9 +290,10 @@ void main() {
 
 		float refl_coeff = 1.0;
 
-		/*float tr = texelFetch(u_translucent_c, ivec2(gl_FragCoord.xy), 0).a;
+		float solid_depth_ws = texelFetch(u_solid_d, ivec2(gl_FragCoord.xy), 0).r ;
+		float tr = texelFetch(u_translucent_c, ivec2(gl_FragCoord.xy), 0).a;
 
-		if(tr > 0.0 && tr < 1.0) {
+		if(solid_depth_ws > depth_ws && tr > 0.0 && tr < 1.0) {
 			float n1 = frx_viewFlag(FRX_CAMERA_IN_FLUID) ? 1.3333 : 1.0;
 			float n2 = frx_viewFlag(FRX_CAMERA_IN_FLUID) ? 1.0 : 1.3333;
 			vec3 refraction_dir = refract(incidence_cs, normal_cs, n1 / n2);
@@ -304,10 +304,11 @@ void main() {
 			refl_coeff =
 				pow((n1*cosi - n2*cost) / (n1*cosi + n2*cost), 2.0)
 				+
-				pow((n2*cosi - n1*cost) / (n2*cosi + n1*cost), 2.0);
+				pow((n2*cosi - n1*cost) / (n2*cosi + n1*cost), 2.0)
+			;
 
-			refl_coeff /= 2.0;
-		}*/
+			refl_coeff = clamp(refl_coeff, 0.0, 1.0);
+		}
 
 		if(refl_coeff > 0) {
 			vec3 dir_ws = cam_dir_to_win(position_cs, reflection_dir, frx_projectionMatrix);
@@ -320,7 +321,9 @@ void main() {
 
 			if(res.code == TRAVERSAL_SUCCESS || res.code == TRAVERSAL_UNDER) {
 				color = texelFetch(u_sorted_c, ivec2(res.pos), 0);
-				ratio = refl_coeff;
+				vec2 dist_to_border = vec2(1.0) - abs(vec2(res.pos) / vec2(frxu_size) * 2.0 - 1.0);
+				float min_dist_to_border = min(dist_to_border.x, dist_to_border.y);
+				ratio = refl_coeff * pow(min_dist_to_border, 0.3);
 			}
 		}
 	}
