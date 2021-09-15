@@ -21,16 +21,21 @@ uniform sampler2D u_weather_n;
 uniform sampler2D u_weather_d;
 
 uniform sampler2D u_cloud_c;
-uniform sampler2D u_cloud_n;
 uniform sampler2D u_cloud_d;
 
 uniform sampler2D u_particle_c;
 uniform sampler2D u_particle_n;
 uniform sampler2D u_particle_d;
 
-out vec4 out_sorted_c;
-out vec4 out_sorted_d;
-out vec4 out_sorted_n;
+out vec4 out_sorted_without_translucent_c;
+out vec4 out_sorted_without_translucent_n;
+out vec4 out_sorted_without_translucent_d;
+
+out vec4 out_sorted_with_translucent_c;
+out vec4 out_sorted_with_translucent_n;
+out vec4 out_sorted_with_translucent_d;
+
+out vec4 out_sorted_all_c;
 
 #define NUM_LAYERS 6
 
@@ -73,6 +78,16 @@ vec3 blend(vec3 dst, vec4 src) {
 	return (dst * (1.0 - src.a)) + src.rgb;
 }
 
+vec3 accum() {
+	vec3 r = color_layers[0].rgb;
+
+	for (int i = 1; i < active_layers; ++i) {
+		r = blend(r, color_layers[i]);
+	}
+
+	return r;
+}
+
 void main() {
 	ivec2 coord = ivec2(gl_FragCoord.xy);
 
@@ -83,15 +98,30 @@ void main() {
 	active_layers = 1;
 
 	try_insert(
-		texelFetch(u_translucent_c, coord, 0),
-		texelFetch(u_translucent_d, coord, 0).r,
-		texelFetch(u_translucent_n, coord, 0)
-	);
-	try_insert(
 		texelFetch(u_entity_c, coord, 0),
 		texelFetch(u_entity_d, coord, 0).r,
 		texelFetch(u_entity_n, coord, 0)
 	);
+	try_insert(
+		texelFetch(u_cloud_c, coord, 0),
+		texelFetch(u_cloud_d, coord, 0).r,
+		vec4(0)
+	);
+
+	out_sorted_without_translucent_c = vec4(accum(), 1.0);
+	out_sorted_without_translucent_n = normal_layers[active_layers - 1];
+	out_sorted_without_translucent_d = vec4(depth_layers[active_layers - 1], 0, 0, 1);
+
+	try_insert(
+		texelFetch(u_translucent_c, coord, 0),
+		texelFetch(u_translucent_d, coord, 0).r,
+		texelFetch(u_translucent_n, coord, 0)
+	);
+
+	out_sorted_with_translucent_c = vec4(accum(), 1.0);
+	out_sorted_with_translucent_n = normal_layers[active_layers - 1];
+	out_sorted_with_translucent_d = vec4(depth_layers[active_layers - 1], 0, 0, 1);
+
 	try_insert(
 		texelFetch(u_particle_c, coord, 0),
 		texelFetch(u_particle_d, coord, 0).r,
@@ -102,21 +132,8 @@ void main() {
 		texelFetch(u_weather_d, coord, 0).r,
 		texelFetch(u_weather_n, coord, 0)
 	);
-	try_insert(
-		texelFetch(u_cloud_c, coord, 0),
-		texelFetch(u_cloud_d, coord, 0).r,
-		texelFetch(u_cloud_n, coord, 0)
-	);
 
-	vec3 accum = color_layers[0].rgb;
-
-	for (int i = 1; i < active_layers; ++i) {
-		accum = blend(accum, color_layers[i]);
-	}
-
-	out_sorted_c = vec4(accum.rgb, 1.0);
-	out_sorted_d = vec4(depth_layers[active_layers - 1], 0, 0, 1);
-	out_sorted_n = normal_layers[active_layers - 1];
+	out_sorted_all_c = vec4(accum(), 1.0);
 }
 
 

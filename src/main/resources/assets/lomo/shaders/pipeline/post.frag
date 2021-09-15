@@ -6,12 +6,15 @@
 
 // lomo:post.frag
 
-uniform sampler2D u_solid_c;
-uniform sampler2D u_solid_n;
-uniform sampler2D u_solid_d;
-uniform sampler2D u_sorted_c;
-uniform sampler2D u_sorted_n;
-uniform sampler2D u_sorted_d;
+uniform sampler2D u_sorted_without_translucent_c;
+uniform sampler2D u_sorted_without_translucent_n;
+uniform sampler2D u_sorted_without_translucent_d;
+
+uniform sampler2D u_sorted_with_translucent_c;
+uniform sampler2D u_sorted_with_translucent_n;
+uniform sampler2D u_sorted_with_translucent_d;
+
+uniform sampler2D u_sorted_all_c;
 
 uniform sampler2D u_translucent_c;
 
@@ -269,11 +272,11 @@ void main() {
 	vec4 color = vec4(0);
 	float ratio = 0.0;
 	
-	vec4 normal4 = texelFetch(u_sorted_n, ivec2(gl_FragCoord.xy), 0);
-	vec4 color0 = texelFetch(u_sorted_c, ivec2(gl_FragCoord.xy), 0);
+	vec4 normal4 = texelFetch(u_sorted_with_translucent_n, ivec2(gl_FragCoord.xy), 0);
+	vec4 color0 = texelFetch(u_sorted_with_translucent_c, ivec2(gl_FragCoord.xy), 0);
 
 	if(normal4.a > 0.01) {
-		float depth_ws = texelFetch(u_sorted_d, ivec2(gl_FragCoord.xy), 0).r ;
+		float depth_ws = texelFetch(u_sorted_with_translucent_d, ivec2(gl_FragCoord.xy), 0).r ;
 		vec3 position_ws = vec3(gl_FragCoord.xy, depth_ws);
 		vec3 position_cs = win_to_cam(position_ws);
 
@@ -290,7 +293,7 @@ void main() {
 
 		float refl_coeff = 1.0;
 
-		float solid_depth_ws = texelFetch(u_solid_d, ivec2(gl_FragCoord.xy), 0).r ;
+		float solid_depth_ws = texelFetch(u_sorted_without_translucent_d, ivec2(gl_FragCoord.xy), 0).r ;
 		float tr = texelFetch(u_translucent_c, ivec2(gl_FragCoord.xy), 0).a;
 
 		if(solid_depth_ws > depth_ws && tr > 0.0 && tr < 1.0) {
@@ -318,15 +321,18 @@ void main() {
 			float z_per_xy = dir_ws.z / length(dir_ws.xy);
 			position_ws.z -= abs(z_per_xy)*3;
 
-			fb_traversal_result res = traverse_fb(dir_ws, position_ws, u_sorted_d);
+			fb_traversal_result res = traverse_fb(dir_ws, position_ws, u_sorted_with_translucent_d);
 
 			if(res.code == TRAVERSAL_SUCCESS || res.code == TRAVERSAL_UNDER) {
-				color = texelFetch(u_sorted_c, ivec2(res.pos), 0);
+				color = texelFetch(u_sorted_with_translucent_c, ivec2(res.pos), 0);
 				vec2 dist_to_border = vec2(1.0) - abs(vec2(res.pos) / vec2(frxu_size) * 2.0 - 1.0);
 				float min_dist_to_border = min(dist_to_border.x, dist_to_border.y);
 				ratio = refl_coeff * pow(min_dist_to_border, 0.3);
 			}
 		}
+	}
+	else {
+		color0 = texelFetch(u_sorted_all_c, ivec2(gl_FragCoord.xy), 0);
 	}
 
 	out_color = mix(color0, color, ratio);
