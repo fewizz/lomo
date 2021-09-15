@@ -20,7 +20,7 @@
 	"translucentTerrain": "translucent_cnd",
 	"translucentEntity": "entity_cnd",
 	"weather": "weather_cnd",
-	"clouds": "cloud_cnd",
+	"clouds": "cloud_cd",
 	"translucentParticles": "particle_cnd"
 },
 
@@ -28,7 +28,7 @@
 	"entity": "entity_cnd",
 	"particles": "particle_cnd",
 	"weather": "weather_cnd",
-	"clouds": "cloud_cnd",
+	"clouds": "cloud_cd",
 	"translucent": "translucent_cnd"
 },
 
@@ -548,6 +548,13 @@
 		"colorAttachments": [
 			{ "image": "cloud_c", "clearColor": "c:" },
 			{ "image": "cloud_n", "clearColor": "c:" }
+		],
+		"depthAttachment": { "image": "cloud_d", "clearDepth": "c:" }
+	},
+	{
+		"name": "cloud_cd",
+		"colorAttachments": [
+			{ "image": "cloud_c", "clearColor": "c:" }
 		],
 		"depthAttachment": { "image": "cloud_d", "clearDepth": "c:" }
 	},

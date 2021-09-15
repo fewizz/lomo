@@ -6,4 +6,5 @@
 
 void frx_materialFragment() {
 	reflectivity = 1.0;
+	frx_fragNormal = frx_vertexNormal;
 }

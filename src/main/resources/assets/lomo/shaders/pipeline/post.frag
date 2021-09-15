@@ -308,6 +308,7 @@ void main() {
 			;
 
 			refl_coeff = clamp(refl_coeff, 0.0, 1.0);
+			refl_coeff = sqrt(refl_coeff); // hax
 		}
 
 		if(refl_coeff > 0) {
