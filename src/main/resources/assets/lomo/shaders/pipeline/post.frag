@@ -172,9 +172,8 @@ float lower_depth_value(cell_pos pos, sampler2D s) {
 
 bool is_out_of_fb(cell_pos pos) {
 	return
-		any(lessThan(outer(pos), uvec2(0u))) ||
-		any(greaterThanEqual(outer(pos), uvec2(frxu_size.xy))) ||
-		pos.z < 0 || pos.z > 1;
+		any(greaterThanEqual(outer(pos), uvec2(frxu_size))) ||
+		pos.z < 0;
 }
 
 #define TRAVERSE_FUNC(__name, __next_func, __init_func) \
@@ -191,43 +190,34 @@ fb_traversal_result __name (vec3 dir, vec3 pos_ws, sampler2D s) { \
 	float upper_depth = upper_depth_value(pos, s); \
 	float lower_depth = lower_depth_value(pos, s); \
 	FIND_UPPEST_LOD(__init_func) \
-	float dir_xy_length = length(dir.xy); \
-	float dir_z_per_xy = dir.z / dir_xy_length; \
-	bool backwards = dir.z < 0.0; \
-	int steps = 0; \
+	float dir_z_per_xy = dir.z / length(dir.xy); \
+	\
 	while(true) { \
 		cell_pos next = pos; \
 		float dist = __next_func (next, udir); \
 		next.z += dist * dir_z_per_xy; \
-		bool under = next.z >= lower_depth; \
-		if(under) { \
-			if(pos.level == 0u) { \
-				return fb_traversal_result(TRAVERSAL_SUCCESS, outer(next), next.z); \
-			} \
+		\
+		if(pos.level > 0u && next.z >= lower_depth) { \
 			float mul = (lower_depth - pos.z) / (next.z - pos.z); \
 			dist *= mul; \
 			pos.m = uvec2(ivec2(pos.m) + ivec2(float(max_inner_value) * dist * dir_xy)); \
 			pos.z = lower_depth; \
-			FIND_LOWEST_LOD(__init_func) \
 		} \
 		else { \
-			if(pos.level == 0u && pos.z >= lower_depth) \
-				return fb_traversal_result(TRAVERSAL_UNDER, outer(pos), pos.z); \
-			\
 			cell_pos prev = pos; \
 			pos = next; \
 			if(( prev.m >> cell_bits(pos.level + 1u) ) != ( pos.m >> cell_bits(pos.level + 1u) )) { \
 				upper_depth = upper_depth_value(pos, s); \
 			} \
 			FIND_UPPEST_LOD(__init_func) \
-			\
 			lower_depth = lower_depth_value(pos, s); \
-			FIND_LOWEST_LOD(__init_func) \
 		} \
+		\
+		FIND_LOWEST_LOD(__init_func) \
 		if(is_out_of_fb(pos)) return fb_traversal_result(TRAVERSAL_OUT_OF_FB, uvec2(0u), 0.0); \
-		if(++steps == 100) { \
-			return fb_traversal_result(TRAVERSAL_TOO_LONG, uvec2(0u), 0.0); \
-		} \
+		\
+		if(pos.level == 0u && pos.z >= lower_depth) \
+			return fb_traversal_result(TRAVERSAL_SUCCESS, outer(pos), pos.z); \
 	} \
 }
 
@@ -310,8 +300,9 @@ void main() {
 				pow((n2*cosi - n1*cost) / (n2*cosi + n1*cost), 2.0)
 			;
 
-			refl_coeff = clamp(refl_coeff, 0.0, 1.0);
-			refl_coeff = sqrt(refl_coeff); // hax
+			refl_coeff /= 2.0;
+			//refl_coeff = clamp(refl_coeff, 0.0, 1.0);
+			//refl_coeff = sqrt(refl_coeff); // hax
 		}
 
 		if(refl_coeff > 0) {
@@ -323,7 +314,7 @@ void main() {
 
 			fb_traversal_result res = traverse_fb(dir_ws, position_ws, u_sorted_with_translucent_d);
 
-			if(res.code == TRAVERSAL_SUCCESS || res.code == TRAVERSAL_UNDER) {
+			if(res.code == TRAVERSAL_SUCCESS) {
 				color = texelFetch(u_sorted_with_translucent_c, ivec2(res.pos), 0);
 				vec2 dist_to_border = vec2(1.0) - abs(vec2(res.pos) / vec2(frxu_size) * 2.0 - 1.0);
 				float min_dist_to_border = min(dist_to_border.x, dist_to_border.y);

@@ -17,7 +17,7 @@ float depth(sampler2D s) {
 	ivec2 size = textureSize(s, 0);
 
 	ivec2 coord = ivec2(gl_FragCoord.xy);
-	if(any(greaterThanEqual(coord << (2*lod), size))) discard;
+	if(any(greaterThanEqual(coord << (2*lod), size))) return 0.0;//discard;
 
 	for(int x = 0; x < 4; x++) {
 		for(int y = 0; y < 4; y++) {
