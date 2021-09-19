@@ -89,6 +89,10 @@ vec3 cam_dir_to_win(vec3 pos_cs, vec3 dir_cs, mat4 projMat) {
 	return normalize(X);
 }
 
+vec3 cam_dir_to_win(vec3 pos_cs, vec3 dir_cs) {
+	return cam_dir_to_win(pos_cs, dir_cs, frx_projectionMatrix);
+}
+
 vec3 raw_normal_to_cam(vec3 raw_normal, mat4 viewMat) {
 	return normalize(
 		(mat3(viewMat) * vec3(raw_normal))
