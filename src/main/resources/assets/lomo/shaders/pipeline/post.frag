@@ -3,6 +3,7 @@
 #include lomo:shaders/lib/math.glsl
 #include frex:shaders/api/view.glsl
 #include frex:shaders/api/world.glsl
+#include lomo:shaders/lib/sky.glsl
 
 // lomo:post.frag
 
@@ -235,7 +236,7 @@ TRAVERSE_FUNC(traverse_fb_r, next_cell_r, cell_pos_init_r)
 TRAVERSE_FUNC(traverse_fb_d, next_cell_d, cell_pos_init_d)
 TRAVERSE_FUNC(traverse_fb_l, next_cell_l, cell_pos_init_l)
 
-fb_traversal_result traverse_fb0(vec3 dir, vec3 pos, sampler2D s) {
+fb_traversal_result traverse_fb(vec3 dir, vec3 pos, sampler2D s) {
 	if(dir.x == 0.0 && dir.y == 0.0) {
 		uvec2 upos = uvec2(pos.xy);
 		float d = texelFetch(s, ivec2(upos), 0).r;
@@ -275,12 +276,12 @@ z = - (n.x * x + n.x * x) / n.z
 x + n.z * z = 0
 z = - x/n.z
 */
-float z_of_point_on_plane(vec3 n, vec2 xy) {
-	return -(n.x * xy.x + n.y * xy.y) / n.z;
-}
+//float z_of_point_on_plane(vec3 n, vec2 xy) {
+//	return -(n.x * xy.x + n.y * xy.y) / n.z;
+//}
 
-#define TRAVERSAL_UNDER 10
-fb_traversal_result traverse_fb(vec3 dir, vec3 pos, sampler2D s, sampler2D n) {
+//#define TRAVERSAL_UNDER 10
+/*fb_traversal_result traverse_fb(vec3 dir, vec3 pos, sampler2D s, sampler2D n) {
 	fb_traversal_result res0 = traverse_fb0(dir, pos, s);
 	if(res0.code != TRAVERSAL_SUCCESS) return res0;
 
@@ -290,7 +291,7 @@ fb_traversal_result traverse_fb(vec3 dir, vec3 pos, sampler2D s, sampler2D n) {
 
 	vec3 n = normalize(texelFetch(n, res0.pos, 0).xyz * 2.0 - 1.0);
 	n = raw_normal_to_cam(n);
-	float d = 
+	//float d = 
 
 	float m = abs(min(
 		min(
@@ -302,9 +303,7 @@ fb_traversal_result traverse_fb(vec3 dir, vec3 pos, sampler2D s, sampler2D n) {
 			z_of_point_on_plane(n, p + vec2(1, -1))
 		)
 	));
-
-
-}
+}*/
 
 void main() {
 	//out_lag_finder = vec4(0.0, 0.0, 0.0, 0.0);
@@ -350,7 +349,7 @@ void main() {
 			;
 
 			refl_coeff /= 2.0;
-			refl_coeff = 1.0;
+			//refl_coeff = 1.0;
 			//refl_coeff = clamp(refl_coeff, 0.0, 1.0);
 			//refl_coeff = sqrt(refl_coeff); // hax
 		}
@@ -366,12 +365,18 @@ void main() {
 			//position_ws -= incidence_ws*2.0;z
 
 			fb_traversal_result res = traverse_fb(dir_ws, position_ws, u_sorted_with_translucent_d);
+			ratio = refl_coeff;
 
 			if(res.code == TRAVERSAL_SUCCESS) {
 				color = texelFetch(u_sorted_with_translucent_c, ivec2(res.pos), 0);
-				vec2 dist_to_border = vec2(1.0) - abs(vec2(res.pos) / vec2(frxu_size) * 2.0 - 1.0);
-				float min_dist_to_border = min(dist_to_border.x, dist_to_border.y);
-				ratio = refl_coeff * pow(min_dist_to_border, 0.3);
+				if(res.z < 1) {
+					vec2 dist_to_border = vec2(1.0) - abs(vec2(res.pos) / vec2(frxu_size) * 2.0 - 1.0);
+					float min_dist_to_border = min(dist_to_border.x, dist_to_border.y);
+					ratio *= pow(min_dist_to_border, 0.3);
+				}
+			}
+			else if(res.code == TRAVERSAL_OUT_OF_FB) {
+				color = vec4(sky_color(mat3(frx_inverseViewMatrix) * reflection_dir, 0.0), 1.0);
 			}
 		}
 	}

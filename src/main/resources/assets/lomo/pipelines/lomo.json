@@ -103,12 +103,12 @@
 
 "fabulous": {
 	"passes": [
-		/*{
+		{
 			"name": "sky",
 			"program" : "sky",
-			"framebuffer": "sky_c",
+			"framebuffer": "solid_c",
 			"samplerImages": [ "solid_d" ]
-		},*/
+		},
 		{
 			"name": "sort",
 			"program": "sort",
@@ -398,7 +398,7 @@
 			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
 		]
 	},
-	/*{
+	{
 		"name": "sky_c",
 		"texParams": [
 			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
@@ -406,7 +406,7 @@
 			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
 			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
 		]
-	},*/
+	},
 	{
 		"name": "sorted_all_c",
 		"texParams": [
@@ -660,13 +660,13 @@
 			{ "image": "post_c" },
 			{ "image": "lag_finder" }
 		]
-	}/*,
+	},
 	{
 		"name": "sky_c",
 		"colorAttachments": [
 			{ "image": "sky_c" }
 		]
-	}*/
+	}
 ],
 
 "beforeWorldRender": {

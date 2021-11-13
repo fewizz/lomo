@@ -27,7 +27,7 @@ uniform sampler2D u_particle_c;
 uniform sampler2D u_particle_n;
 uniform sampler2D u_particle_d;
 
-out vec4 out_sorted_without_translucent_c;
+/*out vec4 out_sorted_without_translucent_c;
 out vec4 out_sorted_without_translucent_n;
 out vec4 out_sorted_without_translucent_d;
 
@@ -35,7 +35,9 @@ out vec4 out_sorted_with_translucent_c;
 out vec4 out_sorted_with_translucent_n;
 out vec4 out_sorted_with_translucent_d;
 
-out vec4 out_sorted_all_c;
+out vec4 out_sorted_all_c;*/
+
+out vec4 _out[7];
 
 #define NUM_LAYERS 6
 
@@ -108,9 +110,10 @@ void main() {
 		vec4(0)
 	);
 
-	out_sorted_without_translucent_c = vec4(accum(), 1.0);
-	out_sorted_without_translucent_n = normal_layers[active_layers - 1];
-	out_sorted_without_translucent_d = vec4(depth_layers[active_layers - 1], 0, 0, 1);
+	/*out_sorted_without_translucent*/
+	_out[0] = vec4(accum(), 1.0);
+	_out[1] = normal_layers[active_layers - 1];
+	_out[2] = vec4(depth_layers[active_layers - 1], 0, 0, 1);
 
 	try_insert(
 		texelFetch(u_translucent_c, coord, 0),
@@ -118,9 +121,10 @@ void main() {
 		texelFetch(u_translucent_n, coord, 0)
 	);
 
-	out_sorted_with_translucent_c = vec4(accum(), 1.0);
-	out_sorted_with_translucent_n = normal_layers[active_layers - 1];
-	out_sorted_with_translucent_d = vec4(depth_layers[active_layers - 1], 0, 0, 1);
+	/*out_sorted_with_translucent*/
+	_out[3] = vec4(accum(), 1.0);
+	_out[4] = normal_layers[active_layers - 1];
+	_out[5] = vec4(depth_layers[active_layers - 1], 0, 0, 1);
 
 	try_insert(
 		texelFetch(u_particle_c, coord, 0),
@@ -133,7 +137,9 @@ void main() {
 		texelFetch(u_weather_n, coord, 0)
 	);
 
-	out_sorted_all_c = vec4(accum(), 1.0);
+
+	/*out_sorted_all_c*/
+	_out[6] = vec4(accum(), 1.0);
 }
 
 

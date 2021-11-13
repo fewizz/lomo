@@ -64,6 +64,8 @@ vec4 light() {
 	result = texture(frxs_lightmap, frx_fragLight.xy);
 #endif
 
+	result *= vec4(sky_color(normalize(frx_vertexNormal), 1.0), 1.0) * 2;
+
 #if HANDHELD_LIGHT_RADIUS != 0
 	vec4 held = frx_heldLight;
 
