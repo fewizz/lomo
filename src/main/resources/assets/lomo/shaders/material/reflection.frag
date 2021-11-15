@@ -2,9 +2,9 @@
 #include frex:shaders/lib/math.glsl
 #include lomo:shaders/pipeline/lomo_frag_header.glsl
 
-// lomo:material/reflection.frag
+/* lomo:material/reflection.frag */
 
 void frx_materialFragment() {
-	reflectivity = 1.0;
-	frx_fragNormal = frx_vertexNormal;
+	reflectivity = 0.995;
+	//frx_fragNormal = frx_vertexNormal;
 }

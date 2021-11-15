@@ -1,24 +1,27 @@
 #include frex:shaders/api/header.glsl
-//#extension GL_ARB_explicit_attrib_location : require
 #include canvas:shaders/pipeline/pipeline.glsl
 
-// lomo:sort.frag
+/* lomo:pipeline/sort.frag */
 
 uniform sampler2D u_solid_c;
 uniform sampler2D u_solid_n;
 uniform sampler2D u_solid_d;
+uniform sampler2D u_solid_e;
 
 uniform sampler2D u_translucent_c;
 uniform sampler2D u_translucent_n;
 uniform sampler2D u_translucent_d;
+uniform sampler2D u_translucent_e;
 
 uniform sampler2D u_entity_c;
 uniform sampler2D u_entity_n;
 uniform sampler2D u_entity_d;
+uniform sampler2D u_entity_e;
 
 uniform sampler2D u_weather_c;
 uniform sampler2D u_weather_n;
 uniform sampler2D u_weather_d;
+uniform sampler2D u_weather_e;
 
 uniform sampler2D u_cloud_c;
 uniform sampler2D u_cloud_d;
@@ -26,18 +29,19 @@ uniform sampler2D u_cloud_d;
 uniform sampler2D u_particle_c;
 uniform sampler2D u_particle_n;
 uniform sampler2D u_particle_d;
+uniform sampler2D u_particle_e;
 
-/*out vec4 out_sorted_without_translucent_c;
-out vec4 out_sorted_without_translucent_n;
-out vec4 out_sorted_without_translucent_d;
+layout(location = 0) out vec4 out_sorted_without_translucent_c;
+layout(location = 1) out vec4 out_sorted_without_translucent_n;
+layout(location = 2) out vec4 out_sorted_without_translucent_d;
 
-out vec4 out_sorted_with_translucent_c;
-out vec4 out_sorted_with_translucent_n;
-out vec4 out_sorted_with_translucent_d;
+layout(location = 3) out vec4 out_sorted_with_translucent_c;
+layout(location = 4) out vec4 out_sorted_with_translucent_n;
+layout(location = 5) out vec4 out_sorted_with_translucent_d;
 
-out vec4 out_sorted_all_c;*/
+layout(location = 6) out vec4 out_sorted_all_c;
 
-out vec4 _out[7];
+//out vec4 o[7];
 
 #define NUM_LAYERS 6
 
@@ -111,9 +115,9 @@ void main() {
 	);
 
 	/*out_sorted_without_translucent*/
-	_out[0] = vec4(accum(), 1.0);
-	_out[1] = normal_layers[active_layers - 1];
-	_out[2] = vec4(depth_layers[active_layers - 1], 0, 0, 1);
+	out_sorted_without_translucent_c = vec4(accum(), 1.0);
+	out_sorted_without_translucent_n = normal_layers[active_layers - 1];
+	out_sorted_without_translucent_d = vec4(depth_layers[active_layers - 1], 0, 0, 1);
 
 	try_insert(
 		texelFetch(u_translucent_c, coord, 0),
@@ -122,9 +126,9 @@ void main() {
 	);
 
 	/*out_sorted_with_translucent*/
-	_out[3] = vec4(accum(), 1.0);
-	_out[4] = normal_layers[active_layers - 1];
-	_out[5] = vec4(depth_layers[active_layers - 1], 0, 0, 1);
+	out_sorted_with_translucent_c = vec4(accum(), 1.0);
+	out_sorted_with_translucent_n = normal_layers[active_layers - 1];
+	out_sorted_with_translucent_d = vec4(depth_layers[active_layers - 1], 0, 0, 1);
 
 	try_insert(
 		texelFetch(u_particle_c, coord, 0),
@@ -137,9 +141,8 @@ void main() {
 		texelFetch(u_weather_n, coord, 0)
 	);
 
-
 	/*out_sorted_all_c*/
-	_out[6] = vec4(accum(), 1.0);
+	out_sorted_all_c = vec4(accum(), 1.0);
 }
 
 

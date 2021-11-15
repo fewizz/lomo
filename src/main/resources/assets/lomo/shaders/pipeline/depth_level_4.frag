@@ -1,13 +1,12 @@
 #include frex:shaders/api/header.glsl
 #include canvas:shaders/pipeline/pipeline.glsl
 
-/* lomo:depth_levels_4.frag */
+/* lomo:pipeline/depth_levels_4.frag */
 
 uniform sampler2D u_depth_0;
 uniform sampler2D u_depth_1;
 
-out vec4 out_depth_0;
-out vec4 out_depth_1;
+out vec4 o[2];
 
 float depth(sampler2D s) {
 	int lod = frxu_lod;
@@ -34,6 +33,6 @@ float depth(sampler2D s) {
 }
 
 void main() {
-	out_depth_0 = vec4(depth(u_depth_0));
-	out_depth_1 = vec4(depth(u_depth_1));
+	o[0] = vec4(depth(u_depth_0));
+	o[1] = vec4(depth(u_depth_1));
 }

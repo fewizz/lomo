@@ -80,9 +80,9 @@ vec3 cam_dir_to_win(vec3 pos_cs, vec3 dir_cs, mat4 projMat) {
 	vec4 pos_c = projMat * vec4(pos_cs, 1.0);
 	vec4 pos_dir_c = projMat * vec4(pos_cs + dir_cs, 1.0);
 	vec3 X =
-	  pos_dir_c.xyz / pos_dir_c.w
-	  -
-	  pos_c.xyz / pos_c.w;
+		pos_dir_c.xyz / pos_dir_c.w
+		-
+		pos_c.xyz / pos_c.w;
 
 	X.xy *= vec2(frxu_size);
 

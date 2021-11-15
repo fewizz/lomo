@@ -9,11 +9,14 @@
 #include frex:shaders/api/material.glsl
 #include canvas:basic_light_config
 #include canvas:handheld_light_config
+
 #include lomo:shaders/lib/sky.glsl
 
-// lomo:lomo.frag
+/* lomo:pipeline/lomo.frag */
 
-out vec4 out_data[2];
+layout(location = 0) out vec4 out_color;
+layout(location = 1) out vec4 out_normal;
+layout(location = 2) out vec4 out_extra;
 
 #ifdef SHADOW_MAP_PRESENT
 varying vec4 shadowPos;
@@ -64,7 +67,7 @@ vec4 light() {
 	result = texture(frxs_lightmap, frx_fragLight.xy);
 #endif
 
-	result *= vec4(sky_color(normalize(frx_vertexNormal), 1.0), 1.0) * 2;
+	//result *= vec4(sky_color(normalize(frx_vertexNormal), 1.0), 1.0) * 2;
 
 #if HANDHELD_LIGHT_RADIUS != 0
 	vec4 held = frx_heldLight;
@@ -129,16 +132,22 @@ void frx_pipelineFragment() {
 
 	glintify(a, float(frx_matGlint));
 
-	out_data[0] = p_fog(a);
+	out_color = p_fog(a);
+
 	if(
 		frx_renderTargetSolid ||
 		frx_renderTargetTranslucent ||
 		frx_renderTargetParticles ||
 		frx_renderTargetEntity
-	)
-		out_data[1] = vec4(frx_fragNormal * 0.5 + 0.5, reflectivity);
+	) {
+		if(frag_normal == vec3(0.0)) frag_normal = normalize(frx_vertexNormal);
+
+		out_normal = vec4(frag_normal * 0.5 + 0.5, 1.);
+		out_extra = vec4(reflectivity, frx_fragLight.y, 0.0, 1.0);
+	}
 	else {
-		out_data[1] = vec4(0);
+		out_normal = vec4(0);
+		out_extra = vec4(0);
 	}
 
 	gl_FragDepth = gl_FragCoord.z;

@@ -1,11 +1,12 @@
 #include frex:shaders/api/header.glsl
-#include lomo:shaders/lib/transform.glsl
-#include lomo:shaders/lib/math.glsl
 #include frex:shaders/api/view.glsl
 #include frex:shaders/api/world.glsl
+
+#include lomo:shaders/lib/transform.glsl
+#include lomo:shaders/lib/math.glsl
 #include lomo:shaders/lib/sky.glsl
 
-// lomo:post.frag
+/* lomo:post.frag */
 
 uniform sampler2D u_sorted_without_translucent_c;
 uniform sampler2D u_sorted_without_translucent_n;
@@ -19,7 +20,7 @@ uniform sampler2D u_sorted_all_c;
 
 uniform sampler2D u_translucent_c;
 
-out vec4 out_color;
+layout(location = 0) out vec4 out_color;
 //out vec4 out_lag_finder;
 
 #define TRAVERSAL_SUCCESS 0
@@ -243,8 +244,6 @@ fb_traversal_result traverse_fb(vec3 dir, vec3 pos, sampler2D s) {
 
 		if(dir.z > 0 && d >= pos.z)
 			return fb_traversal_result(TRAVERSAL_SUCCESS, upos, d, pos.z);
-		//if(dir.z < 0 && d < pos.z)
-		//	return fb_traversal_result(TRAVERSAL_POSSIBLY_UNDER, upos, d, pos.z);
 
 		return fb_traversal_result(TRAVERSAL_OUT_OF_FB, upos, 0, 0);
 	}
@@ -313,15 +312,18 @@ void main() {
 	vec4 normal4 = texelFetch(u_sorted_with_translucent_n, ivec2(gl_FragCoord.xy), 0);
 	vec4 color0 = texelFetch(u_sorted_with_translucent_c, ivec2(gl_FragCoord.xy), 0);
 
-	if(normal4.a > 0.01) {
-		float depth_ws = texelFetch(u_sorted_with_translucent_d, ivec2(gl_FragCoord.xy), 0).r ;
+	float depth_ws = texelFetch(u_sorted_with_translucent_d, ivec2(gl_FragCoord.xy), 0).r ;
+	if(length(normal4) > 0. && depth_ws < 1.) {//normal4.a > 0.01) {
 		vec3 position_ws = vec3(gl_FragCoord.xy, depth_ws);
 		vec3 position_cs = win_to_cam(position_ws);
 
-		vec3 normal = normal4.rgb * 2.0 - 1.0;
+		vec3 normal = normalize(normal4.xyz * 2.0 - 1.0);
 		vec3 normal_cs = raw_normal_to_cam(normal);
 
-		vec3 incidence_cs = normalize(position_cs - win_to_cam(vec3(gl_FragCoord.xy, 0)));
+		color = vec4(abs(normal), 1.0);
+		ratio = 1.;
+
+		/*vec3 incidence_cs = normalize(position_cs - win_to_cam(vec3(gl_FragCoord.xy, 0)));
 		vec3 reflection_dir = normalize(
 			reflect(
 				incidence_cs,
@@ -329,9 +331,19 @@ void main() {
 			)
 		);
 
-		float refl_coeff = 1.0;
+		//float val = normal4.a * 128.;
+		float reflectivity = 1.;//val - floor(val);
+		float sky = 1.;//floor(val) / 128.;
 
-		float solid_depth_ws = texelFetch(u_sorted_without_translucent_d, ivec2(gl_FragCoord.xy), 0).r ;
+		/*reflection_dir = random_vec(
+			reflection_dir,//mix(normal_cs, reflection_dir, normal4.a),
+			reflectivity,//3.14 * (1.- reflectivity),
+			uint(frx_renderSeconds() * 10000) * uvec2(gl_FragCoord.xy + 1.)
+		);*/
+
+		//float refl_coeff = reflectivity;//normal4.a;//1.0;
+
+		/*float solid_depth_ws = texelFetch(u_sorted_without_translucent_d, ivec2(gl_FragCoord.xy), 0).r ;
 		float tr = texelFetch(u_translucent_c, ivec2(gl_FragCoord.xy), 0).a;
 
 		if(solid_depth_ws > depth_ws && tr > 0.0 && tr < 1.0) {
@@ -352,9 +364,9 @@ void main() {
 			//refl_coeff = 1.0;
 			//refl_coeff = clamp(refl_coeff, 0.0, 1.0);
 			//refl_coeff = sqrt(refl_coeff); // hax
-		}
+		}*/
 
-		if(refl_coeff > 0) {
+		/*if(refl_coeff > 0) {
 			vec3 dir_ws = cam_dir_to_win(position_cs, reflection_dir);
 			//vec3 incidence_ws = cam_dir_to_win(position_cs, incidence_cs);
 
@@ -377,8 +389,9 @@ void main() {
 			}
 			else if(res.code == TRAVERSAL_OUT_OF_FB) {
 				color = vec4(sky_color(mat3(frx_inverseViewMatrix) * reflection_dir, 0.0), 1.0);
+				ratio *= sky;//mix(sky, 1.0, reflectivity);
 			}
-		}
+		}*/
 	}
 	else {
 		color0 = texelFetch(u_sorted_all_c, ivec2(gl_FragCoord.xy), 0);

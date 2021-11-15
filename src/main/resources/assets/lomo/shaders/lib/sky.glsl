@@ -1,7 +1,11 @@
 #include frex:shaders/api/header.glsl
-#include lomo:shaders/lib/transform.glsl
 #include frex:shaders/api/world.glsl
 #include frex:shaders/api/view.glsl
+
+#include lomo:shaders/lib/transform.glsl
+#include lomo:shaders/lib/math.glsl
+
+/* lomo:lib/sky.glsl */
 
 struct ray {
 	vec3 pos;
@@ -96,27 +100,16 @@ float henyey_greenstein_phase_function(float g, float cosa) {
 	return 1./(4.*3.14) * (1.-g*g)/pow(1.+g*g-2.*g*cosa, 3./2.);
 }
 
-vec3 pow3(vec3 v, float x) {
-	return vec3(pow(v.x, x), pow(v.y, x), pow(v.z, x));
-}
-
-vec3 pow3(float x, vec3 p) {
-	return vec3(pow(x, p.x), pow(x, p.y), pow(x, p.z));
-}
-
-const float earth_atmosphere_height = 0.012;
-const float mega = 1000000.;
-const float earth_radius = 6.;
-const float sun_radius = 696.;
-const float dist_from_earth_to_sun = 227940.;
+//const float sun_radius = 696.;
+//const float dist_from_earth_to_sun = 227940.;
 
 const planet earth = planet(
 	vec3(0.),     // pos
-	earth_radius, // earth_rad
+	6.,           // earth_rad
 	0.06          // atmos_h
 );
 
-vec3 resulting_attenuation(ray v, vec3 star_dir, planet p, vec3 coeffs) {
+vec3 resulting_attenuation(ray v, vec3 star_dir, planet p, vec3 coeffs, float phase) {
 	vec3 result = vec3(0.);
 	
 	ray_sphere_distance pl_p = ray_planet_path(v, earth, false);
@@ -145,14 +138,14 @@ vec3 resulting_attenuation(ray v, vec3 star_dir, planet p, vec3 coeffs) {
 		v.pos += v.dir * stp;
 	}
 	
-	return coeffs*result;
+	return phase*coeffs*result;
 }
 
 vec3 sky_color(vec3 dir, float r) {
 	float t = frx_skyAngleRadians + 3.14 / 2.0;
 	vec3 sun_dir = vec3(cos(t), sin(t), 0);
 	
-	vec3 eye_pos = vec3(0, earth_radius + 0.001, 0.) + frx_cameraPos / 1000000.;
+	vec3 eye_pos = vec3(0, earth.rad + 0.001, 0.) + frx_cameraPos / 1000000.;
 
 	vec3 interp_dir = normalize(dir + vec3(0., 5., 0.)); // TODO
 
@@ -164,15 +157,26 @@ vec3 sky_color(vec3 dir, float r) {
 
 	float rpf = rayleigh_phase_function(a);
 
+	// TODO rename "planet"
+	planet molecules = planet(
+		vec3(0.),
+		earth.rad,
+		0.008
+	);
+
+	planet aerosols = planet(
+		vec3(0.),
+		earth.rad,
+		0.0012
+	);
+
 	vec3 color =
-		resulting_attenuation(eye, sun_dir, planet(vec3(0.), earth.rad, 0.008), 6000./rgb) * rpf
+		resulting_attenuation(eye, sun_dir, molecules, 6000./rgb, rpf)
 		+
-		100.*resulting_attenuation(eye, sun_dir, planet(vec3(0.), earth.rad, 0.0012), 0.01 * rgb) * henyey_greenstein_phase_function(0.99, a);
+		100.*resulting_attenuation(eye, sun_dir, aerosols, 0.01 * rgb, henyey_greenstein_phase_function(0.99, a));
 
-	vec3 interp_color = // TODO
-		resulting_attenuation(eye, interp_dir, planet(vec3(0.), earth.rad, 0.008), 6000./rgb) * rpf;
-	
-	//color *= 60.;
+	//vec3 interp_color = // TODO hack...
+	//	resulting_attenuation(eye, interp_dir, molecules, 6000./rgb, rpf);
 
-	return vec3(1) - exp(-400. * mix(color, interp_color, r));
+	return vec3(1) - exp(-400. * color);
 }
