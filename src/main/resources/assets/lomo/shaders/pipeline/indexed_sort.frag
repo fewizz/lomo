@@ -10,12 +10,12 @@ uniform sampler2D u_d3;
 uniform sampler2D u_d4;
 uniform sampler2D u_d5;
 
-layout(location = 0) out vec4 out_indices;
+layout(location = 0) out vec4 out_index_to_type;
+layout(location = 1) out vec4 out_type_to_index;
 
 void main() {
 	ivec2 coord = ivec2(gl_FragCoord.xy);
 
-	int indices[6];
 	float depths[6] = float[](
 		texelFetch(u_d0, coord, 0).r,
 		texelFetch(u_d1, coord, 0).r,
@@ -25,32 +25,35 @@ void main() {
 		texelFetch(u_d5, coord, 0).r
 	);
 
-	//for(int i = 0; i < 6; i++) depths[i] = texelFetch(u_depths[i], coord, 0).r;
+	uint type_to_index[6];
+	uint index_to_type[6];
 
 	float prev_min = -1;
 
-	for(int i = 0; i < 6; i++) {
+	for(uint i = 0u; i < 6u; i++) {
 		float current_min = 1;
-		int current_index = 0;
 
-		for(int x = 0; x < 6; x++) {
+		for(uint x = 0u; x < 6u; x++) {
 			float d = depths[x];
 
 			if(d < current_min && d > prev_min) {
 				current_min = d;
-				current_index = x;
+				type_to_index[x] = i;
+				index_to_type[i] = x;
 			}
-
-			indices[i] = current_index;
-			prev_min = current_min;
 		}
+
+		prev_min = current_min;
 	}
 
-	int result = 0;
-	for(int i = 0; i < 6; i++) {
-		//result |= indices[i] << (i*4);
-		if(indices[i] == 0) result = i;
+	uint result_type_to_index = 0u;
+	uint result_index_to_type = 0u;
+
+	for(uint i = 0u; i < 6u; i++) {
+		result_type_to_index |= type_to_index[i] << (i*4u);
+		result_index_to_type |= index_to_type[i] << (i*4u);
 	}
 
-	out_indices = vec4(indices[0] / 5.0, 0., 0., 0.);
+	out_index_to_type = vec4(uintBitsToFloat(result_index_to_type), 0., 0., 0.);
+	out_type_to_index = vec4(uintBitsToFloat(result_type_to_index), 0., 0., 0.);
 }

@@ -64,12 +64,9 @@
 		"vertexSource": "lomo:shaders/pipeline/full_frame_depth_1.vert",
 		"fragmentSource": "lomo:shaders/pipeline/sort.frag",
 		"samplers": [
-			"u_solid_c", "u_solid_n", "u_solid_d", "u_solid_e",
-			"u_translucent_c", "u_translucent_n", "u_translucent_d", "u_translucent_e",
-			"u_entity_c", "u_entity_n", "u_entity_d", "u_entity_e",
-			"u_weather_c", "u_weather_n", "u_weather_d", "u_weather_e",
-			"u_cloud_c", "u_cloud_d",
-			"u_particle_c", "u_particle_n", "u_particle_d", "u_particle_e"
+			"u_solid", "u_translucent", "u_entity",
+			"u_weather", "u_cloud", "u_particle",
+			"u_index_to_type"
 		]
 	},
 	{
@@ -117,20 +114,17 @@
 				"solid_d", "translucent_d", "entity_d",
 				"weather_d", "cloud_d", "particle_d"
 			]
-		}/*,
+		},
 		{
 			"name": "sort",
 			"program": "sort",
-			"framebuffer": "sorted_cned",
+			"framebuffer": "sky_c",
 			"samplerImages": [
-				"solid_c", "solid_n", "solid_d", "solid_e",
-				"translucent_c", "translucent_n", "translucent_d", "translucent_e",
-				"entity_c", "entity_n", "entity_d", "entity_e",
-				"weather_c", "weather_n", "weather_d", "weather_e",
-				"cloud_c", "cloud_d",
-				"particle_c", "particle_n", "particle_d", "particle_e"
+				"solid_c", "translucent_c", "entity_c",
+				"weather_c", "cloud_c", "particle_c",
+				"index_to_type"
 			]
-		},
+		}/*,
 		{
 			"name": "level_0",
 			"program": "copy_2_depth",
@@ -625,7 +619,20 @@
 		]
 	},
 	{
-		"name": "depth_indices",
+		"name": "index_to_type",
+		"internalFormat": "GL_R32F",
+		"pixelFormat": "RED",
+		"pixelDataType": "FLOAT",
+		"texParams": [
+			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_COMPARE_MODE", "val": "NONE" }
+		]
+	},
+	{
+		"name": "type_to_index",
 		"internalFormat": "GL_R32F",
 		"pixelFormat": "RED",
 		"pixelDataType": "FLOAT",
@@ -783,7 +790,8 @@
 	{
 		"name": "depth_indices",
 		"colorAttachments": [
-			{ "image": "depth_indices" }
+			{ "image": "index_to_type" },
+			{ "image": "type_to_index" }
 		]
 	}
 ],
