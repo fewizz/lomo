@@ -2,7 +2,6 @@
 
 "nameKey": "pipeline.lomo.name",
 "descriptionKey": "pipeline.canvas_basic.desc",
-"enablePBR": true,
 
 "include": [
 	"canvas:pipeline/basic_light_config.json",
@@ -20,7 +19,7 @@
 	"translucentTerrain": "translucent_cned",
 	"translucentEntity": "entity_cned",
 	"weather": "weather_cned",
-	"clouds": "cloud_cd",
+	"clouds": "cloud_cned",
 	"translucentParticles": "particle_cned"
 },
 
@@ -28,7 +27,7 @@
 	"entity": "entity_cned",
 	"particles": "particle_cned",
 	"weather": "weather_cned",
-	"clouds": "cloud_cd",
+	"clouds": "cloud_cned",
 	"translucent": "translucent_cned"
 },
 
@@ -79,21 +78,28 @@
 		"name": "depth_level_4",
 		"vertexSource": "lomo:shaders/pipeline/full_frame_depth_1.vert",
 		"fragmentSource": "lomo:shaders/pipeline/depth_level_4.frag",
-		"samplers": [ "u_depth_0", "u_depth_1" ]
+		"samplers": [ "u_depths" ]
 	},
 	{
 		"name": "post",
 		"vertexSource": "lomo:shaders/pipeline/full_frame_depth_1.vert",
 		"fragmentSource": "lomo:shaders/pipeline/post.frag",
 		"samplers": [
-			"u_sorted_without_translucent_c",
-			"u_sorted_without_translucent_n",
-			"u_sorted_without_translucent_d",
-			"u_sorted_with_translucent_c",
-			"u_sorted_with_translucent_n",
-			"u_sorted_with_translucent_d",
-			"u_sorted_all_c",
-			"u_translucent_c"
+			"u_colors", "u_normals", "u_extras", "u_depths"
+		]
+	},
+	{
+		"name": "copy_to_array_sorted",
+		"vertexSource": "lomo:shaders/pipeline/full_frame_depth_1.vert",
+		"fragmentSource": "lomo:shaders/pipeline/copy_to_array_sorted.frag",
+		"samplers": [
+			"u_i0",
+			"u_i1",
+			"u_i2",
+			"u_i3",
+			"u_i4",
+			"u_i5",
+			"u_index_to_type"
 		]
 	}
 ],
@@ -116,48 +122,67 @@
 			]
 		},
 		{
-			"name": "sort",
-			"program": "sort",
-			"framebuffer": "sky_c",
+			"name": "sort_colors",
+			"program": "copy_to_array_sorted",
+			"framebuffer": "colors",
 			"samplerImages": [
 				"solid_c", "translucent_c", "entity_c",
-				"weather_c", "cloud_c", "particle_c",
-				"index_to_type"
+				"weather_c", "cloud_c", "particle_c", "index_to_type"
 			]
-		}/*,
-		{
-			"name": "level_0",
-			"program": "copy_2_depth",
-			"framebuffer": "level_0_d",
-			"samplerImages": [ "sorted_with_translucent_d", "sorted_without_translucent_d" ],
-			"lod": 0
 		},
 		{
-			"name": "level_1",
+			"name": "sort_normals",
+			"program": "copy_to_array_sorted",
+			"framebuffer": "normals",
+			"samplerImages": [
+				"solid_n", "translucent_n", "entity_n",
+				"weather_n", "cloud_n", "particle_n", "index_to_type"
+			]
+		},
+		{
+			"name": "sort_extras",
+			"program": "copy_to_array_sorted",
+			"framebuffer": "extras",
+			"samplerImages": [
+				"solid_e", "translucent_e", "entity_e",
+				"weather_e", "cloud_e", "particle_e", "index_to_type"
+			]
+		},
+		{
+			"name": "sort_depths",
+			"program": "copy_to_array_sorted",
+			"framebuffer": "depths",
+			"samplerImages": [
+				"solid_d", "translucent_d", "entity_d",
+				"weather_d", "cloud_d", "particle_d", "index_to_type"
+			]
+		},
+		{
+			"name": "depths_1",
 			"program": "depth_level_4",
-			"framebuffer": "level_1_d",
-			"samplerImages": [ "level_d", "solid_level_d" ],
+			"framebuffer": "depths_1",
+			"samplerImages": [ "depths" ],
 			"lod": 1
 		},
 		{
-			"name": "level_2",
+			"name": "depths_2",
 			"program": "depth_level_4",
-			"framebuffer": "level_2_d",
-			"samplerImages": [ "level_d", "solid_level_d" ],
+			"framebuffer": "depths_2",
+			"samplerImages": [ "depths" ],
 			"lod": 2
 		},
 		{
-			"name": "level_3",
+			"name": "depths_3",
 			"program": "depth_level_4",
-			"framebuffer": "level_3_d",
-			"samplerImages": [ "level_d", "solid_level_d" ],
+			"framebuffer": "depths_3",
+			"samplerImages": [ "depths" ],
 			"lod": 3
 		},
 		{
-			"name": "level_4",
+			"name": "depths_4",
 			"program": "depth_level_4",
-			"framebuffer": "level_4_d",
-			"samplerImages": [ "level_d", "solid_level_d" ],
+			"framebuffer": "depths_4",
+			"samplerImages": [ "depths" ],
 			"lod": 4
 		},
 		{
@@ -165,50 +190,16 @@
 			"program": "post",
 			"framebuffer": "solid_c",
 			"samplerImages": [
-				"sorted_without_translucent_c",
-				"sorted_without_translucent_n",
-				"solid_level_d",
-				"sorted_with_translucent_c",
-				"sorted_with_translucent_n",
-				"level_d",
-				"sorted_all_c",
-				"translucent_c"
+				"colors",
+				"normals",
+				"extras",
+				"depths"
 			]
-		}*/
-		/*{
-			"name": "copy_result",
-			"program": "copy",
-			"framebuffer": "solid",
-			"samplerImages": [
-				"post_result"
-			]
-		}*/
+		}
 	]
 },
 
 "images": [
-	/*{
-		"name": "default_c",
-		"texParams": [
-			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
-			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
-			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
-			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
-		]
-	},*/
-	/*{
-		"name": "default_d",
-		"internalFormat": "DEPTH_COMPONENT",
-		"pixelFormat": "DEPTH_COMPONENT",
-		"pixelDataType": "FLOAT",
-		"texParams": [
-			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
-			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
-			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
-			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" },
-			{ "name": "TEXTURE_COMPARE_MODE", "val": "NONE" }
-		]
-	},*/
 	{
 		"name": "solid_c",
 		"texParams": [
@@ -403,6 +394,18 @@
 		]
 	},
 	{
+		"name": "cloud_n",
+		"internalFormat": "GL_RGBA16F",
+		"pixelFormat": "RGB",
+		"pixelDataType": "FLOAT",
+		"texParams": [
+			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
+		]
+	},
+	{
 		"name": "cloud_d",
 		"internalFormat": "DEPTH_COMPONENT",
 		"pixelFormat": "DEPTH_COMPONENT",
@@ -413,6 +416,18 @@
 			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
 			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" },
 			{ "name": "TEXTURE_COMPARE_MODE", "val": "NONE" }
+		]
+	},
+	{
+		"name": "cloud_e",
+		"internalFormat": "GL_RGBA16F",
+		"pixelFormat": "RGB",
+		"pixelDataType": "FLOAT",
+		"texParams": [
+			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
 		]
 	},
 	{
@@ -471,6 +486,61 @@
 		]
 	},
 	{
+		"name": "colors",
+		"target": "TEXTURE_2D_ARRAY",
+		"depth": 6,
+		"texParams": [
+			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
+		]
+	},
+	{
+		"name": "normals",
+		"target": "TEXTURE_2D_ARRAY",
+		"depth": 6,
+		"internalFormat": "GL_RGBA16F",
+		"pixelFormat": "RGB",
+		"pixelDataType": "FLOAT",
+		"texParams": [
+			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
+		]
+	},
+	{
+		"name": "extras",
+		"target": "TEXTURE_2D_ARRAY",
+		"depth": 6,
+		"internalFormat": "GL_RGBA16F",
+		"pixelFormat": "RGB",
+		"pixelDataType": "FLOAT",
+		"texParams": [
+			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
+		]
+	},
+	{
+		"name": "depths",
+		"target": "TEXTURE_2D_ARRAY",
+		"depth": 6,
+		"lod": 4,
+		"internalFormat": "GL_R32F",
+		"pixelFormat": "RED",
+		"pixelDataType": "FLOAT",
+		"texParams": [
+			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_COMPARE_MODE", "val": "NONE" }
+		]
+	},
+	/*{
 		"name": "sorted_all_c",
 		"texParams": [
 			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
@@ -570,8 +640,8 @@
 			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
 			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
 		]
-	},
-	{
+	},*/
+	/*{
 		"name": "level_d",
 		"lod": 4,
 		"internalFormat": "GL_R32F",
@@ -596,7 +666,7 @@
 			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE"},
 			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE"}
 		]
-	},
+	},/*
 	{
 		"name": "lag_finder",
 		"internalFormat": "GL_RGBA32F",
@@ -617,7 +687,7 @@
 			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
 			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
 		]
-	},
+	},*/
 	{
 		"name": "index_to_type",
 		"internalFormat": "GL_R32F",
@@ -701,9 +771,11 @@
 		"depthAttachment": { "image": "weather_d", "clearDepth": "c:" }
 	},
 	{
-		"name": "cloud_cd",
+		"name": "cloud_cned",
 		"colorAttachments": [
-			{ "image": "cloud_c", "clearColor": "c:" }
+			{ "image": "cloud_c", "clearColor": "c:" },
+			{ "image": "cloud_n", "clearColor": "c:" },
+			{ "image": "cloud_e", "clearColor": "c:" }
 		],
 		"depthAttachment": { "image": "cloud_d", "clearDepth": "c:" }
 	},
@@ -740,70 +812,133 @@
 		]
 	},*/
 	{
-		"name": "level_0_d",
+		"name": "depths_0",
 		"colorAttachments": [
-			{ "image": "level_d", "lod": 0 },
-			{ "image": "solid_level_d", "lod": 0 }
+			{ "image": "depths", "layer": 0, "lod": 0 },
+			{ "image": "depths", "layer": 1, "lod": 0 },
+			{ "image": "depths", "layer": 2, "lod": 0 },
+			{ "image": "depths", "layer": 3, "lod": 0 },
+			{ "image": "depths", "layer": 4, "lod": 0 },
+			{ "image": "depths", "layer": 5, "lod": 0 }
 		]
 	},
 	{
-		"name": "level_1_d",
+		"name": "depths_1",
 		"colorAttachments": [
-			{ "image": "level_d", "lod": 1 },
-			{ "image": "solid_level_d", "lod": 1 }
+			{ "image": "depths", "layer": 0, "lod": 1 },
+			{ "image": "depths", "layer": 1, "lod": 1 },
+			{ "image": "depths", "layer": 2, "lod": 1 },
+			{ "image": "depths", "layer": 3, "lod": 1 },
+			{ "image": "depths", "layer": 4, "lod": 1 },
+			{ "image": "depths", "layer": 5, "lod": 1 }
 		]
 	},
 	{
-		"name": "level_2_d",
+		"name": "depths_2",
 		"colorAttachments": [
-			{ "image": "level_d", "lod": 2 },
-			{ "image": "solid_level_d", "lod": 2 }
+			{ "image": "depths", "layer": 0, "lod": 2 },
+			{ "image": "depths", "layer": 1, "lod": 2 },
+			{ "image": "depths", "layer": 2, "lod": 2 },
+			{ "image": "depths", "layer": 3, "lod": 2 },
+			{ "image": "depths", "layer": 4, "lod": 2 },
+			{ "image": "depths", "layer": 5, "lod": 2 }
 		]
 	},
 	{
-		"name": "level_3_d",
+		"name": "depths_3",
 		"colorAttachments": [
-			{ "image": "level_d", "lod": 3 },
-			{ "image": "solid_level_d", "lod": 3 }
+			{ "image": "depths", "layer": 0, "lod": 3 },
+			{ "image": "depths", "layer": 1, "lod": 3 },
+			{ "image": "depths", "layer": 2, "lod": 3 },
+			{ "image": "depths", "layer": 3, "lod": 3 },
+			{ "image": "depths", "layer": 4, "lod": 3 },
+			{ "image": "depths", "layer": 5, "lod": 3 }
 		]
 	},
 	{
-		"name": "level_4_d",
+		"name": "depths_4",
 		"colorAttachments": [
-			{ "image": "level_d", "lod": 4 },
-			{ "image": "solid_level_d", "lod": 4 }
+			{ "image": "depths", "layer": 0, "lod": 4 },
+			{ "image": "depths", "layer": 1, "lod": 4 },
+			{ "image": "depths", "layer": 2, "lod": 4 },
+			{ "image": "depths", "layer": 3, "lod": 4 },
+			{ "image": "depths", "layer": 4, "lod": 4 },
+			{ "image": "depths", "layer": 5, "lod": 4 }
 		]
 	},
-	{
+	/*{
 		"name": "post",
 		"colorAttachments": [
 			{ "image": "post_c" },
 			{ "image": "lag_finder" }
 		]
-	},
-	{
+	},*/
+	/*{
 		"name": "sky_c",
 		"colorAttachments": [
 			{ "image": "sky_c" }
 		]
-	},
+	},*/
 	{
 		"name": "depth_indices",
 		"colorAttachments": [
 			{ "image": "index_to_type" },
 			{ "image": "type_to_index" }
 		]
+	},
+	{
+		"name": "colors",
+		"colorAttachments": [
+			{ "image": "colors", "layer": 0 },
+			{ "image": "colors", "layer": 1 },
+			{ "image": "colors", "layer": 2 },
+			{ "image": "colors", "layer": 3 },
+			{ "image": "colors", "layer": 4 },
+			{ "image": "colors", "layer": 5 }
+		]
+	},
+	{
+		"name": "normals",
+		"colorAttachments": [
+			{ "image": "normals", "layer": 0 },
+			{ "image": "normals", "layer": 1 },
+			{ "image": "normals", "layer": 2 },
+			{ "image": "normals", "layer": 3 },
+			{ "image": "normals", "layer": 4 },
+			{ "image": "normals", "layer": 5 }
+		]
+	},
+	{
+		"name": "extras",
+		"colorAttachments": [
+			{ "image": "extras", "layer": 0 },
+			{ "image": "extras", "layer": 1 },
+			{ "image": "extras", "layer": 2 },
+			{ "image": "extras", "layer": 3 },
+			{ "image": "extras", "layer": 4 },
+			{ "image": "extras", "layer": 5 }
+		]
+	},
+	{
+		"name": "depths",
+		"colorAttachments": [
+			{ "image": "depths", "layer": 0 },
+			{ "image": "depths", "layer": 1 },
+			{ "image": "depths", "layer": 2 },
+			{ "image": "depths", "layer": 3 },
+			{ "image": "depths", "layer": 4 },
+			{ "image": "depths", "layer": 5 }
+		]
 	}
 ],
 
 "beforeWorldRender": {
 	"passes": [
-		//{ "name": "clear_default", "framebuffer": "default_cd", "program": "frex_clear" },
 		{ "name": "clear_solid", "framebuffer": "solid_cned", "program": "frex_clear" },
 		{ "name": "clear_entity", "framebuffer": "entity_cned", "program": "frex_clear" },
 		{ "name": "clear_translucent", "framebuffer": "translucent_cned", "program": "frex_clear" },
 		{ "name": "clear_weather", "framebuffer": "weather_cned", "program": "frex_clear" },
-		{ "name": "clear_cloud", "framebuffer": "cloud_cd", "program": "frex_clear" },
+		{ "name": "clear_cloud", "framebuffer": "cloud_cned", "program": "frex_clear" },
 		{ "name": "clear_particle", "framebuffer": "particle_cned", "program": "frex_clear" }
 	]
 }

@@ -40,7 +40,7 @@ mat3 rotation(float angle, vec3 v) {
 	float c = cos(a);
 	float s = sin(a);
 
-	vec3 axis = vec3(normalize(v));
+	vec3 axis = vec3(v);
 	vec3 temp = vec3((1. - c) * axis);
 
 	mat3 r = mat3(0);
@@ -59,16 +59,21 @@ mat3 rotation(float angle, vec3 v) {
 	return r;
 }
 
+// i can do better
 vec3 random_vec(vec3 v, float coeff, uvec2 magic) {
-	return v;
-	/*
-	// vec2 rand = hash22(magic);
-	float a = exp(-coeff * 200. * hash22(magic)); // TODO
-	rand *= 3.14 * (hash22(magic * 2u) * 2. - 1.);
-	//rand *= 3.14;
+	//return v;
+	
+	vec2 rand = hash22(magic) * 2. - 1.;
+	//vec2 rand = exp(-coeff * 200. * hash22(magic)); // TODO
+	//rand *= 3.14 * (hash22(magic * 2u) * 2. - 1.);
+	rand *= 3.14;
 	//rand *= a;
 
-	return rotation(rand.y, vec3(0., 1., 0.)) * rotation(rand.x, vec3(1., 0., 0.)) * v;
+	vec3 random_perp = vec3(v.x, v.y, (-v.x*v.x - v.y*v.y) / v.z);
+
+	//return rotation(rand.y, vec3(0., 1., 0.)) * rotation(rand.x * (1. - coeff), vec3(1., 0., 0.)) * v;
+
+	return rotation(rand.y, v) * rotation(rand.x * (1. - coeff), normalize(random_perp)) * v;
 
 	//float a0 = rand.x * v.y + cosa;
 	//float xz_angle = atan(v.x, v.y);

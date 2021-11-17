@@ -3,20 +3,25 @@
 
 /* lomo:pipeline/depth_levels_4.frag */
 
-uniform sampler2D u_depth_0;
-uniform sampler2D u_depth_1;
+uniform sampler2DArray u_depths;
 
-out vec4 o[2];
+layout(location = 0) out vec4 out_d0;
+layout(location = 1) out vec4 out_d1;
+layout(location = 2) out vec4 out_d2;
+layout(location = 3) out vec4 out_d3;
+layout(location = 4) out vec4 out_d4;
+layout(location = 5) out vec4 out_d5;
 
-float depth(sampler2D s) {
+void main() {
 	int lod = frxu_lod;
 	int lod_from = lod - 1;
-	float min_depth = 1;
 
-	ivec2 size = textureSize(s, 0);
+	ivec2 size = textureSize(u_depths, 0).xy;
 
 	ivec2 coord = ivec2(gl_FragCoord.xy);
-	if(any(greaterThanEqual(coord << (2*lod), size))) return 0.0;//discard;
+	if(any(greaterThanEqual(coord << (2*lod), size))) discard;
+
+	float min_depths[6] = float[](1, 1, 1, 1, 1, 1);
 
 	for(int x = 0; x < 4; x++) {
 		for(int y = 0; y < 4; y++) {
@@ -24,15 +29,17 @@ float depth(sampler2D s) {
 
 			if(any(greaterThanEqual(v << (2*lod_from), size))) continue;
 
-			float d = texelFetch(s, v, lod_from).r;
-			min_depth = min(min_depth, d);
+			for(int i = 0; i < 6; i++) {
+				float d = texelFetch(u_depths, ivec3(v, i), lod_from).r;
+				min_depths[i] = min(min_depths[i], d);
+			}
 		}
 	}
 
-	return min_depth;
-}
-
-void main() {
-	o[0] = vec4(depth(u_depth_0));
-	o[1] = vec4(depth(u_depth_1));
+	out_d0 = vec4(min_depths[0]);
+	out_d1 = vec4(min_depths[1]);
+	out_d2 = vec4(min_depths[2]);
+	out_d3 = vec4(min_depths[3]);
+	out_d4 = vec4(min_depths[4]);
+	out_d5 = vec4(min_depths[5]);
 }

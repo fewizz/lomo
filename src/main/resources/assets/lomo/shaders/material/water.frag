@@ -31,5 +31,5 @@ void frx_materialFragment() {
 	//frx_fragReflectance = 1.;
 	//frx_vertexColor.a = 0.4;
 
-	reflectivity = 0.99;
+	reflectivity = 1.;
 }
