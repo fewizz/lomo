@@ -5,6 +5,6 @@
 /* lomo:material/reflection.frag */
 
 void frx_materialFragment() {
-	reflectivity = 0.995;
+	reflectivity = 1.;
 	//frx_fragNormal = frx_vertexNormal;
 }

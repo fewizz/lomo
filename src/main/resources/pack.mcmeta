@@ -1,6 +1,6 @@
 {
-  "pack": {
-    "pack_format": 7,
-    "description": "Lomo shaders version ${version}"
-  }
+	"pack": {
+		"pack_format": 8,
+		"description": "Lomo shaders version ${version}"
+	}
 }

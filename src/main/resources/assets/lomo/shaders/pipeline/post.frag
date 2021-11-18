@@ -5,6 +5,7 @@
 #include lomo:shaders/lib/transform.glsl
 #include lomo:shaders/lib/math.glsl
 #include lomo:shaders/lib/sky.glsl
+#include lomo:shaders/lib/blend.glsl
 
 /* lomo:post.frag */
 
@@ -262,11 +263,11 @@ fb_traversal_result traverse_fb(vec3 dir, vec3 pos, sampler2DArray s, uint f) {
 }
 
 void main() {
-	vec4 color = vec4(0);
-	float ratio = 0.0;
+	//vec4 color = vec4(0);
+	//float ratio = 0.0;
 	
 	vec4 normal4 = texelFetch(u_normals, ivec3(gl_FragCoord.xy, 0), 0);
-	vec4 color0 = texelFetch(u_colors, ivec3(gl_FragCoord.xy, 0), 0);
+	//vec4 color0 = texelFetch(u_colors, ivec3(gl_FragCoord.xy, 0), 0);
 
 	float depth_ws = texelFetch(u_depths, ivec3(gl_FragCoord.xy, 0), 0).r ;
 	vec3 position_ws = vec3(gl_FragCoord.xy, depth_ws);
@@ -299,21 +300,41 @@ void main() {
 	float z_per_xy = dir_ws.z / length(dir_ws.xy);
 	position_ws.z -= abs(z_per_xy)*2.0;
 
-	fb_traversal_result res = traverse_fb(dir_ws, position_ws, u_depths, 0u);
-	ratio = reflectivity;
+	vec4 colors_array[6] = vec4[](vec4(0.), vec4(0.), vec4(0.), vec4(0.), vec4(0.), vec4(0.));
+	uint layer = 0u;
 
-	if(res.code == TRAVERSAL_SUCCESS) {
-		color = texelFetch(u_colors, ivec3(res.pos, 0), 0);
-		if(res.z < 1) {
-			vec2 dist_to_border = vec2(1.0) - abs(vec2(res.pos) / vec2(frxu_size) * 2.0 - 1.0);
-			float min_dist_to_border = min(dist_to_border.x, dist_to_border.y);
-			ratio *= pow(min_dist_to_border, 0.3);
+	while(layer < 6u) {
+		fb_traversal_result res = traverse_fb(dir_ws, position_ws, u_depths, layer);
+
+		vec4 color = vec4(0.);
+
+		if(res.code == TRAVERSAL_SUCCESS) {
+			color = texelFetch(u_colors, ivec3(res.pos, 0), int(layer));
+
+			//if(res.z < 1) {
+			//	vec2 dist_to_border = vec2(1.0) - abs(vec2(res.pos) / vec2(frxu_size) * 2.0 - 1.0);
+			//	float min_dist_to_border = min(dist_to_border.x, dist_to_border.y);
+				//ratio *= pow(min_dist_to_border, 0.3);
+			//}
 		}
-	}
-	else if(res.code == TRAVERSAL_OUT_OF_FB) {
-		color = vec4(sky_color(mat3(frx_inverseViewMatrix) * reflection_dir, 0.0), 1.0);
-		ratio *= sky;
+		else {
+			color = vec4(sky_color(mat3(frx_inverseViewMatrix) * reflection_dir, 0.0), 1.0);
+		}
+		colors_array[layer++] = color;
+
+		if(color.a == 1.0) {
+			break;
+		}
+
+		position_ws = vec3(vec2(res.pos), res.z);
 	}
 
-	out_color = mix(color0, color, ratio);
+	vec3 base = colors_array[--layer].rgb;
+
+	while(layer > 0u) {
+		base = blend(base, colors_array[--layer]);
+	}
+
+	vec4 original_color = texelFetch(u_colors, ivec3(gl_FragCoord.xy, 0), 0);
+	out_color = vec4(mix(original_color.rgb, base, reflectivity), 1.);
 }
