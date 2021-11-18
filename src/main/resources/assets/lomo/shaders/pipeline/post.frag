@@ -314,7 +314,7 @@ void main() {
 		vec4 color = vec4(0.);
 
 		if(res.z < 1.0 && res.code == TRAVERSAL_SUCCESS) {
-			color = texelFetch(u_colors, ivec3(res.pos, int(layer)), 0) * sky;
+			color = texelFetch(u_colors, ivec3(res.pos, int(layer)), 0);
 
 			//if(res.z < 1) {
 			//	vec2 dist_to_border = vec2(1.0) - abs(vec2(res.pos) / vec2(frxu_size) * 2.0 - 1.0);
