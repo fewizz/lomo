@@ -6,9 +6,9 @@
 uniform sampler2D u_input;
 uniform sampler2D u_input_depth;
 
-out vec4 o;
+layout(location = 0) out vec4 out_color;
 
 void main() {
-	o = texelFetch(u_input, ivec2(gl_FragCoord.xy), 0);
+	out_color = texelFetch(u_input, ivec2(gl_FragCoord.xy), 0);
 	gl_FragDepth = texelFetch(u_input_depth, ivec2(gl_FragCoord.xy), 0).r;
 }

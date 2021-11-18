@@ -35,12 +35,6 @@
 
 "programs": [
 	{
-		"name": "sky",
-		"vertexSource": "lomo:shaders/pipeline/full_frame_depth_1.vert",
-		"fragmentSource": "lomo:shaders/pipeline/sky.frag",
-		"samplers": [ "u_solid_d" ]
-	},
-	{
 		"name": "copy",
 		"vertexSource": "lomo:shaders/pipeline/full_frame_depth_1.vert",
 		"fragmentSource": "lomo:shaders/pipeline/copy.frag",
@@ -57,22 +51,6 @@
 		"vertexSource": "lomo:shaders/pipeline/full_frame_depth_1.vert",
 		"fragmentSource": "lomo:shaders/pipeline/indexed_sort.frag",
 		"samplers": [ "u_d0", "u_d1", "u_d2", "u_d3", "u_d4", "u_d5" ]
-	},
-	{
-		"name": "sort",
-		"vertexSource": "lomo:shaders/pipeline/full_frame_depth_1.vert",
-		"fragmentSource": "lomo:shaders/pipeline/sort.frag",
-		"samplers": [
-			"u_solid", "u_translucent", "u_entity",
-			"u_weather", "u_cloud", "u_particle",
-			"u_index_to_type"
-		]
-	},
-	{
-		"name": "copy_2_depth",
-		"vertexSource": "lomo:shaders/pipeline/full_frame_depth_1.vert",
-		"fragmentSource": "lomo:shaders/pipeline/copy_2_depth.frag",
-		"samplers": [ "u_depth_0", "u_depth_1" ]
 	},
 	{
 		"name": "depth_level_4",
@@ -106,12 +84,6 @@
 
 "fabulous": {
 	"passes": [
-		{
-			"name": "sky",
-			"program" : "sky",
-			"framebuffer": "solid_c",
-			"samplerImages": [ "solid_d" ]
-		},
 		{
 			"name": "indexed_sort",
 			"program": "indexed_sort",
@@ -540,154 +512,6 @@
 			{ "name": "TEXTURE_COMPARE_MODE", "val": "NONE" }
 		]
 	},
-	/*{
-		"name": "sorted_all_c",
-		"texParams": [
-			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
-			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
-			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
-			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
-		]
-	},
-	{
-		"name": "sorted_without_translucent_c",
-		"texParams": [
-			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
-			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
-			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
-			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
-		]
-	},
-	{
-		"name": "sorted_without_translucent_n",
-		"internalFormat": "GL_RGBA16F",
-		"pixelFormat": "RGB",
-		"pixelDataType": "FLOAT",
-		"texParams": [
-			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
-			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
-			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
-			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
-		]
-	},
-	{
-		"name": "sorted_without_translucent_d",
-		"internalFormat": "GL_R32F",
-		"pixelFormat": "RED",
-		"pixelDataType": "FLOAT",
-		"texParams": [
-			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
-			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
-			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
-			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" },
-			{ "name": "TEXTURE_COMPARE_MODE", "val": "NONE" }
-		]
-	},
-	{
-		"name": "sorted_without_translucent_e",
-		"internalFormat": "GL_RGBA16F",
-		"pixelFormat": "RGB",
-		"pixelDataType": "FLOAT",
-		"texParams": [
-			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
-			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
-			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
-			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
-		]
-	},
-	{
-		"name": "sorted_with_translucent_c",
-		"texParams": [
-			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
-			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
-			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
-			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
-		]
-	},
-	{
-		"name": "sorted_with_translucent_n",
-		"internalFormat": "GL_RGBA16F",
-		"pixelFormat": "RGB",
-		"pixelDataType": "FLOAT",
-		"texParams": [
-			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
-			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
-			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
-			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
-		]
-	},
-	{
-		"name": "sorted_with_translucent_d",
-		"internalFormat": "GL_R32F",
-		"pixelFormat": "RED",
-		"pixelDataType": "FLOAT",
-		"texParams": [
-			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
-			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
-			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
-			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" },
-			{ "name": "TEXTURE_COMPARE_MODE", "val": "NONE" }
-		]
-	},
-	{
-		"name": "sorted_with_translucent_e",
-		"internalFormat": "GL_RGBA16F",
-		"pixelFormat": "RGB",
-		"pixelDataType": "FLOAT",
-		"texParams": [
-			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
-			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
-			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
-			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
-		]
-	},*/
-	/*{
-		"name": "level_d",
-		"lod": 4,
-		"internalFormat": "GL_R32F",
-		"pixelFormat": "RED",
-		"pixelDataType": "FLOAT",
-		"texParams": [
-			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST_MIPMAP_NEAREST"},
-			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST"},
-			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE"},
-			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE"}
-		]
-	},
-	{
-		"name": "solid_level_d",
-		"lod": 4,
-		"internalFormat": "GL_R32F",
-		"pixelFormat": "RED",
-		"pixelDataType": "FLOAT",
-		"texParams": [
-			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST_MIPMAP_NEAREST"},
-			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST"},
-			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE"},
-			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE"}
-		]
-	},/*
-	{
-		"name": "lag_finder",
-		"internalFormat": "GL_RGBA32F",
-		"pixelFormat": "RGBA",
-		"pixelDataType": "FLOAT",
-		"texParams": [
-			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
-			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
-			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
-			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
-		]
-	},
-	{
-		"name": "post_c",
-		"texParams": [
-			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
-			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
-			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
-			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
-		]
-	},*/
 	{
 		"name": "index_to_type",
 		"internalFormat": "GL_R32F",
@@ -717,19 +541,6 @@
 ],
 
 "framebuffers": [
-	/*{
-		"name": "default_c",
-		"colorAttachments": [
-			{ "image": "default_c" }
-		]
-	},
-	{
-		"name": "default_cd",
-		"colorAttachments": [
-			{ "image": "default_c", "clearColor": "c:" }
-		],
-		"depthAttachment": { "image": "default_d", "clearDepth": "c:" }
-	},*/
 	{
 		"name": "solid_c",
 		"colorAttachments": [
@@ -797,20 +608,6 @@
 		],
 		"depthAttachment": { "image": "translucent_d", "clearDepth": "c:" }
 	},
-	/*{
-		"name": "sorted_cned",
-		"colorAttachments": [
-			{ "image": "sorted_without_translucent_c", "clearColor": "c:" },
-			{ "image": "sorted_without_translucent_n", "clearColor": "c:" },
-			{ "image": "sorted_without_translucent_d", "clearColor": 4294967295 },
-			{ "image": "sorted_without_translucent_e", "clearColor": "c:" },
-			{ "image": "sorted_with_translucent_c", "clearColor": "c:" },
-			{ "image": "sorted_with_translucent_n", "clearColor": "c:" },
-			{ "image": "sorted_with_translucent_d", "clearColor": 4294967295 },
-			{ "image": "sorted_with_translucent_e", "clearColor": "c:" },
-			{ "image": "sorted_all_c", "clearColor": "c:" }
-		]
-	},*/
 	{
 		"name": "depths_0",
 		"colorAttachments": [
@@ -866,19 +663,6 @@
 			{ "image": "depths", "layer": 5, "lod": 4 }
 		]
 	},
-	/*{
-		"name": "post",
-		"colorAttachments": [
-			{ "image": "post_c" },
-			{ "image": "lag_finder" }
-		]
-	},*/
-	/*{
-		"name": "sky_c",
-		"colorAttachments": [
-			{ "image": "sky_c" }
-		]
-	},*/
 	{
 		"name": "depth_indices",
 		"colorAttachments": [

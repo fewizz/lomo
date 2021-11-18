@@ -1,7 +1,7 @@
 #include frex:shaders/api/header.glsl
 #include canvas:shaders/pipeline/pipeline.glsl
 
-/* lomo:pipepline/full_frame_depth_1 */
+/* lomo:pipepline/full_frame_depth_1.vert */
 
 in vec3 in_vertex;
 in vec2 in_uv;

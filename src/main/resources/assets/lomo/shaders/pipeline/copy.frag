@@ -4,8 +4,8 @@
 
 uniform sampler2D u_input;
 
-out vec4 o;
+layout(location = 0) out vec4 out_color;
 
 void main() {
-	o = texelFetch(u_input, ivec2(gl_FragCoord.xy), 0);
+	out_color = texelFetch(u_input, ivec2(gl_FragCoord.xy), 0);
 }

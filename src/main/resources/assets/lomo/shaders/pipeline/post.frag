@@ -263,30 +263,35 @@ fb_traversal_result traverse_fb(vec3 dir, vec3 pos, sampler2DArray s, uint f) {
 }
 
 void main() {
-	//vec4 color = vec4(0);
-	//float ratio = 0.0;
-	
-	vec4 normal4 = texelFetch(u_normals, ivec3(gl_FragCoord.xy, 0), 0);
-	//vec4 color0 = texelFetch(u_colors, ivec3(gl_FragCoord.xy, 0), 0);
-
 	float depth_ws = texelFetch(u_depths, ivec3(gl_FragCoord.xy, 0), 0).r ;
 	vec3 position_ws = vec3(gl_FragCoord.xy, depth_ws);
 	vec3 position_cs = win_to_cam(position_ws);
-
-	vec3 normal = normalize(normal4.xyz * 2.0 - 1.0);
-	vec3 normal_cs = raw_normal_to_cam(normal);
-
-	vec3 incidence_cs = normalize(position_cs - win_to_cam(vec3(gl_FragCoord.xy, 0)));
-	vec3 reflection_dir = normalize(
-		reflect(
-			incidence_cs,
-			normal_cs
-		)
-	);
-
+	
 	vec4 extras = texelFetch(u_extras, ivec3(gl_FragCoord.xy, 0), 0);
 	float reflectivity = extras.x;
 	float sky = extras.y;
+
+	vec3 raw_normal = texelFetch(u_normals, ivec3(gl_FragCoord.xy, 0), 0).xyz;
+
+	vec3 incidence_cs = normalize(position_cs - win_to_cam(vec3(gl_FragCoord.xy, 0)));
+	vec3 reflection_dir = vec3(0.0);
+	
+	if(position_ws.z != 1.0) {
+		vec3 normal = normalize(raw_normal * 2.0 - 1.0);
+		vec3 normal_cs = raw_normal_to_cam(normal);
+	
+		reflection_dir = normalize(
+			reflect(
+				incidence_cs,
+				normal_cs
+			)
+		);
+	}
+	else {
+		reflection_dir = incidence_cs;
+		reflectivity = 1.0;
+		sky = 1.0;
+	}
 
 	reflection_dir = random_vec(
 		reflection_dir,
@@ -308,7 +313,7 @@ void main() {
 
 		vec4 color = vec4(0.);
 
-		if(res.code == TRAVERSAL_SUCCESS) {
+		if(res.z < 1.0 && res.code == TRAVERSAL_SUCCESS) {
 			color = texelFetch(u_colors, ivec3(res.pos, int(layer)), 0) * sky;
 
 			//if(res.z < 1) {
@@ -336,6 +341,6 @@ void main() {
 		base_color = blend(base_color, colors[--layer]);
 	}
 
-	vec4 original_color = texelFetch(u_colors, ivec3(gl_FragCoord.xy, 0), 0);
-	out_color = vec4(mix(original_color.rgb, base_color, reflectivity), 1.);
+	vec3 original_color = texelFetch(u_colors, ivec3(gl_FragCoord.xy, 0), 0).rgb;
+	out_color = vec4(mix(original_color, base_color, reflectivity), 1.);
 }
