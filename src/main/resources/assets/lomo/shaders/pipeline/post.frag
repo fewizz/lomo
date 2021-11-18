@@ -300,7 +300,7 @@ void main() {
 	float z_per_xy = dir_ws.z / length(dir_ws.xy);
 	position_ws.z -= abs(z_per_xy)*2.0;
 
-	vec4 colors_array[6] = vec4[](vec4(0.), vec4(0.), vec4(0.), vec4(0.), vec4(0.), vec4(0.));
+	vec4 colors[6] = vec4[](vec4(0.), vec4(0.), vec4(0.), vec4(0.), vec4(0.), vec4(0.));
 	uint layer = 0u;
 
 	while(layer < 6u) {
@@ -309,7 +309,7 @@ void main() {
 		vec4 color = vec4(0.);
 
 		if(res.code == TRAVERSAL_SUCCESS) {
-			color = texelFetch(u_colors, ivec3(res.pos, 0), int(layer));
+			color = texelFetch(u_colors, ivec3(res.pos, int(layer)), 0) * sky;
 
 			//if(res.z < 1) {
 			//	vec2 dist_to_border = vec2(1.0) - abs(vec2(res.pos) / vec2(frxu_size) * 2.0 - 1.0);
@@ -319,8 +319,9 @@ void main() {
 		}
 		else {
 			color = vec4(sky_color(mat3(frx_inverseViewMatrix) * reflection_dir, 0.0), 1.0);
+			reflectivity *= sky;
 		}
-		colors_array[layer++] = color;
+		colors[layer++] = color;
 
 		if(color.a == 1.0) {
 			break;
@@ -329,12 +330,12 @@ void main() {
 		position_ws = vec3(vec2(res.pos), res.z);
 	}
 
-	vec3 base = colors_array[--layer].rgb;
+	vec3 base_color = colors[--layer].rgb;
 
 	while(layer > 0u) {
-		base = blend(base, colors_array[--layer]);
+		base_color = blend(base_color, colors[--layer]);
 	}
 
 	vec4 original_color = texelFetch(u_colors, ivec3(gl_FragCoord.xy, 0), 0);
-	out_color = vec4(mix(original_color.rgb, base, reflectivity), 1.);
+	out_color = vec4(mix(original_color.rgb, base_color, reflectivity), 1.);
 }
