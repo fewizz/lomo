@@ -14,7 +14,12 @@ uniform sampler2DArray u_normals;
 uniform sampler2DArray u_extras;
 uniform sampler2DArray u_depths;
 
-layout(location = 0) out vec4 out_color;
+//layout(location = 0) out vec4 out_color;
+//layout(location = 1) out vec4 out_color;
+layout(location = 0) out vec4 out_noise;
+layout(location = 1) out vec4 out_noise_extra;
+layout(location = 2) out vec4 out_color;
+//layout(location = 1) out vec4 out_noise_normal;
 //out vec4 out_lag_finder;
 
 #define TRAVERSAL_SUCCESS 0
@@ -141,36 +146,36 @@ float lower_depth_value(cell_pos pos, sampler2DArray s, uint f) {
 	return depth_value(pos.m, pos.level, s, f);
 }
 
-#define LOD_INCREASE(__init_func) { \
-	++pos.level; \
-	__init_func (pos, udir); \
+#define LOD_INCREASE(__init_func, __pos) { \
+	++__pos.level; \
+	__init_func (__pos, udir); \
 	lower_depth = upper_depth; \
-	upper_depth = upper_depth_value(pos, s, f); \
+	upper_depth = upper_depth_value(__pos, s, f); \
 }
 
-#define LOD_DECREASE(__init_func) { \
-	--pos.level; \
-	__init_func (pos, udir); \
+#define LOD_DECREASE(__init_func, __pos) { \
+	--__pos.level; \
+	__init_func (__pos, udir); \
 	upper_depth = lower_depth; \
-	lower_depth = lower_depth_value(pos, s, f); \
+	lower_depth = lower_depth_value(__pos, s, f); \
 }
 
-#define FIND_LOWEST_LOD(__init_func) { \
-	while(pos.level > 0u && pos.z >= lower_depth) { \
-		LOD_DECREASE(__init_func) \
+#define FIND_LOWEST_LOD(__init_func, __pos) { \
+	while(__pos.level > 0u && __pos.z >= lower_depth) { \
+		LOD_DECREASE(__init_func, __pos) \
 	} \
 }
 
-#define FIND_UPPEST_LOD(__init_func) { \
-	while(pos.level < last_level && pos.z < upper_depth) { \
-		LOD_INCREASE(__init_func) \
+#define FIND_UPPEST_LOD(__init_func, __pos) { \
+	while(__pos.level < last_level && __pos.z < upper_depth) { \
+		LOD_INCREASE(__init_func, __pos) \
 	} \
 }
 
 bool is_out_of_fb(cell_pos pos) {
 	return
 		any(greaterThanEqual(outer(pos), uvec2(frxu_size))) ||
-		pos.z < 0;
+		pos.z <= 0;
 }
 
 #define TRAVERSE_FUNC(__name, __next_func, __init_func) \
@@ -186,12 +191,10 @@ fb_traversal_result __name (vec3 dir, vec3 pos_ws, sampler2DArray s, uint f) { \
 	__init_func (pos, udir); \
 	float upper_depth = upper_depth_value(pos, s, f); \
 	float lower_depth = lower_depth_value(pos, s, f); \
-	FIND_UPPEST_LOD(__init_func) \
+	FIND_UPPEST_LOD(__init_func, pos) \
 	float dir_z_per_xy = dir.z / length(dir.xy); \
 	\
 	while(true) { \
-		cell_pos prev = pos; \
-		float prev_lower_depth = lower_depth; \
 		cell_pos next = pos; \
 		float dist = __next_func (next, udir); \
 		next.z += dist * dir_z_per_xy; \
@@ -199,25 +202,25 @@ fb_traversal_result __name (vec3 dir, vec3 pos_ws, sampler2DArray s, uint f) { \
 		if(pos.level > 0u && next.z >= lower_depth) { \
 			float mul = (lower_depth - pos.z) / (next.z - pos.z); \
 			dist *= mul; \
-			pos.m = uvec2(ivec2(pos.m) + ivec2(float(max_inner_value) * dist * dir_xy)); \
-			pos.z = lower_depth; \
+			next.m = uvec2(ivec2(pos.m) + ivec2(float(max_inner_value) * dist * dir_xy)); \
+			next.z = lower_depth; \
 		} \
 		else { \
-			pos = next; \
-			if(( prev.m >> cell_bits(pos.level + 1u) ) != ( pos.m >> cell_bits(pos.level + 1u) )) { \
-				upper_depth = upper_depth_value(pos, s, f); \
+			if(( pos.m >> cell_bits(pos.level + 1u) ) != ( next.m >> cell_bits(next.level + 1u) )) { \
+				upper_depth = upper_depth_value(next, s, f); \
 			} \
-			FIND_UPPEST_LOD(__init_func) \
-			lower_depth = lower_depth_value(pos, s, f); \
+			FIND_UPPEST_LOD(__init_func, next) \
+			lower_depth = lower_depth_value(next, s, f); \
 		} \
 		\
-		FIND_LOWEST_LOD(__init_func) \
-		if(is_out_of_fb(pos)) return fb_traversal_result(TRAVERSAL_OUT_OF_FB, uvec2(0u), 0.0, 0.0); \
+		FIND_LOWEST_LOD(__init_func, next) \
+		if(is_out_of_fb(next)) return fb_traversal_result(TRAVERSAL_OUT_OF_FB, uvec2(0u), 0.0, 0.0); \
 		\
-		if(pos.level == 0u) { \
-			if(pos.z >= lower_depth) \
-				return fb_traversal_result(TRAVERSAL_SUCCESS, outer(pos), pos.z, prev.z); \
+		if(next.level == 0u && pos.z >= lower_depth) { \
+			return fb_traversal_result(TRAVERSAL_SUCCESS, outer(next), next.z, pos.z); \
 		} \
+		\
+		pos = next; \
 	} \
 }
 
@@ -262,8 +265,36 @@ fb_traversal_result traverse_fb(vec3 dir, vec3 pos, sampler2DArray s, uint f) {
 	}
 }
 
+void traverse_fb_with_check(vec3 dir, vec3 pos, sampler2DArray s, uint f) {
+
+}
+
 void main() {
-	float depth_ws = texelFetch(u_depths, ivec3(gl_FragCoord.xy, 0), 0).r ;
+	vec4 colors[6] = vec4[](vec4(0.), vec4(0.), vec4(0.), vec4(0.), vec4(0.), vec4(0.));
+	uint layer = 0u;
+
+	uint nontranslucent_index = 0u;
+
+	while(layer < 6u) {
+		vec4 c = texelFetch(u_colors, ivec3(gl_FragCoord.xy, layer), 0);
+		colors[layer++] = c;
+
+		if(c.a == 1.0) {
+			nontranslucent_index = layer - 1u;
+			break;
+		}
+	}
+
+	vec3 base_color = colors[--layer].rgb;
+
+	while(layer > 0u) {
+		base_color = blend(base_color, colors[--layer]);
+	}
+
+	out_color = vec4(base_color, 1.0);
+
+	float depth_ws = texelFetch(u_depths, ivec3(gl_FragCoord.xy, 0), 0).r;
+	float nontranslucent_depth_ws = texelFetch(u_depths, ivec3(gl_FragCoord.xy, int(nontranslucent_index)), 0).r;
 	vec3 position_ws = vec3(gl_FragCoord.xy, depth_ws);
 	vec3 position_cs = win_to_cam(position_ws);
 	
@@ -271,14 +302,13 @@ void main() {
 	float reflectivity = extras.x;
 	float sky = extras.y;
 
-	vec3 raw_normal = texelFetch(u_normals, ivec3(gl_FragCoord.xy, 0), 0).xyz;
-
 	vec3 incidence_cs = normalize(position_cs - win_to_cam(vec3(gl_FragCoord.xy, 0)));
+	vec3 normal_cs = vec3(0.0);
 	vec3 reflection_dir = vec3(0.0);
 	
-	if(position_ws.z != 1.0) {
-		vec3 normal = normalize(raw_normal * 2.0 - 1.0);
-		vec3 normal_cs = raw_normal_to_cam(normal);
+	if(nontranslucent_depth_ws != 1.0) {
+		vec3 raw_normal = texelFetch(u_normals, ivec3(gl_FragCoord.xy, 0), 0).xyz;
+		normal_cs = normalize(raw_normal * 2.0 - 1.0);
 	
 		reflection_dir = normalize(
 			reflect(
@@ -288,16 +318,54 @@ void main() {
 		);
 	}
 	else {
-		reflection_dir = incidence_cs;
-		reflectivity = 1.0;
-		sky = 1.0;
+		out_noise = vec4(
+			sky_color(mat3(frx_inverseViewMatrix) * incidence_cs, 0.0),
+			1.0
+		);
+		out_noise_extra = vec4(
+			1.0,
+			0.0,
+			vec2(0.0)
+		);
+		return;
 	}
+
+	//vec4 worldPos = frx_inverseViewMatrix * vec4(position_cs, 1.0);
+	//worldPos /= worldPos.w;
+	//worldPos.xyz += frx_cameraPos;
+
+	uvec2 rand = uvec2(position_ws.xy * 1000) * 10000000u;
 
 	reflection_dir = random_vec(
 		reflection_dir,
 		reflectivity,
-		uint(frx_renderSeconds() * 10000) * uvec2(gl_FragCoord.xy + 1.)
+		rand
 	);
+
+	if(hash12(hash22(rand)) > reflectivity*reflectivity || dot(reflection_dir, normal_cs) <= 0) {
+		float block = extras.z;
+
+		if(hash12(hash22(rand)) < block*block) {
+			out_noise = vec4(
+				base_color,
+				1.0
+			);
+			out_noise_extra = vec4(
+				reflectivity,
+				0.0,
+				vec2(0.0)
+			);
+		}
+		else {
+			out_noise = vec4(0.);
+			out_noise_extra = vec4(
+				reflectivity,
+				1.0,
+				vec2(0.0)
+			);
+		}
+		return;
+	}
 
 	vec3 dir_ws = cam_dir_to_win(position_cs, reflection_dir);
 
@@ -305,42 +373,54 @@ void main() {
 	float z_per_xy = dir_ws.z / length(dir_ws.xy);
 	position_ws.z -= abs(z_per_xy)*2.0;
 
-	vec4 colors[6] = vec4[](vec4(0.), vec4(0.), vec4(0.), vec4(0.), vec4(0.), vec4(0.));
-	uint layer = 0u;
+	//while(layer < 6u) {
+	vec3 color = vec3(0.);
+	//vec3 pos = vec3(0.);
 
-	while(layer < 6u) {
-		fb_traversal_result res = traverse_fb(dir_ws, position_ws, u_depths, layer);
+		//if(dot(reflection_dir, normal_cs) > 0) {
+	fb_traversal_result res = traverse_fb(dir_ws, position_ws, u_depths, layer);
 
-		vec4 color = vec4(0.);
-
-		if(res.z < 1.0 && res.code == TRAVERSAL_SUCCESS) {
-			color = texelFetch(u_colors, ivec3(res.pos, int(layer)), 0);
+	if(res.z < 1.0 && res.code == TRAVERSAL_SUCCESS) {
+		color = texelFetch(u_colors, ivec3(res.pos, int(layer)), 0).rgb;
 
 			//if(res.z < 1) {
 			//	vec2 dist_to_border = vec2(1.0) - abs(vec2(res.pos) / vec2(frxu_size) * 2.0 - 1.0);
 			//	float min_dist_to_border = min(dist_to_border.x, dist_to_border.y);
 				//ratio *= pow(min_dist_to_border, 0.3);
 			//}
-		}
-		else {
-			color = vec4(sky_color(mat3(frx_inverseViewMatrix) * reflection_dir, 0.0), 1.0);
-			reflectivity *= sky;
-		}
-		colors[layer++] = color;
-
-		if(color.a == 1.0) {
-			break;
-		}
-
-		position_ws = vec3(vec2(res.pos), res.z);
+	}
+	else {
+		if(sky > 0.0) color = sky_color(mat3(frx_inverseViewMatrix) * reflection_dir, 0.0) * sky;
+		color *= sky;
 	}
 
-	vec3 base_color = colors[--layer].rgb;
+	//pos = vec3(vec2(res.pos), res.z);
 
-	while(layer > 0u) {
-		base_color = blend(base_color, colors[--layer]);
-	}
+	//colors[layer++] = color;
 
-	vec3 original_color = texelFetch(u_colors, ivec3(gl_FragCoord.xy, 0), 0).rgb;
-	out_color = vec4(mix(original_color, base_color, reflectivity), 1.);
+	//if(color.a == 1.0) {
+	//	break;
+	//}
+
+	//position_ws = pos;
+	//}
+
+	//base_color = colors[--layer].rgb;
+
+	//while(layer > 0u) {
+	//	base_color = blend(base_color, colors[--layer]);
+	//}
+
+	//vec3 original_color = texelFetch(u_colors, ivec3(gl_FragCoord.xy, 0), 0).rgb;
+	//out_color = vec4(mix(original_color, base_color, reflectivity), 1.);
+	out_noise = vec4(
+		color,
+		1.0
+	);
+	out_noise_extra = vec4(
+		reflectivity,
+		0.0,
+		vec2(0.)
+	);
+	//out_noise_normal = vec4(reflection_dir, 1.0);
 }

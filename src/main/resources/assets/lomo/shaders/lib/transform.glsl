@@ -95,7 +95,7 @@ vec3 cam_dir_to_win(vec3 pos_cs, vec3 dir_cs) {
 
 vec3 raw_normal_to_cam(vec3 raw_normal, mat4 viewMat) {
 	return normalize(
-		(mat3(viewMat) * vec3(raw_normal))
+		(mat3(viewMat) * raw_normal)
 	);
 }
 

@@ -10,7 +10,7 @@
 #include canvas:basic_light_config
 #include canvas:handheld_light_config
 
-#include lomo:shaders/lib/sky.glsl
+#include lomo:shaders/lib/transform.glsl
 
 /* lomo:pipeline/lomo.frag */
 
@@ -139,9 +139,10 @@ void frx_pipelineFragment() {
 		frx_renderTargetEntity
 	) {
 		if(frag_normal == vec3(0.0)) frag_normal = normalize(frx_vertexNormal);
+		frag_normal = raw_normal_to_cam(frag_normal);
 
 		out_normal = vec4(frag_normal * 0.5 + 0.5, 1.);
-		out_extra = vec4(reflectivity, frx_fragLight.y, 0.0, 1.0);
+		out_extra = vec4(reflectivity, frx_fragLight.y, emissivity, 1.0);
 	}
 	else {
 		out_normal = vec4(0);

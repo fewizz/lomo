@@ -53,9 +53,9 @@
 		"samplers": [ "u_d0", "u_d1", "u_d2", "u_d3", "u_d4", "u_d5" ]
 	},
 	{
-		"name": "depth_level_4",
+		"name": "depth_levels",
 		"vertexSource": "lomo:shaders/pipeline/full_frame_depth_1.vert",
-		"fragmentSource": "lomo:shaders/pipeline/depth_level_4.frag",
+		"fragmentSource": "lomo:shaders/pipeline/depth_levels.frag",
 		"samplers": [ "u_depths" ]
 	},
 	{
@@ -78,6 +78,43 @@
 			"u_i4",
 			"u_i5",
 			"u_index_to_type"
+		]
+	},
+	{
+		"name": "depth_derivatives",
+		"vertexSource": "lomo:shaders/pipeline/full_frame_depth_1.vert",
+		"fragmentSource": "lomo:shaders/pipeline/depth_derivative.frag",
+		"samplers": [
+			"u_depths"
+		]
+	},
+	{
+		"name": "denoise_hor",
+		"vertexSource": "lomo:shaders/pipeline/full_frame_depth_1.vert",
+		"fragmentSource": "lomo:shaders/pipeline/denoise_hor.frag",
+		"samplers": [
+			"u_noise",
+			"u_normals",
+			"u_depths"
+		]
+	},
+	{
+		"name": "denoise_ver",
+		"vertexSource": "lomo:shaders/pipeline/full_frame_depth_1.vert",
+		"fragmentSource": "lomo:shaders/pipeline/denoise_ver.frag",
+		"samplers": [
+			"u_noise",
+			"u_normals",
+			"u_depths"
+		]
+	},
+	{
+		"name": "combine",
+		"vertexSource": "lomo:shaders/pipeline/full_frame_depth_1.vert",
+		"fragmentSource": "lomo:shaders/pipeline/combine.frag",
+		"samplers": [
+			"u_noise",
+			"u_color"
 		]
 	}
 ],
@@ -131,43 +168,197 @@
 		},
 		{
 			"name": "depths_1",
-			"program": "depth_level_4",
+			"program": "depth_levels",
 			"framebuffer": "depths_1",
 			"samplerImages": [ "depths" ],
 			"lod": 1
 		},
 		{
 			"name": "depths_2",
-			"program": "depth_level_4",
+			"program": "depth_levels",
 			"framebuffer": "depths_2",
 			"samplerImages": [ "depths" ],
 			"lod": 2
 		},
 		{
 			"name": "depths_3",
-			"program": "depth_level_4",
+			"program": "depth_levels",
 			"framebuffer": "depths_3",
 			"samplerImages": [ "depths" ],
 			"lod": 3
 		},
 		{
 			"name": "depths_4",
-			"program": "depth_level_4",
+			"program": "depth_levels",
 			"framebuffer": "depths_4",
 			"samplerImages": [ "depths" ],
 			"lod": 4
 		},
+		/*{
+			"name": "depths_5",
+			"program": "depth_levels",
+			"framebuffer": "depths_5",
+			"samplerImages": [ "depths" ],
+			"lod": 5
+		},
+		{
+			"name": "depths_6",
+			"program": "depth_levels",
+			"framebuffer": "depths_6",
+			"samplerImages": [ "depths" ],
+			"lod": 6
+		},
+		{
+			"name": "depths_7",
+			"program": "depth_levels",
+			"framebuffer": "depths_7",
+			"samplerImages": [ "depths" ],
+			"lod": 7
+		},*/
+		{
+			"name": "depth_derivatives",
+			"program": "depth_derivatives",
+			"framebuffer": "depth_derivatives",
+			"samplerImages": [ "depths" ]
+		},
 		{
 			"name": "post",
 			"program": "post",
-			"framebuffer": "solid_c",
+			"framebuffer": "noise_0",
 			"samplerImages": [
 				"colors",
 				"normals",
 				"extras",
 				"depths"
 			]
-		}
+		},
+		{
+			"name": "denoise_0",
+			"program": "denoise_hor",
+			"framebuffer": "noise_1",
+			"samplerImages": [
+				"noise_0",
+				"normals",
+				"depths"
+			]
+		},
+		{
+			"name": "denoise_1",
+			"program": "denoise_ver",
+			"framebuffer": "noise_2",
+			"samplerImages": [
+				"noise_1",
+				"normals",
+				"depths"
+			]
+		},
+		{
+			"name": "denoise_2",
+			"program": "denoise_hor",
+			"framebuffer": "noise_1",
+			"samplerImages": [
+				"noise_2",
+				"normals",
+				"depths"
+			]
+		},
+		{
+			"name": "denoise_3",
+			"program": "denoise_ver",
+			"framebuffer": "noise_2",
+			"samplerImages": [
+				"noise_1",
+				"normals",
+				"depths"
+			]
+		},
+		{
+			"name": "combine",
+			"program": "combine",
+			"framebuffer": "solid_c",
+			"samplerImages": [
+				"noise_2",
+				"post_c"
+			]
+		}//,
+		/*{
+			"name": "denoise_2",
+			"program": "denoise_hor",
+			"framebuffer": "noise_1",
+			"samplerImages": [
+				"noise_2",
+				"normals",
+				"depths"
+			]
+		},
+		{
+			"name": "denoise_3",
+			"program": "denoise_ver",
+			"framebuffer": "noise_2",
+			"samplerImages": [
+				"noise_1",
+				"normals",
+				"depths"
+			]
+		}*///,
+		/*{
+			"name": "denoise_2",
+			"program": "denoise_hor",
+			"framebuffer": "noise_1",
+			"samplerImages": [
+				"noise_0",
+				"normals",
+				"depths"
+			]
+		},
+		{
+			"name": "denoise_3",
+			"program": "denoise_ver",
+			"framebuffer": "noise_0",
+			"samplerImages": [
+				"noise_1",
+				"normals",
+				"depths"
+			]
+		}/*,
+		{
+			"name": "denoise_4",
+			"program": "denoise_hor",
+			"framebuffer": "noise_1",
+			"samplerImages": [
+				"noise_0",
+				"normals",
+				"depths"
+			]
+		},
+		{
+			"name": "denoise_5",
+			"program": "denoise_ver",
+			"framebuffer": "noise_0",
+			"samplerImages": [
+				"noise_1",
+				"normals",
+				"depths"
+			]
+		}*///,
+		/*{
+			"name": "denoise_6",
+			"program": "denoise_hor",
+			"framebuffer": "noise_1",
+			"samplerImages": [
+				"noise_0",
+				"normals"
+			]
+		},
+		{
+			"name": "denoise_7",
+			"program": "denoise_ver",
+			"framebuffer": "noise_0",
+			"samplerImages": [
+				"noise_1",
+				"normals"
+			]
+		}*/
 	]
 },
 
@@ -183,7 +374,7 @@
 	},
 	{
 		"name": "solid_n",
-		"internalFormat": "GL_RGBA16F",
+		"internalFormat": "GL_RGB16F",
 		"pixelFormat": "RGB",
 		"pixelDataType": "FLOAT",
 		"texParams": [
@@ -208,7 +399,7 @@
 	},
 	{
 		"name": "solid_e",
-		"internalFormat": "GL_RGBA16F",
+		"internalFormat": "GL_RGB16F",
 		"pixelFormat": "RGB",
 		"pixelDataType": "FLOAT",
 		"texParams": [
@@ -229,7 +420,7 @@
 	},
 	{
 		"name": "translucent_n",
-		"internalFormat": "GL_RGBA16F",
+		"internalFormat": "GL_RGB16F",
 		"pixelFormat": "RGB",
 		"pixelDataType": "FLOAT",
 		"texParams": [
@@ -254,7 +445,7 @@
 	},
 	{
 		"name": "translucent_e",
-		"internalFormat": "GL_RGBA16F",
+		"internalFormat": "GL_RGB16F",
 		"pixelFormat": "RGB",
 		"pixelDataType": "FLOAT",
 		"texParams": [
@@ -275,7 +466,7 @@
 	},
 	{
 		"name": "entity_n",
-		"internalFormat": "GL_RGBA16F",
+		"internalFormat": "GL_RGB16F",
 		"pixelFormat": "RGB",
 		"pixelDataType": "FLOAT",
 		"texParams": [
@@ -300,7 +491,7 @@
 	},
 	{
 		"name": "entity_e",
-		"internalFormat": "GL_RGBA16F",
+		"internalFormat": "GL_RGB16F",
 		"pixelFormat": "RGB",
 		"pixelDataType": "FLOAT",
 		"texParams": [
@@ -321,7 +512,7 @@
 	},
 	{
 		"name": "weather_n",
-		"internalFormat": "GL_RGBA16F",
+		"internalFormat": "GL_RGB16F",
 		"pixelFormat": "RGB",
 		"pixelDataType": "FLOAT",
 		"texParams": [
@@ -346,7 +537,7 @@
 	},
 	{
 		"name": "weather_e",
-		"internalFormat": "GL_RGBA16F",
+		"internalFormat": "GL_RGB16F",
 		"pixelFormat": "RGB",
 		"pixelDataType": "FLOAT",
 		"texParams": [
@@ -367,7 +558,7 @@
 	},
 	{
 		"name": "cloud_n",
-		"internalFormat": "GL_RGBA16F",
+		"internalFormat": "GL_RGB16F",
 		"pixelFormat": "RGB",
 		"pixelDataType": "FLOAT",
 		"texParams": [
@@ -392,7 +583,7 @@
 	},
 	{
 		"name": "cloud_e",
-		"internalFormat": "GL_RGBA16F",
+		"internalFormat": "GL_RGB16F",
 		"pixelFormat": "RGB",
 		"pixelDataType": "FLOAT",
 		"texParams": [
@@ -413,7 +604,7 @@
 	},
 	{
 		"name": "particle_n",
-		"internalFormat": "GL_RGBA16F",
+		"internalFormat": "GL_RGB16F",
 		"pixelFormat": "RGB",
 		"pixelDataType": "FLOAT",
 		"texParams": [
@@ -438,18 +629,9 @@
 	},
 	{
 		"name": "particle_e",
-		"internalFormat": "GL_RGBA16F",
+		"internalFormat": "GL_RGB16F",
 		"pixelFormat": "RGB",
 		"pixelDataType": "FLOAT",
-		"texParams": [
-			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
-			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
-			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
-			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
-		]
-	},
-	{
-		"name": "sky_c",
 		"texParams": [
 			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
 			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
@@ -472,7 +654,7 @@
 		"name": "normals",
 		"target": "TEXTURE_2D_ARRAY",
 		"depth": 6,
-		"internalFormat": "GL_RGBA16F",
+		"internalFormat": "GL_RGB16F",
 		"pixelFormat": "RGB",
 		"pixelDataType": "FLOAT",
 		"texParams": [
@@ -486,7 +668,7 @@
 		"name": "extras",
 		"target": "TEXTURE_2D_ARRAY",
 		"depth": 6,
-		"internalFormat": "GL_RGBA16F",
+		"internalFormat": "GL_RGB16F",
 		"pixelFormat": "RGB",
 		"pixelDataType": "FLOAT",
 		"texParams": [
@@ -536,6 +718,68 @@
 			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
 			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" },
 			{ "name": "TEXTURE_COMPARE_MODE", "val": "NONE" }
+		]
+	},
+	{
+		"name": "post_c",
+		"texParams": [
+			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
+		]
+	},
+	{
+		"name": "depth_derivatives",
+		"target": "TEXTURE_2D_ARRAY",
+		"depth": 6,
+		"internalFormat": "GL_RG16F",
+		"pixelFormat": "RG",
+		"pixelDataType": "FLOAT",
+		"texParams": [
+			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
+		]
+	},
+	{
+		"name": "noise_0",
+		"target": "TEXTURE_2D_ARRAY",
+		"depth": 2,
+		"internalFormat": "GL_RGB8",
+		"pixelFormat": "RGB",
+		"texParams": [
+			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
+		]
+	},
+	{
+		"name": "noise_1",
+		"target": "TEXTURE_2D_ARRAY",
+		"depth": 2,
+		"internalFormat": "GL_RGB8",
+		"pixelFormat": "RGB",
+		"texParams": [
+			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
+		]
+	},
+	{
+		"name": "noise_2",
+		"target": "TEXTURE_2D_ARRAY",
+		"depth": 2,
+		"internalFormat": "GL_RGB8",
+		"pixelFormat": "RGB",
+		"texParams": [
+			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
 		]
 	}
 ],
@@ -712,6 +956,39 @@
 			{ "image": "depths", "layer": 3 },
 			{ "image": "depths", "layer": 4 },
 			{ "image": "depths", "layer": 5 }
+		]
+	},
+	{
+		"name": "depth_derivatives",
+		"colorAttachments": [
+			{ "image": "depth_derivatives", "layer": 0 },
+			{ "image": "depth_derivatives", "layer": 1 },
+			{ "image": "depth_derivatives", "layer": 2 },
+			{ "image": "depth_derivatives", "layer": 3 },
+			{ "image": "depth_derivatives", "layer": 4 },
+			{ "image": "depth_derivatives", "layer": 5 }
+		]
+	},
+	{
+		"name": "noise_0",
+		"colorAttachments": [
+			{ "image": "noise_0", "layer": 0 },
+			{ "image": "noise_0", "layer": 1 },
+			{ "image": "post_c" }
+		]
+	},
+	{
+		"name": "noise_1",
+		"colorAttachments": [
+			{ "image": "noise_1", "layer": 0 },
+			{ "image": "noise_1", "layer": 1 }
+		]
+	},
+	{
+		"name": "noise_2",
+		"colorAttachments": [
+			{ "image": "noise_2", "layer": 0 },
+			{ "image": "noise_2", "layer": 1 }
 		]
 	}
 ],

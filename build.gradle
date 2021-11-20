@@ -45,6 +45,7 @@ tasks.withType(JavaCompile).configureEach {
 }
 
 task shaderpack(type: Zip) {
+	outputs.upToDateWhen { false }
 	archiveFileName = "${archiveBaseName.get()}-${archiveVersion.get()}.zip"
 	destinationDirectory = jar.destinationDirectory
 	from sourceSets.main.resources

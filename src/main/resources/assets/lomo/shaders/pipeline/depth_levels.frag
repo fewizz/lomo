@@ -12,6 +12,9 @@ layout(location = 3) out vec4 out_d3;
 layout(location = 4) out vec4 out_d4;
 layout(location = 5) out vec4 out_d5;
 
+const int power = 2;
+const int mul = 1 << power;
+
 void main() {
 	int lod = frxu_lod;
 	int lod_from = lod - 1;
@@ -19,15 +22,15 @@ void main() {
 	ivec2 size = textureSize(u_depths, 0).xy;
 
 	ivec2 coord = ivec2(gl_FragCoord.xy);
-	if(any(greaterThanEqual(coord << (2*lod), size))) discard;
+	if(any(greaterThanEqual(coord << (power*lod), size))) discard;
 
 	float min_depths[6] = float[](1, 1, 1, 1, 1, 1);
 
-	for(int x = 0; x < 4; x++) {
-		for(int y = 0; y < 4; y++) {
-			ivec2 v = coord * 4 + ivec2(x, y);
+	for(int x = 0; x < mul; x++) {
+		for(int y = 0; y < mul; y++) {
+			ivec2 v = coord * mul + ivec2(x, y);
 
-			if(any(greaterThanEqual(v << (2*lod_from), size))) continue;
+			if(any(greaterThanEqual(v << (lod_from*power), size))) continue;
 
 			for(int i = 0; i < 6; i++) {
 				float d = texelFetch(u_depths, ivec3(v, i), lod_from).r;
