@@ -169,7 +169,7 @@
 		{
 			"name": "post",
 			"program": "post",
-			"framebuffer": "post_c",
+			"framebuffer": "solid_c",
 			"samplerImages": [
 				"colors",
 				"normals",

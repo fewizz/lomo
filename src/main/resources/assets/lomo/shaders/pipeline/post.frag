@@ -413,11 +413,11 @@ void main() {
 		incidence_cs = reflection_dir;
 	}
 
-	vec3 color = vec3(1.0);//lights[--i];
+	vec3 color = lights[--i];
 
 	while(--i >= 0) {
 		color = color * colors[i] + lights[i];
 	}
 
-	out_color = vec4(colors[1], 1.0);
+	out_color = vec4(color, 1.0);
 }
