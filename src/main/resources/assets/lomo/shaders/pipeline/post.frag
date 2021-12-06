@@ -6,6 +6,7 @@
 #include lomo:shaders/lib/math.glsl
 #include lomo:shaders/lib/sky.glsl
 #include lomo:shaders/lib/blend.glsl
+#include lomo:shaders/lib/ray_plane.glsl
 
 /* lomo:post.frag */
 
@@ -18,13 +19,13 @@ layout(location = 0) out vec4 out_color;
 
 #define TRAVERSAL_SUCCESS 0
 #define TRAVERSAL_OUT_OF_FB 1
-//#define TRAVERSAL_POSSIBLY_UNDER 2
 
 struct fb_traversal_result {
 	int code;
 	uvec2 pos;
 	float z;
 	float prev_z;
+	float depth;
 };
 
 const uint power = 2u;
@@ -176,8 +177,6 @@ bool is_out_of_fb(cell_pos pos) {
 		pos.z <= 0;
 }
 
-// AFTER  2
-
 #define TRAVERSE_FUNC(__name, __next_func, __init_func) \
 fb_traversal_result __name (vec3 dir, vec3 pos_ws, sampler2DArray s, uint f) { \
 	cell_pos pos = cell_pos( \
@@ -213,12 +212,12 @@ fb_traversal_result __name (vec3 dir, vec3 pos_ws, sampler2DArray s, uint f) { \
 			UPDATE_LOWER_DEPTH(pos); \
 		} \
 		\
-		if(is_out_of_fb(pos)) return fb_traversal_result(TRAVERSAL_OUT_OF_FB, uvec2(0u), 0.0, 0.0); \
+		if(is_out_of_fb(pos)) return fb_traversal_result(TRAVERSAL_OUT_OF_FB, uvec2(0u), 0.0, 0.0, 0.0); \
 		\
-		FIND_LOWEST_LOD(__init_func, pos); \
 		if(level == 0u && pos.z >= lower_depth) { \
-			return fb_traversal_result(TRAVERSAL_SUCCESS, outer(pos), pos.z, prev.z); \
+			return fb_traversal_result(TRAVERSAL_SUCCESS, outer(pos), pos.z, prev.z, lower_depth); \
 		} \
+		FIND_LOWEST_LOD(__init_func, pos); \
 	} \
 }
 
@@ -238,9 +237,9 @@ fb_traversal_result traverse_fb(vec3 dir, vec3 pos, sampler2DArray s, uint f) {
 		float d = texelFetch(s, ivec3(upos, f), 0).r;
 
 		if(dir.z > 0 && d >= pos.z)
-			return fb_traversal_result(TRAVERSAL_SUCCESS, upos, d, pos.z);
+			return fb_traversal_result(TRAVERSAL_SUCCESS, upos, d, pos.z, d);
 
-		return fb_traversal_result(TRAVERSAL_OUT_OF_FB, upos, 0, 0);
+		return fb_traversal_result(TRAVERSAL_OUT_OF_FB, upos, 0.0, 0.0, 0.0);
 	}
 
 	if(dir.x == 1.0)
@@ -254,17 +253,66 @@ fb_traversal_result traverse_fb(vec3 dir, vec3 pos, sampler2DArray s, uint f) {
 		return traverse_fb_d(dir, pos, s, f);
 
 	if(dir.x > 0.0) {
-		if(dir.y > 0.0) return traverse_fb_ru(dir, pos, s, f);
-		else return traverse_fb_rd(dir, pos, s, f);
+		if(dir.y > 0.0)
+			return traverse_fb_ru(dir, pos, s, f);
+		else
+			return traverse_fb_rd(dir, pos, s, f);
 	}
 	else {
-		if(dir.y > 0.0) return traverse_fb_lu(dir, pos, s, f);
-		else return traverse_fb_ld(dir, pos, s, f);
+		if(dir.y > 0.0)
+			return traverse_fb_lu(dir, pos, s, f);
+		else
+			return traverse_fb_ld(dir, pos, s, f);
 	}
 }
 
-void traverse_fb_with_check(vec3 dir, vec3 pos, sampler2DArray s, uint f) {
+#define TRAVERSAL_POSSIBLY_UNDER 2
 
+fb_traversal_result traverse_fb_with_thickness(vec3 dir, vec3 pos_ws, sampler2DArray depths_s, sampler2DArray normals_s, uint f) {
+	fb_traversal_result result = traverse_fb(dir, pos_ws, depths_s, f);
+
+	if(result.code != TRAVERSAL_SUCCESS) {
+		return result;
+	}
+
+	vec3 raw_normal = texelFetch(normals_s, ivec3(result.pos, f), 0).xyz;
+	vec3 normal_cs = normalize(raw_normal * 2.0 - 1.0);
+
+	float depth_ws = result.depth;
+	vec2 pos_xy = vec2(result.pos) + 0.5;
+	vec3 pos_center_ws = vec3(pos_xy, depth_ws);
+	vec3 pos_center_cs = win_to_cam(pos_center_ws);
+	float dist_to_center = length(pos_center_cs);
+
+	float max_depth = dist_to_center;
+
+	for(int x = -1; x <= 1; x+=2) {
+		for(int y = -1; y <= 1; y+=2) {
+			pos_ws = pos_center_ws + vec3(x, y, 0) / 2.0;
+			vec3 pos_cs = win_to_cam(pos_ws); // we can do better
+
+			vec3 dir = normalize(pos_cs);
+			ray r = ray(vec3(0.0), dir);
+			plane p = plane_from_pos_and_normal(pos_center_cs, normal_cs);
+
+			ray_plane_intersection_result res = ray_plane_intersection(r, p);
+
+			max_depth = max(
+				max_depth,
+				res.dist
+			);
+		}
+	}
+
+	float thickness = (max_depth - dist_to_center) * 5. + 0.01; // linear, magic
+	float dx_post = length(win_to_cam(vec3(pos_xy, result.z))) - dist_to_center; // todo?
+	float dx_pre = length(win_to_cam(vec3(pos_xy, result.prev_z))) - dist_to_center;
+
+	if(dx_pre > thickness && dx_post > thickness) {
+		result.code = TRAVERSAL_POSSIBLY_UNDER;
+	}
+
+	return result;
 }
 
 void main() {
@@ -339,9 +387,9 @@ void main() {
 
 		// applying z offset, dumb'ish
 		float z_per_xy = dir_ws.z / length(dir_ws.xy);
-		position_ws.z -= abs(z_per_xy)*2.0;
+		position_ws.z -= abs(z_per_xy)*3.0;
 
-		fb_traversal_result res = traverse_fb(dir_ws, position_ws, u_depths, layer);
+		fb_traversal_result res = traverse_fb_with_thickness(dir_ws, position_ws, u_depths, u_normals, layer);
 
 		if(res.z < 1.0 && res.code == TRAVERSAL_SUCCESS) {
 			vec3 new_color = texelFetch(u_colors, ivec3(res.pos, int(layer)), 0).rgb;
@@ -365,11 +413,11 @@ void main() {
 		incidence_cs = reflection_dir;
 	}
 
-	vec3 color = lights[--i];
+	vec3 color = vec3(1.0);//lights[--i];
 
 	while(--i >= 0) {
 		color = color * colors[i] + lights[i];
 	}
 
-	out_color = vec4(color, 1.0);
+	out_color = vec4(colors[1], 1.0);
 }

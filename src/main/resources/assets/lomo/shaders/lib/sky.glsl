@@ -4,13 +4,8 @@
 
 #include lomo:shaders/lib/transform.glsl
 #include lomo:shaders/lib/math.glsl
-
+#include lomo:shaders/lib/ray.glsl
 /* lomo:lib/sky.glsl */
-
-struct ray {
-	vec3 pos;
-	vec3 dir;
-};
 
 struct sphere {
 	vec3 pos;
