@@ -7,9 +7,8 @@
 
 /* lomo:material/water.glsl */
 
-// not the best way for doing this, should be replaced
 float lomo_water_h(vec3 pos) {
-	float t = frx_renderSeconds();
+	float t = frx_renderSeconds;
 	pos.xy += t;
 	return snoise(
 		vec4(pos/8.0, t)
@@ -28,8 +27,6 @@ void frx_materialFragment() {
 	frag_normal = normalize(cross(z_off, x_off));
 
 	frx_fragColor = frx_vertexColor*0.25 + vec4(0, 1, 1, 0)*0.75;
-	//frx_fragReflectance = 1.;
-	//frx_vertexColor.a = 0.4;
 
 	reflectivity = 1.;
 }

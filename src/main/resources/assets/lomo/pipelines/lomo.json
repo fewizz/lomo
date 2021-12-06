@@ -81,34 +81,6 @@
 		]
 	},
 	{
-		"name": "depth_derivatives",
-		"vertexSource": "lomo:shaders/pipeline/full_frame_depth_1.vert",
-		"fragmentSource": "lomo:shaders/pipeline/depth_derivative.frag",
-		"samplers": [
-			"u_depths"
-		]
-	},
-	{
-		"name": "denoise_hor",
-		"vertexSource": "lomo:shaders/pipeline/full_frame_depth_1.vert",
-		"fragmentSource": "lomo:shaders/pipeline/denoise_hor.frag",
-		"samplers": [
-			"u_noise",
-			"u_normals",
-			"u_depths"
-		]
-	},
-	{
-		"name": "denoise_ver",
-		"vertexSource": "lomo:shaders/pipeline/full_frame_depth_1.vert",
-		"fragmentSource": "lomo:shaders/pipeline/denoise_ver.frag",
-		"samplers": [
-			"u_noise",
-			"u_normals",
-			"u_depths"
-		]
-	},
-	{
 		"name": "combine",
 		"vertexSource": "lomo:shaders/pipeline/full_frame_depth_1.vert",
 		"fragmentSource": "lomo:shaders/pipeline/combine.frag",
@@ -127,7 +99,7 @@
 			"framebuffer": "depth_indices",
 			"samplerImages": [
 				"solid_d", "translucent_d", "entity_d",
-				"weather_d", "cloud_d", "particle_d"
+				"particle_d", "weather_d", "cloud_d"
 			]
 		},
 		{
@@ -136,7 +108,7 @@
 			"framebuffer": "colors",
 			"samplerImages": [
 				"solid_c", "translucent_c", "entity_c",
-				"weather_c", "cloud_c", "particle_c", "index_to_type"
+				"particle_c", "weather_c", "cloud_c", "index_to_type"
 			]
 		},
 		{
@@ -145,7 +117,7 @@
 			"framebuffer": "normals",
 			"samplerImages": [
 				"solid_n", "translucent_n", "entity_n",
-				"weather_n", "cloud_n", "particle_n", "index_to_type"
+				"particle_n", "weather_n", "cloud_n", "index_to_type"
 			]
 		},
 		{
@@ -154,7 +126,7 @@
 			"framebuffer": "extras",
 			"samplerImages": [
 				"solid_e", "translucent_e", "entity_e",
-				"weather_e", "cloud_e", "particle_e", "index_to_type"
+				"particle_e", "weather_e", "cloud_e", "index_to_type"
 			]
 		},
 		{
@@ -163,7 +135,7 @@
 			"framebuffer": "depths",
 			"samplerImages": [
 				"solid_d", "translucent_d", "entity_d",
-				"weather_d", "cloud_d", "particle_d", "index_to_type"
+				"particle_d", "weather_d", "cloud_d", "index_to_type"
 			]
 		},
 		{
@@ -194,177 +166,26 @@
 			"samplerImages": [ "depths" ],
 			"lod": 4
 		},
-		/*{
-			"name": "depths_5",
-			"program": "depth_levels",
-			"framebuffer": "depths_5",
-			"samplerImages": [ "depths" ],
-			"lod": 5
-		},
-		{
-			"name": "depths_6",
-			"program": "depth_levels",
-			"framebuffer": "depths_6",
-			"samplerImages": [ "depths" ],
-			"lod": 6
-		},
-		{
-			"name": "depths_7",
-			"program": "depth_levels",
-			"framebuffer": "depths_7",
-			"samplerImages": [ "depths" ],
-			"lod": 7
-		},*/
-		{
-			"name": "depth_derivatives",
-			"program": "depth_derivatives",
-			"framebuffer": "depth_derivatives",
-			"samplerImages": [ "depths" ]
-		},
 		{
 			"name": "post",
 			"program": "post",
-			"framebuffer": "noise_0",
+			"framebuffer": "post_c",
 			"samplerImages": [
 				"colors",
 				"normals",
 				"extras",
 				"depths"
 			]
-		},
-		{
-			"name": "denoise_0",
-			"program": "denoise_hor",
-			"framebuffer": "noise_1",
-			"samplerImages": [
-				"noise_0",
-				"normals",
-				"depths"
-			]
-		},
-		{
-			"name": "denoise_1",
-			"program": "denoise_ver",
-			"framebuffer": "noise_2",
-			"samplerImages": [
-				"noise_1",
-				"normals",
-				"depths"
-			]
-		},
-		{
-			"name": "denoise_2",
-			"program": "denoise_hor",
-			"framebuffer": "noise_1",
-			"samplerImages": [
-				"noise_2",
-				"normals",
-				"depths"
-			]
-		},
-		{
-			"name": "denoise_3",
-			"program": "denoise_ver",
-			"framebuffer": "noise_2",
-			"samplerImages": [
-				"noise_1",
-				"normals",
-				"depths"
-			]
-		},
-		{
-			"name": "combine",
-			"program": "combine",
-			"framebuffer": "solid_c",
-			"samplerImages": [
-				"noise_2",
-				"post_c"
-			]
-		}//,
-		/*{
-			"name": "denoise_2",
-			"program": "denoise_hor",
-			"framebuffer": "noise_1",
-			"samplerImages": [
-				"noise_2",
-				"normals",
-				"depths"
-			]
-		},
-		{
-			"name": "denoise_3",
-			"program": "denoise_ver",
-			"framebuffer": "noise_2",
-			"samplerImages": [
-				"noise_1",
-				"normals",
-				"depths"
-			]
-		}*///,
-		/*{
-			"name": "denoise_2",
-			"program": "denoise_hor",
-			"framebuffer": "noise_1",
-			"samplerImages": [
-				"noise_0",
-				"normals",
-				"depths"
-			]
-		},
-		{
-			"name": "denoise_3",
-			"program": "denoise_ver",
-			"framebuffer": "noise_0",
-			"samplerImages": [
-				"noise_1",
-				"normals",
-				"depths"
-			]
-		}/*,
-		{
-			"name": "denoise_4",
-			"program": "denoise_hor",
-			"framebuffer": "noise_1",
-			"samplerImages": [
-				"noise_0",
-				"normals",
-				"depths"
-			]
-		},
-		{
-			"name": "denoise_5",
-			"program": "denoise_ver",
-			"framebuffer": "noise_0",
-			"samplerImages": [
-				"noise_1",
-				"normals",
-				"depths"
-			]
-		}*///,
-		/*{
-			"name": "denoise_6",
-			"program": "denoise_hor",
-			"framebuffer": "noise_1",
-			"samplerImages": [
-				"noise_0",
-				"normals"
-			]
-		},
-		{
-			"name": "denoise_7",
-			"program": "denoise_ver",
-			"framebuffer": "noise_0",
-			"samplerImages": [
-				"noise_1",
-				"normals"
-			]
-		}*/
+		}
 	]
 },
 
 "images": [
 	{
 		"name": "solid_c",
+		"internalFormat": "RGBA8",
+		"pixelFormat": "RGBA",
+		"pixelDataType": "UNSIGNED_BYTE",
 		"texParams": [
 			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
 			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
@@ -722,59 +543,9 @@
 	},
 	{
 		"name": "post_c",
-		"texParams": [
-			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
-			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
-			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
-			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
-		]
-	},
-	{
-		"name": "depth_derivatives",
-		"target": "TEXTURE_2D_ARRAY",
-		"depth": 6,
-		"internalFormat": "GL_RG16F",
-		"pixelFormat": "RG",
+		"internalFormat": "GL_RGBA32F",
 		"pixelDataType": "FLOAT",
-		"texParams": [
-			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
-			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
-			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
-			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
-		]
-	},
-	{
-		"name": "noise_0",
-		"target": "TEXTURE_2D_ARRAY",
-		"depth": 2,
-		"internalFormat": "GL_RGB8",
-		"pixelFormat": "RGB",
-		"texParams": [
-			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
-			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
-			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
-			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
-		]
-	},
-	{
-		"name": "noise_1",
-		"target": "TEXTURE_2D_ARRAY",
-		"depth": 2,
-		"internalFormat": "GL_RGB8",
-		"pixelFormat": "RGB",
-		"texParams": [
-			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
-			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
-			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
-			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
-		]
-	},
-	{
-		"name": "noise_2",
-		"target": "TEXTURE_2D_ARRAY",
-		"depth": 2,
-		"internalFormat": "GL_RGB8",
-		"pixelFormat": "RGB",
+		"pixelFormat": "RGBA",
 		"texParams": [
 			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
 			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
@@ -959,36 +730,9 @@
 		]
 	},
 	{
-		"name": "depth_derivatives",
+		"name": "post_c",
 		"colorAttachments": [
-			{ "image": "depth_derivatives", "layer": 0 },
-			{ "image": "depth_derivatives", "layer": 1 },
-			{ "image": "depth_derivatives", "layer": 2 },
-			{ "image": "depth_derivatives", "layer": 3 },
-			{ "image": "depth_derivatives", "layer": 4 },
-			{ "image": "depth_derivatives", "layer": 5 }
-		]
-	},
-	{
-		"name": "noise_0",
-		"colorAttachments": [
-			{ "image": "noise_0", "layer": 0 },
-			{ "image": "noise_0", "layer": 1 },
 			{ "image": "post_c" }
-		]
-	},
-	{
-		"name": "noise_1",
-		"colorAttachments": [
-			{ "image": "noise_1", "layer": 0 },
-			{ "image": "noise_1", "layer": 1 }
-		]
-	},
-	{
-		"name": "noise_2",
-		"colorAttachments": [
-			{ "image": "noise_2", "layer": 0 },
-			{ "image": "noise_2", "layer": 1 }
 		]
 	}
 ],

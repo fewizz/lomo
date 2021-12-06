@@ -78,13 +78,15 @@ float density_ratio(vec3 point, planet p) {
 	return density_ratio(distance(point, p.pos) - p.rad, p.atmos_h);
 }
 
+const int sky_steps = 3;
+
 vec3 od_integration(vec3 po, vec3 dir, float dist, planet p) {
-	float stp = dist / 2.;
+	float stp = dist / float(sky_steps);
 	vec3 result = vec3(0.);
 	
 	po += dir * stp / 2.;
 	
-	for(int i = 0; i < 2; i++) {
+	for(int i = 0; i < sky_steps; i++) {
 		result += density_ratio(po, p) * stp;
 		po += dir * stp;
 	}
@@ -92,16 +94,9 @@ vec3 od_integration(vec3 po, vec3 dir, float dist, planet p) {
 	return result;
 }
 
-float rayleigh_phase_function(float cosa) {
-	return 1./(4.*3.14) * 3./4. *(1.+cosa*cosa);
-}
-
 float henyey_greenstein_phase_function(float g, float cosa) {
-	return 1./(4.*3.14) * (1.-g*g)/pow(1.+g*g-2.*g*cosa, 3./2.);
+	return 3.*(1.-g*g)/(2.*(2.+g*g)) * (1.+cosa*cosa)/pow(1.+g*g-2.*g*cosa, 3./2.);
 }
-
-//const float sun_radius = 696.;
-//const float dist_from_earth_to_sun = 227940.;
 
 const planet earth = planet(
 	vec3(0.),     // pos
@@ -116,20 +111,21 @@ vec3 resulting_attenuation(ray v, vec3 star_dir, planet p, vec3 coeffs, float ph
 	
 	float path = 0.0;
 	float dist = (pl_p.far - pl_p.close);
-	float stp = dist / 2.;
+	float stp = dist / float(sky_steps);
 	
+	ray begin = v;
 	v.pos += v.dir * (pl_p.close + stp / 2.);
 	
-	for(int i = 0; i < 2; i++) {
+	for(int i = 0; i < sky_steps; i++) {
 		ray r0 = ray(v.pos, star_dir);
 		ray_sphere_distance pl_p0 = ray_planet_path(r0, earth, true);
 		
 		result +=
-			density_ratio(v.pos, p)
-			* exp(
+			exp(
+				-density_ratio(v.pos, p)
 				-coeffs * (
 					od_integration(v.pos, star_dir, pl_p0.far, p) +
-					od_integration(v.pos, v.dir, stp, p)
+					od_integration(begin.pos, v.dir, path, p)
 				)
 			)
 			* stp;
@@ -155,7 +151,7 @@ vec3 sky_color(vec3 dir, float r) {
 	vec3 rgb1 = vec3(7.2, 5.7, 4.2);
 	vec3 rgb = pow3(rgb1, 4.);
 
-	float rpf = rayleigh_phase_function(a);
+	//float rpf = rayleigh_phase_function(a);
 
 	// TODO rename "planet"
 	planet molecules = planet(
@@ -171,12 +167,12 @@ vec3 sky_color(vec3 dir, float r) {
 	);
 
 	vec3 color =
-		resulting_attenuation(eye, sun_dir, molecules, 6000./rgb, rpf)
+		resulting_attenuation(eye, sun_dir, molecules, 5000./rgb, henyey_greenstein_phase_function(0., a))
 		+
-		100.*resulting_attenuation(eye, sun_dir, aerosols, 0.01 * rgb, henyey_greenstein_phase_function(0.99, a));
+		resulting_attenuation(eye, sun_dir, aerosols, vec3(0.01), henyey_greenstein_phase_function(0.76, a));
 
 	//vec3 interp_color = // TODO hack...
 	//	resulting_attenuation(eye, interp_dir, molecules, 6000./rgb, rpf);
 
-	return vec3(1) - exp(-400. * color);
+	return color * 2.0;//return vec3(1) - exp(-400. * color);
 }
