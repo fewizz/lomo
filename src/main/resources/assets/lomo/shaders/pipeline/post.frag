@@ -323,9 +323,6 @@ void main() {
 	vec3 position_cs = win_to_cam(position_ws);
 
 	vec3 incidence_cs = normalize(position_cs - win_to_cam(vec3(gl_FragCoord.xy, 0)));
-	vec4 extras = texelFetch(u_extras, ivec3(position_ws.xy, 0), 0);
-	float reflectivity0 = extras.x;
-	float block_light0 = extras.z;
 
 	if(depth_ws >= 1) {
 		out_color = vec4(sky_color(mat3(frx_inverseViewMatrix) * incidence_cs, 0.0), 1.0);
@@ -350,20 +347,26 @@ void main() {
 		base_color = blend(base_color, colors0[--layer]);
 	}
 
-	const int steps = 3;
+	const int max_index = 3;
+	vec3 lights[max_index];
+	vec3 colors[max_index];
 
-	vec3 lights[steps];
-	vec3 colors[steps];
+	vec3 color = base_color;
 
-	float reflectivity = extras.x;
-	float sky_light = extras.y;
-	float block_light = extras.z;
+	int i = 0;
+
+	while(true) {
+		vec4 extras = texelFetch(u_extras, ivec3(position_ws.xy, 0), 0);
+		float reflectivity = extras.x;
+		float sky_light = extras.y;
+		float block_light = extras.z;
 	
-	colors[0] = base_color*(1.0 - block_light);
-	lights[0] = base_color*block_light;
+		lights[i] = color*block_light*block_light;
+		colors[i] = color*(1.0 - block_light*block_light);
 
-	int i = 1;
-	for(; i < steps; ++i) {
+		if(i >= max_index) break;
+		++i;
+
 		vec3 raw_normal = texelFetch(u_normals, ivec3(position_ws.xy, 0), 0).xyz;
 		vec3 normal_cs = normalize(raw_normal * 2.0 - 1.0);
 
@@ -390,27 +393,20 @@ void main() {
 		fb_traversal_result res = traverse_fb_with_thickness(dir_ws, position_ws, incidence_cs, u_depths, u_normals, layer);
 
 		if(res.depth < 1.0 && res.code == TRAVERSAL_SUCCESS) {
-			vec3 new_color = texelFetch(u_colors, ivec3(res.pos, int(layer)), 0).rgb;
-			extras = texelFetch(u_extras, ivec3(position_ws.xy, 0), 0);
-
-			lights[i] = new_color * extras.z / 2.0;
-			colors[i] = new_color * (1.0 - extras.z / 2.0);
-			reflectivity = extras.x;
-
+			color = texelFetch(u_colors, ivec3(res.pos, int(layer)), 0).rgb;
 			position_ws.xy = vec2(res.pos) + vec2(0.5);
 			position_ws.z = res.depth;
 		}
 		else {
 			vec3 light = sky_color(mat3(frx_inverseViewMatrix) * reflection_dir, 0.0);
-			lights[i] = light * extras.y;
-			++i;
+			lights[i] = light * sky_light;
 			break;
 		}
 
 		incidence_cs = reflection_dir;
 	}
 
-	vec3 color = lights[--i];
+	color = lights[i];
 
 	while(--i >= 0) {
 		color = color * colors[i] + lights[i];
