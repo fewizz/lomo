@@ -385,13 +385,11 @@ void main() {
 
 		vec3 dir_ws = cam_dir_to_win(position_cs, reflection_dir);
 
-		// applying z offset, dumb'ish
-		float z_per_xy = dir_ws.z / length(dir_ws.xy);
-		position_ws.z -= abs(z_per_xy)*3.0;
+		position_ws += 2*dir_ws;
 
 		fb_traversal_result res = traverse_fb_with_thickness(dir_ws, position_ws, u_depths, u_normals, layer);
 
-		if(res.z < 1.0 && res.code == TRAVERSAL_SUCCESS) {
+		if(res.depth < 1.0 && res.code == TRAVERSAL_SUCCESS) {
 			vec3 new_color = texelFetch(u_colors, ivec3(res.pos, int(layer)), 0).rgb;
 			extras = texelFetch(u_extras, ivec3(position_ws.xy, 0), 0);
 			lights[i] = new_color * extras.z;
