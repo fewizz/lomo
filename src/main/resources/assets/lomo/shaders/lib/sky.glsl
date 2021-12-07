@@ -162,12 +162,12 @@ vec3 sky_color(vec3 dir, float r) {
 	);
 
 	vec3 color =
-		resulting_attenuation(eye, sun_dir, molecules, 5000./rgb, henyey_greenstein_phase_function(0., a))
+		resulting_attenuation(eye, sun_dir, molecules, 20000./rgb, henyey_greenstein_phase_function(0., a))
 		+
-		resulting_attenuation(eye, sun_dir, aerosols, vec3(0.01), henyey_greenstein_phase_function(0.76, a));
+		resulting_attenuation(eye, sun_dir, aerosols, vec3(rgb*rgb/4000000.), henyey_greenstein_phase_function(0.2, a))
+		+
+		resulting_attenuation(eye, sun_dir, aerosols, vec3(0.4), henyey_greenstein_phase_function(0.95, a))
+		;
 
-	//vec3 interp_color = // TODO hack...
-	//	resulting_attenuation(eye, interp_dir, molecules, 6000./rgb, rpf);
-
-	return color * 2.0;//return vec3(1) - exp(-400. * color);
+	return 1. - exp(-7. * color/6.);
 }

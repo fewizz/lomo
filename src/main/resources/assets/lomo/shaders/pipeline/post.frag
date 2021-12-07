@@ -188,6 +188,7 @@ fb_traversal_result __name (vec3 dir, vec3 pos_ws, sampler2DArray s, uint f) { \
 	vec2 dir_xy = normalize(dir.xy); \
 	uvec2 udir = uvec2(abs(dir_xy) * float(max_dir_value)); \
 	__init_func (pos, level, udir); \
+	__next_func (pos, level, -udir); \
 	float upper_depth = UPPER_DEPTH_VALUE(pos); \
 	float lower_depth = LOWER_DEPTH_VALUE(pos); \
 	FIND_UPPEST_LOD(__init_func, pos); \
@@ -268,7 +269,7 @@ fb_traversal_result traverse_fb(vec3 dir, vec3 pos, sampler2DArray s, uint f) {
 
 #define TRAVERSAL_POSSIBLY_UNDER 2
 
-fb_traversal_result traverse_fb_with_thickness(vec3 dir, vec3 pos_ws, sampler2DArray depths_s, sampler2DArray normals_s, uint f) {
+fb_traversal_result traverse_fb_with_thickness(vec3 dir, vec3 pos_ws, vec3 i_cs, sampler2DArray depths_s, sampler2DArray normals_s, uint f) {
 	fb_traversal_result result = traverse_fb(dir, pos_ws, depths_s, f);
 
 	if(result.code != TRAVERSAL_SUCCESS) {
@@ -308,7 +309,7 @@ fb_traversal_result traverse_fb_with_thickness(vec3 dir, vec3 pos_ws, sampler2DA
 	float dx_post = length(win_to_cam(vec3(pos_xy, result.z))) - dist_to_center; // todo?
 	float dx_pre = length(win_to_cam(vec3(pos_xy, result.prev_z))) - dist_to_center;
 
-	if((dx_pre > thickness && dx_post > thickness) || dot(-pos_center_cs/dist_to_center, normal_cs) < 0.15 ) {
+	if((dx_pre > thickness && dx_post > thickness) || dot(-pos_center_cs/dist_to_center, normal_cs) / dot(-i_cs, normal_cs) < 0.1 ) {
 		result.code = TRAVERSAL_POSSIBLY_UNDER;
 	}
 
@@ -353,7 +354,6 @@ void main() {
 
 	vec3 lights[steps];
 	vec3 colors[steps];
-	float reflectivities[steps];
 
 	float reflectivity = extras.x;
 	float sky_light = extras.y;
@@ -361,13 +361,20 @@ void main() {
 	
 	colors[0] = base_color*(1.0 - block_light);
 	lights[0] = base_color*block_light;
-	reflectivities[0] = reflectivity;
 
 	int i = 1;
 	for(; i < steps; ++i) {
 		vec3 raw_normal = texelFetch(u_normals, ivec3(position_ws.xy, 0), 0).xyz;
 		vec3 normal_cs = normalize(raw_normal * 2.0 - 1.0);
-	
+
+		vec2 rand = hash22(position_ws.xy) * 2. - 1.;
+
+		rand.x *= (1. - reflectivity);
+		rand *= 3.1416 / 2.0;
+
+		vec3 new_normal_cs = rotation(rand.x, normalize(cross(incidence_cs, normal_cs))) * normal_cs;
+		normal_cs = rotation(rand.y, normal_cs) * new_normal_cs;
+
 		vec3 reflection_dir = normalize(
 			reflect(
 				incidence_cs,
@@ -375,29 +382,20 @@ void main() {
 			)
 		);
 
-		vec2 rand = hash22(position_ws.xy) * 2. - 1.;
-
-		rand *= 1. - reflectivity;
-		rand *= 3.1416 / 2.0;
-
-		reflection_dir = rotation(rand.x, normal_cs) * reflection_dir;
-		reflection_dir = rotation(rand.y, normalize(cross(reflection_dir, normal_cs))) * reflection_dir;
-
 		position_cs = win_to_cam(position_ws);
 		vec3 dir_ws = cam_dir_to_win(position_cs, reflection_dir);
 
-		position_ws += 2*dir_ws;
+		position_ws.z -= 2.0 * abs(dir_ws.z) / length(dir_ws.xy);
 
-		fb_traversal_result res = traverse_fb_with_thickness(dir_ws, position_ws, u_depths, u_normals, layer);
+		fb_traversal_result res = traverse_fb_with_thickness(dir_ws, position_ws, incidence_cs, u_depths, u_normals, layer);
 
 		if(res.depth < 1.0 && res.code == TRAVERSAL_SUCCESS) {
 			vec3 new_color = texelFetch(u_colors, ivec3(res.pos, int(layer)), 0).rgb;
 			extras = texelFetch(u_extras, ivec3(position_ws.xy, 0), 0);
 
-			lights[i] = new_color * extras.z;
-			colors[i] = new_color * (1.0 - extras.z);
+			lights[i] = new_color * extras.z / 2.0;
+			colors[i] = new_color * (1.0 - extras.z / 2.0);
 			reflectivity = extras.x;
-			reflectivities[i] = reflectivity;
 
 			position_ws.xy = vec2(res.pos) + vec2(0.5);
 			position_ws.z = res.depth;
@@ -409,7 +407,6 @@ void main() {
 			break;
 		}
 
-		//reflectivities[i] = reflectivity;
 		incidence_cs = reflection_dir;
 	}
 
