@@ -308,7 +308,7 @@ fb_traversal_result traverse_fb_with_thickness(vec3 dir, vec3 pos_ws, sampler2DA
 	float dx_post = length(win_to_cam(vec3(pos_xy, result.z))) - dist_to_center; // todo?
 	float dx_pre = length(win_to_cam(vec3(pos_xy, result.prev_z))) - dist_to_center;
 
-	if(dx_pre > thickness && dx_post > thickness) {
+	if((dx_pre > thickness && dx_post > thickness) || dot(-pos_center_cs/dist_to_center, normal_cs) < 0.15 ) {
 		result.code = TRAVERSAL_POSSIBLY_UNDER;
 	}
 
@@ -383,6 +383,7 @@ void main() {
 		reflection_dir = rotation(rand.x, normal_cs) * reflection_dir;
 		reflection_dir = rotation(rand.y, normalize(cross(reflection_dir, normal_cs))) * reflection_dir;
 
+		position_cs = win_to_cam(position_ws);
 		vec3 dir_ws = cam_dir_to_win(position_cs, reflection_dir);
 
 		position_ws += 2*dir_ws;
@@ -392,13 +393,14 @@ void main() {
 		if(res.depth < 1.0 && res.code == TRAVERSAL_SUCCESS) {
 			vec3 new_color = texelFetch(u_colors, ivec3(res.pos, int(layer)), 0).rgb;
 			extras = texelFetch(u_extras, ivec3(position_ws.xy, 0), 0);
+
 			lights[i] = new_color * extras.z;
 			colors[i] = new_color * (1.0 - extras.z);
 			reflectivity = extras.x;
 			reflectivities[i] = reflectivity;
 
 			position_ws.xy = vec2(res.pos) + vec2(0.5);
-			position_ws.z = res.z;
+			position_ws.z = res.depth;
 		}
 		else {
 			vec3 light = sky_color(mat3(frx_inverseViewMatrix) * reflection_dir, 0.0);
