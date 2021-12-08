@@ -7,6 +7,7 @@
 #include lomo:shaders/lib/sky.glsl
 #include lomo:shaders/lib/blend.glsl
 #include lomo:shaders/lib/ray_plane.glsl
+#include lomo:shaders/lib/hash.glsl
 
 /* lomo:post.frag */
 
@@ -174,7 +175,7 @@ NEXT_CELL_STRAIGHT(next_cell_l, x, sub, dist_negative)
 bool is_out_of_fb(cell_pos pos) {
 	return
 		any(greaterThanEqual(outer(pos), uvec2(frxu_size))) ||
-		pos.z <= 0;
+		pos.z <= 0 || pos.z >= 1;
 }
 
 #define TRAVERSE_FUNC(__name, __next_func, __init_func) \
@@ -206,7 +207,7 @@ fb_traversal_result __name (vec3 dir, vec3 pos_ws, sampler2DArray s, uint f) { \
 			pos.z = lower_depth; \
 		} \
 		else { \
-			if((pos.m >> cell_bits(level + 1u) ) != ( prev.m >> cell_bits(level + 1u) )) { \
+			if((pos.m >> cell_bits(level + 1u)) != ( prev.m >> cell_bits(level + 1u) )) { \
 				UPDATE_UPPER_DEPTH(pos); \
 			} \
 			FIND_UPPEST_LOD(__init_func, pos); \
@@ -283,33 +284,37 @@ fb_traversal_result traverse_fb_with_thickness(vec3 dir, vec3 pos_ws, vec3 i_cs,
 	vec2 pos_xy = vec2(result.pos) + 0.5;
 	vec3 pos_center_ws = vec3(pos_xy, depth_ws);
 	vec3 pos_center_cs = win_to_cam(pos_center_ws);
-	float dist_to_center = length(pos_center_cs);
+	vec3 pos_center_near_cs = win_to_cam(vec3(pos_xy, 0));
 
-	float max_depth = dist_to_center;
+	float dist_from_near_to_center = -pos_center_cs.z - -pos_center_near_cs.z;
+
+	float max_depth_from_near = dist_from_near_to_center;
 
 	for(int x = -1; x <= 1; x+=2) {
 		for(int y = -1; y <= 1; y+=2) {
-			pos_ws = pos_center_ws + vec3(x, y, 0) / 2.0;
-			vec3 pos_cs = win_to_cam(pos_ws); // we can do better
+			vec2 pos_ws = pos_center_ws.xy + vec2(x, y) / 2.0;
 
-			vec3 dir = normalize(pos_cs);
-			ray r = ray(vec3(0.0), dir);
+			vec3 near_cs = win_to_cam(vec3(pos_ws, 0)); // point in near plane
+			vec3 far_cs = win_to_cam(vec3(pos_ws, 1)); // point in far plane
+
+			vec3 dir_cs = normalize(far_cs-near_cs);
+			ray r = ray(near_cs, dir_cs);
 			plane p = plane_from_pos_and_normal(pos_center_cs, normal_cs);
 
 			ray_plane_intersection_result res = ray_plane_intersection(r, p);
 
-			max_depth = max(
-				max_depth,
-				res.dist
+			max_depth_from_near = max(
+				max_depth_from_near,
+				-(dir_cs * res.dist).z
 			);
 		}
 	}
 
-	float thickness = (max_depth - dist_to_center) * 5. + 0.01; // linear, magic
-	float dx_post = length(win_to_cam(vec3(pos_xy, result.z))) - dist_to_center; // todo?
-	float dx_pre = length(win_to_cam(vec3(pos_xy, result.prev_z))) - dist_to_center;
+	float thickness = (max_depth_from_near - dist_from_near_to_center) * 10. + 0.02; // linear, magic
+	float dx_post = (-win_to_cam(vec3(pos_xy, result.z)).z) - -pos_center_cs.z; // todo?
+	float dx_pre = (-win_to_cam(vec3(pos_xy, result.prev_z)).z) - -pos_center_cs.z;
 
-	if((dx_pre > thickness && dx_post > thickness) || dot(-pos_center_cs/dist_to_center, normal_cs) / dot(-i_cs, normal_cs) < 0.1 ) {
+	if((dx_pre > thickness && dx_post > thickness) || dot(-normalize(pos_center_cs - pos_center_near_cs), normal_cs) / abs(dot(-i_cs, normal_cs)) < 0.4) {
 		result.code = TRAVERSAL_POSSIBLY_UNDER;
 	}
 
@@ -325,7 +330,7 @@ void main() {
 	vec3 incidence_cs = normalize(position_cs - win_to_cam(vec3(gl_FragCoord.xy, 0)));
 
 	if(depth_ws >= 1) {
-		out_color = vec4(sky_color(mat3(frx_inverseViewMatrix) * incidence_cs, 0.0), 1.0);
+		out_color = vec4(sky_color(mat3(frx_inverseViewMatrix) * incidence_cs), 1.0);
 		return;
 	}
 
@@ -347,9 +352,10 @@ void main() {
 		base_color = blend(base_color, colors0[--layer]);
 	}
 
-	const int max_index = 3;
-	vec3 lights[max_index];
-	vec3 colors[max_index];
+	const int steps = 5;
+	const int max_index = steps - 1;
+	vec3 lights[steps];
+	vec3 colors[steps];
 
 	vec3 color = base_color;
 
@@ -364,8 +370,7 @@ void main() {
 		lights[i] = color*block_light*block_light;
 		colors[i] = color*(1.0 - block_light*block_light);
 
-		if(i >= max_index) break;
-		++i;
+		if(++i >= max_index) break;
 
 		vec3 raw_normal = texelFetch(u_normals, ivec3(position_ws.xy, 0), 0).xyz;
 		vec3 normal_cs = normalize(raw_normal * 2.0 - 1.0);
@@ -388,7 +393,7 @@ void main() {
 		position_cs = win_to_cam(position_ws);
 		vec3 dir_ws = cam_dir_to_win(position_cs, reflection_dir);
 
-		position_ws.z -= 2.0 * abs(dir_ws.z) / length(dir_ws.xy);
+		position_ws.z -= 4.0 * abs(dir_ws.z) / length(dir_ws.xy); // TODO
 
 		fb_traversal_result res = traverse_fb_with_thickness(dir_ws, position_ws, incidence_cs, u_depths, u_normals, layer);
 
@@ -398,8 +403,8 @@ void main() {
 			position_ws.z = res.depth;
 		}
 		else {
-			vec3 light = sky_color(mat3(frx_inverseViewMatrix) * reflection_dir, 0.0);
-			lights[i] = light * sky_light;
+			vec3 light = sky_color(mat3(frx_inverseViewMatrix) * reflection_dir);
+			lights[i] = light * 1.2 * sky_light * sky_light;
 			break;
 		}
 

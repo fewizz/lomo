@@ -97,3 +97,28 @@ vec3 raw_normal_to_cam(vec3 raw_normal, mat4 viewMat) {
 vec3 raw_normal_to_cam(vec3 raw_normal) {
 	return raw_normal_to_cam(raw_normal, frx_viewMatrix);
 }
+
+
+mat3 rotation(float angle, vec3 v) {
+	float a = angle;
+	float c = cos(a);
+	float s = sin(a);
+
+	vec3 axis = vec3(v);
+	vec3 temp = vec3((1. - c) * axis);
+
+	mat3 r = mat3(0);
+	r[0][0] = c + temp[0] * axis[0];
+	r[0][1] = temp[0] * axis[1] + s * axis[2];
+	r[0][2] = temp[0] * axis[2] - s * axis[1];
+
+	r[1][0] = temp[1] * axis[0] - s * axis[2];
+	r[1][1] = c + temp[1] * axis[1];
+	r[1][2] = temp[1] * axis[2] + s * axis[0];
+
+	r[2][0] = temp[2] * axis[0] + s * axis[1];
+	r[2][1] = temp[2] * axis[1] - s * axis[0];
+	r[2][2] = c + temp[2] * axis[2];
+
+	return r;
+}
