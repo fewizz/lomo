@@ -108,7 +108,7 @@ vec3 sky_color(vec3 dir) {
 	float t = frx_skyAngleRadians + 3.14 / 2.0;
 	vec3 sun_dir = vec3(cos(t), sin(t), 0);
 	
-	vec3 eye_pos = vec3(0, earth.rad + 0.001, 0.) + frx_cameraPos / 1000000.;
+	vec3 eye_pos = vec3(0, earth.rad + 0.01, 0.) + frx_cameraPos / 1000000.;
 
 	ray eye = ray(eye_pos, dir);
 
@@ -120,22 +120,23 @@ vec3 sky_color(vec3 dir) {
 	planet molecules = planet(
 		vec3(0.),
 		earth.rad,
-		0.008
+		0.08
 	);
 
 	planet aerosols = planet(
 		vec3(0.0),
 		earth.rad,
-		0.0012
+		0.012
 	);
 
 	vec3 color =
-		resulting_attenuation(eye, sun_dir, molecules, 20000./rgb, henyey_greenstein_phase_function(0., a))
+		vec3(2., 1.3, 2.5) *
+		resulting_attenuation(eye, sun_dir, molecules, 10000./rgb, 1.)//, henyey_greenstein_phase_function(0., a))
 		+
-		resulting_attenuation(eye, sun_dir, aerosols, vec3(rgb*rgb/4000000.), henyey_greenstein_phase_function(0.2, a))
-		+
-		resulting_attenuation(eye, sun_dir, aerosols, vec3(0.4), henyey_greenstein_phase_function(0.95, a))
+		//resulting_attenuation(eye, sun_dir, aerosols, vec3(rgb*rgb/4000000.), henyey_greenstein_phase_function(0.2, a))
+		//+
+		resulting_attenuation(eye, sun_dir, aerosols, vec3(0.1), henyey_greenstein_phase_function(0.99, a))
 		;
 
-	return 1. - exp(-7. * color/6.);
+	return color;//1. - exp(-7. * color/6.);
 }

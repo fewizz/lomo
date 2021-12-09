@@ -185,11 +185,10 @@ fb_traversal_result __name (vec3 dir, vec3 pos_ws, sampler2DArray s, uint f) { \
 		uvec2(0u), \
 		pos_ws.z \
 	); \
-	uint level = 0u; \
 	vec2 dir_xy = normalize(dir.xy); \
 	uvec2 udir = uvec2(abs(dir_xy) * float(max_dir_value)); \
-	__init_func (pos, level, udir); \
-	__next_func (pos, level, -udir); \
+	__init_func (pos, 0u, udir); \
+	uint level = 0u; \
 	float upper_depth = UPPER_DEPTH_VALUE(pos); \
 	float lower_depth = LOWER_DEPTH_VALUE(pos); \
 	FIND_UPPEST_LOD(__init_func, pos); \
@@ -352,17 +351,18 @@ void main() {
 		base_color = blend(base_color, colors0[--layer]);
 	}
 
-	const int steps = 5;
+	const int steps = 3;
 	const int max_index = steps - 1;
 	vec3 lights[steps];
 	vec3 colors[steps];
 
 	vec3 color = base_color;
+	vec3 pos_ws = position_ws;
 
 	int i = 0;
 
 	while(true) {
-		vec4 extras = texelFetch(u_extras, ivec3(position_ws.xy, 0), 0);
+		vec4 extras = texelFetch(u_extras, ivec3(pos_ws.xy, 0), 0);
 		float reflectivity = extras.x;
 		float sky_light = extras.y;
 		float block_light = extras.z;
@@ -370,12 +370,13 @@ void main() {
 		lights[i] = color*block_light*block_light;
 		colors[i] = color*(1.0 - block_light*block_light);
 
-		if(++i >= max_index) break;
+		if(i >= max_index) break;
+		++i;
 
-		vec3 raw_normal = texelFetch(u_normals, ivec3(position_ws.xy, 0), 0).xyz;
+		vec3 raw_normal = texelFetch(u_normals, ivec3(pos_ws.xy, 0), 0).xyz;
 		vec3 normal_cs = normalize(raw_normal * 2.0 - 1.0);
 
-		vec2 rand = hash22(position_ws.xy) * 2. - 1.;
+		vec2 rand = hash22(pos_ws.xy) * 2. - 1.;
 
 		rand.x *= (1. - reflectivity);
 		rand *= 3.1416 / 2.0;
@@ -390,21 +391,26 @@ void main() {
 			)
 		);
 
-		position_cs = win_to_cam(position_ws);
+		position_cs = win_to_cam(pos_ws);
 		vec3 dir_ws = cam_dir_to_win(position_cs, reflection_dir);
 
-		position_ws.z -= 4.0 * abs(dir_ws.z) / length(dir_ws.xy); // TODO
+		//pos_ws.z -= 8.0 * abs(dir_ws.z) / length(dir_ws.xy); // TODO
 
-		fb_traversal_result res = traverse_fb_with_thickness(dir_ws, position_ws, incidence_cs, u_depths, u_normals, layer);
+		fb_traversal_result res = traverse_fb_with_thickness(dir_ws, pos_ws, incidence_cs, u_depths, u_normals, layer);
 
 		if(res.depth < 1.0 && res.code == TRAVERSAL_SUCCESS) {
+			//if(i == 1) {
+			//	lights[i] = vec3(1, 0, 0);
+			//	break;
+			//}
+			//else
 			color = texelFetch(u_colors, ivec3(res.pos, int(layer)), 0).rgb;
-			position_ws.xy = vec2(res.pos) + vec2(0.5);
-			position_ws.z = res.depth;
+			pos_ws.xy = vec2(res.pos) + vec2(0.5);
+			pos_ws.z = res.depth;
 		}
 		else {
 			vec3 light = sky_color(mat3(frx_inverseViewMatrix) * reflection_dir);
-			lights[i] = light * 1.2 * sky_light * sky_light;
+			lights[i] = light * 3. * sky_light * sky_light;
 			break;
 		}
 
