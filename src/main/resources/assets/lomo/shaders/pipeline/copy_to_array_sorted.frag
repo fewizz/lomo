@@ -2,6 +2,7 @@
 
 /* lomo:pipeline/copy_to_array.frag */
 
+// uniform sampler array, please?
 uniform sampler2D u_i0;
 uniform sampler2D u_i1;
 uniform sampler2D u_i2;
@@ -11,14 +12,8 @@ uniform sampler2D u_i5;
 
 uniform sampler2D u_index_to_type;
 
-layout(location = 0) out vec4 out_c0;
-layout(location = 1) out vec4 out_c1;
-layout(location = 2) out vec4 out_c2;
-layout(location = 3) out vec4 out_c3;
-layout(location = 4) out vec4 out_c4;
-layout(location = 5) out vec4 out_c5;
+layout(location = 0) out vec4 out_values[6];
 
-// Sorry for that.
 void main() {
 	ivec2 coord = ivec2(gl_FragCoord.xy);
 
@@ -32,16 +27,9 @@ void main() {
 	);
 
 	uint index_to_type = floatBitsToUint(texelFetch(u_index_to_type, coord, 0).r);
-	uint indices[6];
 
 	for(uint i = 0u; i < 6u; i++) {
-		indices[i] = (index_to_type >> (4u*i)) & 0xFu;
+		uint index = (index_to_type >> (4u*i)) & 0xFu;
+		out_values[i] = values[index];
 	}
-
-	out_c0 = values[indices[0]];
-	out_c1 = values[indices[1]];
-	out_c2 = values[indices[2]];
-	out_c3 = values[indices[3]];
-	out_c4 = values[indices[4]];
-	out_c5 = values[indices[5]];
 }

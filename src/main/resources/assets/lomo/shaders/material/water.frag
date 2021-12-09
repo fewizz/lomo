@@ -16,7 +16,7 @@ float lomo_water_h(vec3 pos) {
 }
 
 void frx_materialFragment() {
-	vec3 pos = frx_vertex.xyz / frx_vertex.w + frx_modelOriginWorldPos();
+	vec3 pos = frx_vertex.xyz + frx_modelToWorld.xyz;
 
 	float y_orig = lomo_water_h(pos);
 	vec3 x_off = vec3(0.01, 0.0, 0.0);

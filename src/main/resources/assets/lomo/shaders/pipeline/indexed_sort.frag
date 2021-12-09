@@ -30,12 +30,9 @@ void main() {
 	uint index_to_type[6];
 
 	float prev_min = -1;
-	//uint prev_type = 0;
 
 	for(uint i = 0u; i < 6u; i++) {
 		float current_min = 1.01;
-		//uint current_type = 0u;
-
 		for(uint x = 0u; x < 6u; x++) {
 			if(done[x]) continue;
 
@@ -43,7 +40,6 @@ void main() {
 
 			if(d < current_min && d >= prev_min) {
 				current_min = d;
-				//current_type = x;
 				index_to_type[i] = x;
 			}
 		}
