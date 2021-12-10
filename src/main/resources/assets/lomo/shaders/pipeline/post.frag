@@ -88,49 +88,46 @@ float next_cell_dist(cell_pos pos) {
 	return float(pos.t.x < pos.t.y ? pos.t.x : pos.t.y) / float(max_inner_value);
 }
 
-void add(inout uint a, uint b) { a += b; }
-void sub(inout uint a, uint b) { a -= b; }
-
-#define NEXT_CELL(__name,__x_func,__y_func,__x_dist_func,__y_dist_func) \
+#define NEXT_CELL(__name,__x_op,__y_op,__x_dist_func,__y_dist_func) \
 float __name (inout cell_pos pos, uint level, uvec2 dir) { \
 	uint cs = max_cell_value(level); \
 	uint dist = 0u; \
 	if(pos.t.x < pos.t.y) { \
 		uint x_d = __x_dist_func (pos.m.x, level); \
-		__x_func (pos.m.x, x_d); \
-		__y_func (pos.m.y, x_d * dir.y / dir.x); \
+		pos.m.x __x_op x_d; \
+		pos.m.y __y_op x_d * dir.y / dir.x; \
 		dist = x_d * max_dir_value / dir.x; \
 		pos.t.x += cs * max_dir_value / dir.x; \
 	} \
 	else { \
 		uint y_d = __y_dist_func (pos.m.y, level); \
-		__y_func (pos.m.y, y_d); \
-		__x_func (pos.m.x, y_d * dir.x / dir.y); \
+		pos.m.y __y_op y_d; \
+		pos.m.x __x_op y_d * dir.x / dir.y; \
 		dist = y_d * max_dir_value / dir.y; \
 		pos.t.y += cs * max_dir_value / dir.y; \
 	} \
 	return float(dist) / float(max_inner_value); \
 }
 
-NEXT_CELL(next_cell_ru,add,add, dist_positive, dist_positive)
-NEXT_CELL(next_cell_rd,add,sub, dist_positive, dist_negative)
-NEXT_CELL(next_cell_lu,sub,add, dist_negative, dist_positive)
-NEXT_CELL(next_cell_ld,sub,sub, dist_negative, dist_negative)
+NEXT_CELL(next_cell_ru,+=,+=, dist_positive, dist_positive)
+NEXT_CELL(next_cell_rd,+=,-=, dist_positive, dist_negative)
+NEXT_CELL(next_cell_lu,-=,+=, dist_negative, dist_positive)
+NEXT_CELL(next_cell_ld,-=,-=, dist_negative, dist_negative)
 
-#define NEXT_CELL_STRAIGHT(__name, __element, __func, __dist_func) \
+#define NEXT_CELL_STRAIGHT(__name, __element, __op, __dist_func) \
 float __name (inout cell_pos pos, uint level, uvec2 dir) { \
 	uint dist = __dist_func(pos.m. __element , level); \
-	__func(pos.m. __element , dist); \
+	pos.m. __element __op dist; \
 	return float(dist) / float(max_inner_value); \
 }
 
-NEXT_CELL_STRAIGHT(next_cell_u, y, add, dist_positive)
-NEXT_CELL_STRAIGHT(next_cell_r, x, add, dist_positive)
-NEXT_CELL_STRAIGHT(next_cell_d, y, sub, dist_negative)
-NEXT_CELL_STRAIGHT(next_cell_l, x, sub, dist_negative)
+NEXT_CELL_STRAIGHT(next_cell_u, y,+=, dist_positive)
+NEXT_CELL_STRAIGHT(next_cell_r, x,+=, dist_positive)
+NEXT_CELL_STRAIGHT(next_cell_d, y,-=, dist_negative)
+NEXT_CELL_STRAIGHT(next_cell_l, x,-=, dist_negative)
 
 #define DEPTH_VALUE(__pos, __level) \
-	( texelFetch(s, ivec3(__pos.m >> cell_bits(__level), uint(f)), int(__level)).r )
+	( texelFetch(u_depths, ivec3(__pos.m >> cell_bits(__level), uint(f)), int(__level)).r )
 
 #define UPPER_DEPTH_VALUE(__pos) \
 	( level < last_level ? DEPTH_VALUE(__pos, level+1u) : 0.0 )
@@ -179,7 +176,7 @@ bool is_out_of_fb(cell_pos pos) {
 }
 
 #define TRAVERSE_FUNC(__name, __next_func, __init_func) \
-fb_traversal_result __name (vec3 dir, vec3 pos_ws, sampler2DArray s, uint f) { \
+fb_traversal_result __name (vec3 dir, vec3 pos_ws, uint f) { \
 	cell_pos pos = cell_pos( \
 		uvec2(pos_ws.xy) * max_inner_value + (max_inner_value >> 1u), \
 		uvec2(0u), \
@@ -232,10 +229,10 @@ TRAVERSE_FUNC(traverse_fb_r, next_cell_r, cell_pos_init_r)
 TRAVERSE_FUNC(traverse_fb_d, next_cell_d, cell_pos_init_d)
 TRAVERSE_FUNC(traverse_fb_l, next_cell_l, cell_pos_init_l)
 
-fb_traversal_result traverse_fb(vec3 dir, vec3 pos, sampler2DArray s, uint f) {
+fb_traversal_result traverse_fb(vec3 dir, vec3 pos, uint f) {
 	if(dir.x == 0.0 && dir.y == 0.0) {
 		uvec2 upos = uvec2(pos.xy);
-		float d = texelFetch(s, ivec3(upos, f), 0).r;
+		float d = texelFetch(u_depths, ivec3(upos, f), 0).r;
 
 		if(dir.z > 0 && d >= pos.z)
 			return fb_traversal_result(TRAVERSAL_SUCCESS, upos, d, pos.z, d);
@@ -244,39 +241,39 @@ fb_traversal_result traverse_fb(vec3 dir, vec3 pos, sampler2DArray s, uint f) {
 	}
 
 	if(dir.x == 1.0)
-		return traverse_fb_r(dir, pos, s, f);
+		return traverse_fb_r(dir, pos, f);
 	if(dir.x == -1.0)
-		return traverse_fb_l(dir, pos, s, f);
+		return traverse_fb_l(dir, pos, f);
 
 	if(dir.y == 1.0)
-		return traverse_fb_u(dir, pos, s, f);
+		return traverse_fb_u(dir, pos, f);
 	if(dir.y == -1.0)
-		return traverse_fb_d(dir, pos, s, f);
+		return traverse_fb_d(dir, pos, f);
 
 	if(dir.x > 0.0) {
 		if(dir.y > 0.0)
-			return traverse_fb_ru(dir, pos, s, f);
+			return traverse_fb_ru(dir, pos, f);
 		else
-			return traverse_fb_rd(dir, pos, s, f);
+			return traverse_fb_rd(dir, pos, f);
 	}
 	else {
 		if(dir.y > 0.0)
-			return traverse_fb_lu(dir, pos, s, f);
+			return traverse_fb_lu(dir, pos, f);
 		else
-			return traverse_fb_ld(dir, pos, s, f);
+			return traverse_fb_ld(dir, pos, f);
 	}
 }
 
 #define TRAVERSAL_POSSIBLY_UNDER 2
 
-fb_traversal_result traverse_fb_with_thickness(vec3 dir, vec3 pos_ws, vec3 i_cs, sampler2DArray depths_s, sampler2DArray normals_s, uint f) {
-	fb_traversal_result result = traverse_fb(dir, pos_ws, depths_s, f);
+fb_traversal_result traverse_fb_with_thickness(vec3 dir, vec3 pos_ws, vec3 i_cs, uint f) {
+	fb_traversal_result result = traverse_fb(dir, pos_ws, f);
 
 	if(result.code != TRAVERSAL_SUCCESS) {
 		return result;
 	}
 
-	vec3 raw_normal = texelFetch(normals_s, ivec3(result.pos, f), 0).xyz;
+	vec3 raw_normal = texelFetch(u_normals, ivec3(result.pos, f), 0).xyz;
 	vec3 normal_cs = normalize(raw_normal * 2.0 - 1.0);
 
 	float depth_ws = result.depth;
@@ -309,7 +306,7 @@ fb_traversal_result traverse_fb_with_thickness(vec3 dir, vec3 pos_ws, vec3 i_cs,
 		}
 	}
 
-	float thickness = (max_depth_from_near - dist_from_near_to_center) * 10. + 0.02; // linear, magic
+	float thickness = (max_depth_from_near - dist_from_near_to_center) * 10. + 0.02; // some magic
 	float dx_post = (-win_to_cam(vec3(pos_xy, result.z)).z) - -pos_center_cs.z; // todo?
 	float dx_pre = (-win_to_cam(vec3(pos_xy, result.prev_z)).z) - -pos_center_cs.z;
 
@@ -321,45 +318,18 @@ fb_traversal_result traverse_fb_with_thickness(vec3 dir, vec3 pos_ws, vec3 i_cs,
 }
 
 void main() {
-	float depth_ws = texelFetch(u_depths, ivec3(gl_FragCoord.xy, 0), 0).r;
-
-	vec3 position_ws = vec3(gl_FragCoord.xy, depth_ws);
-	vec3 position_cs = win_to_cam(position_ws);
-
-	vec3 incidence_cs = normalize(position_cs - win_to_cam(vec3(gl_FragCoord.xy, 0)));
-
-	if(depth_ws >= 1) {
-		out_color = vec4(sky_color(mat3(frx_inverseViewMatrix) * incidence_cs), 1.0);
-		return;
-	}
-
-	vec4 colors0[6] = vec4[](vec4(0.), vec4(0.), vec4(0.), vec4(0.), vec4(0.), vec4(0.));
-	uint layer = 0u;
-
-	while(layer < 6u) {
-		vec4 c = texelFetch(u_colors, ivec3(gl_FragCoord.xy, layer), 0);
-		colors0[layer++] = c;
-
-		if(c.a == 1.0) {
-			break;
-		}
-	}
-
-	vec3 base_color = colors0[--layer].rgb;
-
-	while(layer > 0u) {
-		base_color = blend(base_color, colors0[--layer]);
-	}
-
 	const int steps = 3;
 	const int max_index = steps - 1;
 	vec3 lights[steps];
 	vec3 colors[steps];
 
-	vec3 color = base_color;
-	vec3 pos_ws = position_ws;
+	float depth_ws = texelFetch(u_depths, ivec3(gl_FragCoord.xy, 0), 0).r;
+	vec3 pos_ws = vec3(gl_FragCoord.xy, depth_ws);
+	vec3 color = texelFetch(u_colors, ivec3(pos_ws.xy, 0), 0).rgb;//base_color;
 
 	int i = 0;
+
+	vec3 incidence_cs = normalize(win_to_cam(pos_ws) - win_to_cam(vec3(gl_FragCoord.xy, 0)));
 
 	while(true) {
 		vec4 extras = texelFetch(u_extras, ivec3(pos_ws.xy, 0), 0);
@@ -391,20 +361,20 @@ void main() {
 			)
 		);
 
-		position_cs = win_to_cam(pos_ws);
-		vec3 dir_ws = cam_dir_to_win(position_cs, reflection_dir);
+		vec3 pos_cs = win_to_cam(pos_ws);
+		vec3 dir_ws = cam_dir_to_win(pos_cs, reflection_dir);
 
 		//pos_ws.z -= 8.0 * abs(dir_ws.z) / length(dir_ws.xy); // TODO
 
-		fb_traversal_result res = traverse_fb_with_thickness(dir_ws, pos_ws, incidence_cs, u_depths, u_normals, layer);
+		fb_traversal_result res = traverse_fb(dir_ws, pos_ws, 0u);
 
 		if(res.depth < 1.0 && res.code == TRAVERSAL_SUCCESS) {
 			//if(i == 1) {
 			//	lights[i] = vec3(1, 0, 0);
 			//	break;
-			//}
+			//} 
 			//else
-			color = texelFetch(u_colors, ivec3(res.pos, int(layer)), 0).rgb;
+			color = texelFetch(u_colors, ivec3(res.pos, 0), 0).rgb;
 			pos_ws.xy = vec2(res.pos) + vec2(0.5);
 			pos_ws.z = res.depth;
 		}

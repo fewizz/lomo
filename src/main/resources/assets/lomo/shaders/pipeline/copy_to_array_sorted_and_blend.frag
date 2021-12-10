@@ -1,5 +1,5 @@
 #include frex:shaders/api/header.glsl
-#inlcude lomo:shaders/lib/blend.glsl
+#include lomo:shaders/lib/blend.glsl
 
 /* lomo:pipeline/copy_to_array.frag */
 
@@ -12,14 +12,8 @@ uniform sampler2D u_i5;
 
 uniform sampler2D u_index_to_type;
 
-layout(location = 0) out vec4 out_c0;
-layout(location = 1) out vec4 out_c1;
-//layout(location = 2) out vec4 out_c2;
-//layout(location = 3) out vec4 out_c3;
-//ayout(location = 4) out vec4 out_c4;
-//layout(location = 5) out vec4 out_c5;
+layout(location = 0) out vec4 out_colors[6];
 
-// Sorry for that.
 void main() {
 	ivec2 coord = ivec2(gl_FragCoord.xy);
 
@@ -39,18 +33,11 @@ void main() {
 		indices[i] = (index_to_type >> (4u*i)) & 0xFu;
 	}
 
-	out_c0 = values[indices[0]];
+	vec3 color = values[indices[5]].rgb;
+	out_colors[5] = vec4(color, 1.0);
 
-	vec3 color = values[indices[5]];
-	for(int i = 4; i >= 1; ++i) {
-		color = blend(color, values[i]);
+	for(int i = 4; i >= 0; --i) {
+		color = blend(color, values[indices[i]]);
+		out_colors[i] = vec4(color, 1.0);
 	}
-
-	out_c1 = values[indices[0]];
-
-	out_c1 = values[indices[1]];
-	out_c2 = values[indices[2]];
-	out_c3 = values[indices[3]];
-	out_c4 = values[indices[4]];
-	out_c5 = values[indices[5]];
 }

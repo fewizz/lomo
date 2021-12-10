@@ -81,6 +81,20 @@
 		]
 	},
 	{
+		"name": "copy_to_array_sorted_and_blend",
+		"vertexSource": "lomo:shaders/pipeline/full_frame_depth_1.vert",
+		"fragmentSource": "lomo:shaders/pipeline/copy_to_array_sorted_and_blend.frag",
+		"samplers": [
+			"u_i0",
+			"u_i1",
+			"u_i2",
+			"u_i3",
+			"u_i4",
+			"u_i5",
+			"u_index_to_type"
+		]
+	},
+	{
 		"name": "combine",
 		"vertexSource": "lomo:shaders/pipeline/full_frame_depth_1.vert",
 		"fragmentSource": "lomo:shaders/pipeline/combine.frag",
@@ -104,7 +118,7 @@
 		},
 		{
 			"name": "sort_colors",
-			"program": "copy_to_array_sorted",
+			"program": "copy_to_array_sorted_and_blend",
 			"framebuffer": "colors",
 			"samplerImages": [
 				"solid_c", "translucent_c", "entity_c",
