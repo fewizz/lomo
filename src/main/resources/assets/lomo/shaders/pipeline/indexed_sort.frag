@@ -3,12 +3,13 @@
 
 /* lomo:pipeline/sort.frag */
 
-uniform sampler2D u_d0;
-uniform sampler2D u_d1;
-uniform sampler2D u_d2;
-uniform sampler2D u_d3;
-uniform sampler2D u_d4;
-uniform sampler2D u_d5;
+uniform sampler2D u_solid_d;
+uniform sampler2D u_solid_before_hand_d;
+uniform sampler2D u_translucent_d;
+uniform sampler2D u_entity_d;
+uniform sampler2D u_particle_d;
+uniform sampler2D u_weather_d;
+uniform sampler2D u_cloud_d;
 
 layout(location = 0) out vec4 out_index_to_type;
 layout(location = 1) out vec4 out_type_to_index;
@@ -16,24 +17,34 @@ layout(location = 1) out vec4 out_type_to_index;
 void main() {
 	ivec2 coord = ivec2(gl_FragCoord.xy);
 
-	float depths[6] = float[](
-		texelFetch(u_d0, coord, 0).r,
-		texelFetch(u_d1, coord, 0).r,
-		texelFetch(u_d2, coord, 0).r,
-		texelFetch(u_d3, coord, 0).r,
-		texelFetch(u_d4, coord, 0).r,
-		texelFetch(u_d5, coord, 0).r
+	float depths[7] = float[](
+		texelFetch(u_solid_d, coord, 0).r,
+		texelFetch(u_solid_before_hand_d, coord, 0).r,
+		texelFetch(u_translucent_d, coord, 0).r,
+		texelFetch(u_entity_d, coord, 0).r,
+		texelFetch(u_particle_d, coord, 0).r,
+		texelFetch(u_weather_d, coord, 0).r,
+		texelFetch(u_cloud_d, coord, 0).r
 	);
 
-	bool done[6] = bool[](false, false, false, false, false, false);
-	uint type_to_index[6];
-	uint index_to_type[6];
+	bool done[7] = bool[](false, false, false, false, false, false, false);
+	uint type_to_index[7];
+	uint index_to_type[7];
 
+	uint begin = 0u;
 	float prev_min = -1;
 
-	for(uint i = 0u; i < 6u; i++) {
+	//if(depths[0] != 1.0) {
+		//done[0] = true;
+		//type_to_index[0] = 0u;
+		//index_to_type[0] = 0u;
+		//prev_min = depths[0];
+		//++begin;
+	//}
+
+	for(uint i = begin; i < 7u; i++) {
 		float current_min = 1.01;
-		for(uint x = 0u; x < 6u; x++) {
+		for(uint x = 0u; x < 7u; x++) {
 			if(done[x]) continue;
 
 			float d = depths[x];
@@ -53,7 +64,7 @@ void main() {
 	uint result_type_to_index = 0u;
 	uint result_index_to_type = 0u;
 
-	for(uint i = 0u; i < 6u; i++) {
+	for(uint i = 0u; i < 7u; i++) {
 		result_type_to_index |= type_to_index[i] << (i*4u);
 		result_index_to_type |= index_to_type[i] << (i*4u);
 	}
