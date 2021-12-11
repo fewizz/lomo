@@ -31,7 +31,7 @@
 	"translucent": "translucent_cned"
 },
 
-"defaultFramebuffer": "solid_cd",
+"defaultFramebuffer": "colid_cd",
 
 "programs": [
 	{
@@ -63,7 +63,7 @@
 		"vertexSource": "lomo:shaders/pipeline/full_frame_depth_1.vert",
 		"fragmentSource": "lomo:shaders/pipeline/post.frag",
 		"samplers": [
-			"u_colors", "u_normals", "u_extras", "u_depths"
+			"u_colors", "u_normals", "u_extras", "u_depths", "u_win_normals"
 		]
 	},
 	{
@@ -95,12 +95,11 @@
 		]
 	},
 	{
-		"name": "combine",
+		"name": "win_normals",
 		"vertexSource": "lomo:shaders/pipeline/full_frame_depth_1.vert",
-		"fragmentSource": "lomo:shaders/pipeline/combine.frag",
+		"fragmentSource": "lomo:shaders/pipeline/win_normals.frag",
 		"samplers": [
-			"u_noise",
-			"u_color"
+			"u_depths", "u_normals"
 		]
 	}
 ],
@@ -153,6 +152,14 @@
 			]
 		},
 		{
+			"name": "win_normals",
+			"program": "win_normals",
+			"framebuffer": "win_normals_0",
+			"samplerImages": [
+				"depths", "normals"
+			]
+		},
+		{
 			"name": "depths_1",
 			"program": "depth_levels",
 			"framebuffer": "depths_1",
@@ -188,13 +195,39 @@
 				"colors",
 				"normals",
 				"extras",
-				"depths"
+				"depths",
+				"win_normals"
 			]
 		}
 	]
 },
 
 "images": [
+	{
+		"name": "default_c",
+		"internalFormat": "RGBA8",
+		"pixelFormat": "RGBA",
+		"pixelDataType": "UNSIGNED_BYTE",
+		"texParams": [
+			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
+		]
+	},
+	{
+		"name": "default_d",
+		"internalFormat": "DEPTH_COMPONENT",
+		"pixelFormat": "DEPTH_COMPONENT",
+		"pixelDataType": "FLOAT",
+		"texParams": [
+			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_COMPARE_MODE", "val": "NONE" }
+		]
+	},
 	{
 		"name": "solid_c",
 		"internalFormat": "RGBA8",
@@ -209,7 +242,7 @@
 	},
 	{
 		"name": "solid_n",
-		"internalFormat": "GL_RGB16F",
+		"internalFormat": "RGB32F",
 		"pixelFormat": "RGB",
 		"pixelDataType": "FLOAT",
 		"texParams": [
@@ -234,9 +267,9 @@
 	},
 	{
 		"name": "solid_e",
-		"internalFormat": "GL_RGB16F",
+		"internalFormat": "RGB8",
 		"pixelFormat": "RGB",
-		"pixelDataType": "FLOAT",
+		"pixelDataType": "UNSIGNED_BYTE",
 		"texParams": [
 			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
 			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
@@ -255,7 +288,7 @@
 	},
 	{
 		"name": "translucent_n",
-		"internalFormat": "GL_RGB16F",
+		"internalFormat": "RGB32F",
 		"pixelFormat": "RGB",
 		"pixelDataType": "FLOAT",
 		"texParams": [
@@ -280,9 +313,9 @@
 	},
 	{
 		"name": "translucent_e",
-		"internalFormat": "GL_RGB16F",
+		"internalFormat": "RGB8",
 		"pixelFormat": "RGB",
-		"pixelDataType": "FLOAT",
+		"pixelDataType": "UNSIGNED_BYTE",
 		"texParams": [
 			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
 			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
@@ -301,7 +334,7 @@
 	},
 	{
 		"name": "entity_n",
-		"internalFormat": "GL_RGB16F",
+		"internalFormat": "RGB32F",
 		"pixelFormat": "RGB",
 		"pixelDataType": "FLOAT",
 		"texParams": [
@@ -326,9 +359,9 @@
 	},
 	{
 		"name": "entity_e",
-		"internalFormat": "GL_RGB16F",
+		"internalFormat": "RGB8",
 		"pixelFormat": "RGB",
-		"pixelDataType": "FLOAT",
+		"pixelDataType": "UNSIGNED_BYTE",
 		"texParams": [
 			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
 			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
@@ -347,7 +380,7 @@
 	},
 	{
 		"name": "weather_n",
-		"internalFormat": "GL_RGB16F",
+		"internalFormat": "RGB32F",
 		"pixelFormat": "RGB",
 		"pixelDataType": "FLOAT",
 		"texParams": [
@@ -372,9 +405,9 @@
 	},
 	{
 		"name": "weather_e",
-		"internalFormat": "GL_RGB16F",
+		"internalFormat": "RGB8",
 		"pixelFormat": "RGB",
-		"pixelDataType": "FLOAT",
+		"pixelDataType": "UNSIGNED_BYTE",
 		"texParams": [
 			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
 			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
@@ -393,7 +426,7 @@
 	},
 	{
 		"name": "cloud_n",
-		"internalFormat": "GL_RGB16F",
+		"internalFormat": "RGB32F",
 		"pixelFormat": "RGB",
 		"pixelDataType": "FLOAT",
 		"texParams": [
@@ -418,9 +451,9 @@
 	},
 	{
 		"name": "cloud_e",
-		"internalFormat": "GL_RGB16F",
+		"internalFormat": "RGB8",
 		"pixelFormat": "RGB",
-		"pixelDataType": "FLOAT",
+		"pixelDataType": "UNSIGNED_BYTE",
 		"texParams": [
 			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
 			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
@@ -439,7 +472,7 @@
 	},
 	{
 		"name": "particle_n",
-		"internalFormat": "GL_RGB16F",
+		"internalFormat": "RGB32F",
 		"pixelFormat": "RGB",
 		"pixelDataType": "FLOAT",
 		"texParams": [
@@ -464,9 +497,9 @@
 	},
 	{
 		"name": "particle_e",
-		"internalFormat": "GL_RGB16F",
+		"internalFormat": "RGB8",
 		"pixelFormat": "RGB",
-		"pixelDataType": "FLOAT",
+		"pixelDataType": "UNSIGNED_BYTE",
 		"texParams": [
 			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
 			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
@@ -489,7 +522,21 @@
 		"name": "normals",
 		"target": "TEXTURE_2D_ARRAY",
 		"depth": 6,
-		"internalFormat": "GL_RGB16F",
+		"internalFormat": "RGB32F",
+		"pixelFormat": "RGB",
+		"pixelDataType": "FLOAT",
+		"texParams": [
+			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
+		]
+	},
+	{
+		"name": "win_normals",
+		"target": "TEXTURE_2D_ARRAY",
+		"depth": 6,
+		"internalFormat": "RGB32F",
 		"pixelFormat": "RGB",
 		"pixelDataType": "FLOAT",
 		"texParams": [
@@ -503,9 +550,9 @@
 		"name": "extras",
 		"target": "TEXTURE_2D_ARRAY",
 		"depth": 6,
-		"internalFormat": "GL_RGB16F",
+		"internalFormat": "RGB8",
 		"pixelFormat": "RGB",
-		"pixelDataType": "FLOAT",
+		"pixelDataType": "UNSIGNED_BYTE",
 		"texParams": [
 			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
 			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
@@ -518,7 +565,7 @@
 		"target": "TEXTURE_2D_ARRAY",
 		"depth": 6,
 		"lod": 4,
-		"internalFormat": "GL_R32F",
+		"internalFormat": "R32F",
 		"pixelFormat": "RED",
 		"pixelDataType": "FLOAT",
 		"texParams": [
@@ -531,7 +578,7 @@
 	},
 	{
 		"name": "index_to_type",
-		"internalFormat": "GL_R32F",
+		"internalFormat": "R32F",
 		"pixelFormat": "RED",
 		"pixelDataType": "FLOAT",
 		"texParams": [
@@ -544,7 +591,7 @@
 	},
 	{
 		"name": "type_to_index",
-		"internalFormat": "GL_R32F",
+		"internalFormat": "R32F",
 		"pixelFormat": "RED",
 		"pixelDataType": "FLOAT",
 		"texParams": [
@@ -554,22 +601,17 @@
 			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" },
 			{ "name": "TEXTURE_COMPARE_MODE", "val": "NONE" }
 		]
-	},
-	{
-		"name": "post_c",
-		"internalFormat": "GL_RGBA32F",
-		"pixelDataType": "FLOAT",
-		"pixelFormat": "RGBA",
-		"texParams": [
-			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
-			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
-			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
-			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
-		]
 	}
 ],
 
 "framebuffers": [
+	{
+		"name": "default_cd",
+		"colorAttachments": [
+			{ "image": "default_c" }
+		],
+		"depthAttachment": { "image": "default_d", "clearDepth": "c:" }
+	},
 	{
 		"name": "solid_c",
 		"colorAttachments": [
@@ -722,6 +764,12 @@
 		]
 	},
 	{
+		"name": "win_normals_0",
+		"colorAttachments": [
+			{ "image": "win_normals", "layer": 0 }
+		]
+	},
+	{
 		"name": "extras",
 		"colorAttachments": [
 			{ "image": "extras", "layer": 0 },
@@ -742,17 +790,12 @@
 			{ "image": "depths", "layer": 4 },
 			{ "image": "depths", "layer": 5 }
 		]
-	},
-	{
-		"name": "post_c",
-		"colorAttachments": [
-			{ "image": "post_c" }
-		]
 	}
 ],
 
 "beforeWorldRender": {
 	"passes": [
+		{ "name": "clear_default", "framebuffer": "default_cd", "program": "frex_clear" },
 		{ "name": "clear_solid", "framebuffer": "solid_cned", "program": "frex_clear" },
 		{ "name": "clear_entity", "framebuffer": "entity_cned", "program": "frex_clear" },
 		{ "name": "clear_translucent", "framebuffer": "translucent_cned", "program": "frex_clear" },

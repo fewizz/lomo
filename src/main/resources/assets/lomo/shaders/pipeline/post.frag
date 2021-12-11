@@ -15,6 +15,7 @@ uniform sampler2DArray u_colors;
 uniform sampler2DArray u_normals;
 uniform sampler2DArray u_extras;
 uniform sampler2DArray u_depths;
+uniform sampler2DArray u_win_normals;
 
 layout(location = 0) out vec4 out_color;
 
@@ -266,51 +267,32 @@ fb_traversal_result traverse_fb(vec3 dir, vec3 pos, uint f) {
 
 #define TRAVERSAL_POSSIBLY_UNDER 2
 
-fb_traversal_result traverse_fb_with_thickness(vec3 dir, vec3 pos_ws, vec3 i_cs, uint f) {
+fb_traversal_result traverse_fb_with_thickness(vec3 dir, vec3 pos_ws, uint f) {
 	fb_traversal_result result = traverse_fb(dir, pos_ws, f);
 
 	if(result.code != TRAVERSAL_SUCCESS) {
 		return result;
 	}
 
-	vec3 raw_normal = texelFetch(u_normals, ivec3(result.pos, f), 0).xyz;
-	vec3 normal_cs = normalize(raw_normal * 2.0 - 1.0);
-
+	vec3 win_normal = normalize(texelFetch(u_win_normals, ivec3(result.pos, f), 0).xyz);
 	float depth_ws = result.depth;
+
+	float max_depth = depth_ws;
 	vec2 pos_xy = vec2(result.pos) + 0.5;
-	vec3 pos_center_ws = vec3(pos_xy, depth_ws);
-	vec3 pos_center_cs = win_to_cam(pos_center_ws);
-	vec3 pos_center_near_cs = win_to_cam(vec3(pos_xy, 0));
-
-	float dist_from_near_to_center = -pos_center_cs.z - -pos_center_near_cs.z;
-
-	float max_depth_from_near = dist_from_near_to_center;
+	plane p = plane_from_pos_and_normal(vec3(pos_xy, depth_ws), win_normal);
 
 	for(int x = -1; x <= 1; x+=2) {
 		for(int y = -1; y <= 1; y+=2) {
-			vec2 pos_ws = pos_center_ws.xy + vec2(x, y) / 2.0;
-
-			vec3 near_cs = win_to_cam(vec3(pos_ws, 0)); // point in near plane
-			vec3 far_cs = win_to_cam(vec3(pos_ws, 1)); // point in far plane
-
-			vec3 dir_cs = normalize(far_cs-near_cs);
-			ray r = ray(near_cs, dir_cs);
-			plane p = plane_from_pos_and_normal(pos_center_cs, normal_cs);
-
-			ray_plane_intersection_result res = ray_plane_intersection(r, p);
-
-			max_depth_from_near = max(
-				max_depth_from_near,
-				-(dir_cs * res.dist).z
-			);
+			ray r = ray(vec3(pos_xy, 0) + vec3(x, y, 0) / 2.0, vec3(0, 0, 1)); 
+			ray_plane_intersection_result res = ray_plane_intersection(r, p); // actulally very cheap
+			max_depth = max(max_depth, res.dist);
 		}
 	}
 
-	float thickness = (max_depth_from_near - dist_from_near_to_center) * 10. + 0.02; // some magic
-	float dx_post = (-win_to_cam(vec3(pos_xy, result.z)).z) - -pos_center_cs.z; // todo?
-	float dx_pre = (-win_to_cam(vec3(pos_xy, result.prev_z)).z) - -pos_center_cs.z;
+	float depth_h = max_depth - depth_ws;
+	float prev_z = result.z + -dir.z;
 
-	if((dx_pre > thickness && dx_post > thickness) || dot(-normalize(pos_center_cs - pos_center_near_cs), normal_cs) / abs(dot(-i_cs, normal_cs)) < 0.4) {
+	if(result.z > depth_ws + depth_h && prev_z > depth_ws + depth_h) {
 		result.code = TRAVERSAL_POSSIBLY_UNDER;
 	}
 
@@ -343,8 +325,8 @@ void main() {
 		if(i >= max_index) break;
 		++i;
 
-		vec3 raw_normal = texelFetch(u_normals, ivec3(pos_ws.xy, 0), 0).xyz;
-		vec3 normal_cs = normalize(raw_normal * 2.0 - 1.0);
+		//vec3 raw_normal = texelFetch(u_normals, ivec3(pos_ws.xy, 0), 0).xyz;
+		vec3 normal_cs = normalize(texelFetch(u_normals, ivec3(pos_ws.xy, 0), 0).xyz);
 
 		vec2 rand = hash22(pos_ws.xy) * 2. - 1.;
 
@@ -365,8 +347,9 @@ void main() {
 		vec3 dir_ws = cam_dir_to_win(pos_cs, reflection_dir);
 
 		//pos_ws.z -= 8.0 * abs(dir_ws.z) / length(dir_ws.xy); // TODO
+		//pos_ws.z -= abs(2*dir_ws.z);
 
-		fb_traversal_result res = traverse_fb(dir_ws, pos_ws, 0u);
+		fb_traversal_result res = traverse_fb_with_thickness(dir_ws, pos_ws, 0u);
 
 		if(res.depth < 1.0 && res.code == TRAVERSAL_SUCCESS) {
 			//if(i == 1) {
