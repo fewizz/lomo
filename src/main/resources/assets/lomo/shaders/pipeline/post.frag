@@ -249,9 +249,11 @@ fb_traversal_result __name (vec3 dir, vec3 pos_ws, uint f) { \
 		\
 		/* switching the cell */ \
 		pos.m += uvec2(sign(dir_xy)); \
-		UPDATE_UPPER_DEPTH(pos); \
-		UPDATE_LOWER_DEPTH(pos); \
+		if((pos.m >> cell_bits(level + 1u)) != ( prev.m >> cell_bits(level + 1u) )) { \
+			UPDATE_UPPER_DEPTH(pos); \
+		} \
 		FIND_UPPEST_LOD(__init_func, pos); \
+		UPDATE_LOWER_DEPTH(pos); \
 		FIND_LOWEST_LOD(__init_func, pos); \
 	} \
 }

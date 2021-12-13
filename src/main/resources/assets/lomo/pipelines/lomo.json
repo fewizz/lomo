@@ -111,6 +111,20 @@
 		"samplers": [
 			"u_color", "u_normal", "u_extra", "u_depth"
 		]
+	},
+	{
+		"name": "normal_from_depth",
+		"vertexSource": "lomo:shaders/pipeline/full_frame_depth_1.vert",
+		"fragmentSource": "lomo:shaders/pipeline/normal_from_depth.frag",
+		"samplers": [
+			"u_depth"
+		]
+	},
+	{
+		"name": "extra_sky_1",
+		"vertexSource": "lomo:shaders/pipeline/full_frame_depth_1.vert",
+		"fragmentSource": "lomo:shaders/pipeline/extra_sky_1.frag",
+		"samplers": []
 	}
 ],
 
@@ -122,12 +136,48 @@
 		{ "name": "clear_translucent", "framebuffer": "translucent_cned", "program": "frex_clear" },
 		{ "name": "clear_weather", "framebuffer": "weather_cned", "program": "frex_clear" },
 		{ "name": "clear_cloud", "framebuffer": "cloud_cned", "program": "frex_clear" },
-		{ "name": "clear_particle", "framebuffer": "particle_cned", "program": "frex_clear" }
+		{ "name": "clear_particle", "framebuffer": "particle_cned", "program": "frex_clear" },
+		{
+			"name": "solid_normal_from_depth",
+			"program": "normal_from_depth",
+			"framebuffer": "solid_n",
+			"samplerImages": [
+				"solid_d"
+			]
+		},
+		{
+			"name": "solid_extra_sky_1",
+			"program": "extra_sky_1",
+			"framebuffer": "solid_e",
+			"samplerImages": []
+		}
 	]
 },
 
 "fabulous": {
 	"passes": [
+		{
+			"name": "cloud_normal_from_depth",
+			"program": "normal_from_depth",
+			"framebuffer": "cloud_n",
+			"samplerImages": [
+				"cloud_d"
+			]
+		},
+		{
+			"name": "weather_normal_from_depth",
+			"program": "normal_from_depth",
+			"framebuffer": "weather_n",
+			"samplerImages": [
+				"weather_d"
+			]
+		},
+		{
+			"name": "cloud_extra_sky_1",
+			"program": "extra_sky_1",
+			"framebuffer": "cloud_e",
+			"samplerImages": []
+		},
 		{
 			"name": "copy_solid",
 			"program": "copy_solid",
@@ -136,7 +186,21 @@
 				"solid_c", "solid_n", "solid_e", "solid_d"
 			]
 		},
-		{ "name": "clear_solid_before_hand_render", "framebuffer": "solid_cned", "program": "frex_clear" }
+		{ "name": "clear_solid_before_hand_render", "framebuffer": "solid_cned", "program": "frex_clear" },
+		{
+			"name": "solid_normal_from_depth",
+			"program": "normal_from_depth",
+			"framebuffer": "solid_n",
+			"samplerImages": [
+				"solid_d"
+			]
+		},
+		{
+			"name": "solid_extra_sky_1",
+			"program": "extra_sky_1",
+			"framebuffer": "solid_e",
+			"samplerImages": []
+		}
 	]
 },
 
@@ -723,12 +787,36 @@
 		"depthAttachment": { "image": "solid_d", "clearDepth": "c:" }
 	},
 	{
+		"name": "solid_n",
+		"colorAttachments": [
+			{ "image": "solid_n" }
+		]
+	},
+	{
+		"name": "solid_e",
+		"colorAttachments": [
+			{ "image": "solid_e" }
+		]
+	},
+	{
 		"name": "solid_before_hand_cned",
 		"colorAttachments": [
 			{ "image": "solid_before_hand_c", "clearColor": "c:" },
 			{ "image": "solid_before_hand_n", "clearColor": "c:" },
 			{ "image": "solid_before_hand_e", "clearColor": "c:" },
 			{ "image": "solid_before_hand_d", "clearColor": "c:" }
+		]
+	},
+	{
+		"name": "solid_before_hand_n",
+		"colorAttachments": [
+			{ "image": "solid_before_hand_n" }
+		]
+	},
+	{
+		"name": "solid_before_hand_e",
+		"colorAttachments": [
+			{ "image": "solid_before_hand_e" }
 		]
 	},
 	{
@@ -750,6 +838,12 @@
 		"depthAttachment": { "image": "weather_d", "clearDepth": "c:" }
 	},
 	{
+		"name": "weather_n",
+		"colorAttachments": [
+			{ "image": "weather_n", "clearColor": "c:" }
+		]
+	},
+	{
 		"name": "cloud_cned",
 		"colorAttachments": [
 			{ "image": "cloud_c", "clearColor": "c:" },
@@ -757,6 +851,18 @@
 			{ "image": "cloud_e", "clearColor": "c:" }
 		],
 		"depthAttachment": { "image": "cloud_d", "clearDepth": "c:" }
+	},
+	{
+		"name": "cloud_n",
+		"colorAttachments": [
+			{ "image": "cloud_n" }
+		]
+	},
+	{
+		"name": "cloud_e",
+		"colorAttachments": [
+			{ "image": "cloud_e" }
+		]
 	},
 	{
 		"name": "particle_cned",
