@@ -17,7 +17,7 @@ void main() {
 	ivec2 size = textureSize(u_depths, 0).xy;
 
 	ivec2 coord = ivec2(gl_FragCoord.xy);
-	if(any(greaterThanEqual(coord << (power*lod), size))) discard;
+	//if(any(greaterThanEqual(coord << (power*lod), size))) discard;
 
 	float min_depths[3] = float[](1, 1, 1);
 

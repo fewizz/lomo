@@ -78,7 +78,7 @@ vec3 cam_to_win(vec3 cam) {
 
 vec3 cam_dir_to_win(vec3 pos_cs, vec3 dir_cs, mat4 projMat) {
 	vec3 pos_c = cam_to_win(pos_cs, projMat);
-	vec3 pos_dir_c = cam_to_win(pos_cs + dir_cs*0.01, projMat);
+	vec3 pos_dir_c = cam_to_win(pos_cs + dir_cs*0.1, projMat);
 
 	vec3 X = pos_dir_c - pos_c;
 	return normalize(X);

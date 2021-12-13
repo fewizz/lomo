@@ -23,6 +23,7 @@ layout(location = 0) out vec4 out_color;
 #define TRAVERSAL_SUCCESS 0
 #define TRAVERSAL_OUT_OF_FB 1
 #define TRAVERSAL_POSSIBLY_UNDER 2
+#define TRAVERSAL_TOO_LONG 3
 
 struct cell_pos {
 	uvec2 m;
@@ -197,7 +198,7 @@ int check_if_intersected(in cell_pos pos, vec3 dir, uint f) {
 
 	vec3 intersection_pos = ray_pos + dir * res.dist;
 
-	if(res.dist <= 0. || any(lessThan(intersection_pos.xy, vec2(0.0))) || any(greaterThan(intersection_pos.xy, vec2(1.0)))) {
+	if((dot(normal_ws, dir) > 0 && res.dist == 0) || res.dist < 0. || any(lessThan(intersection_pos.xy, vec2(0.0))) || any(greaterThan(intersection_pos.xy, vec2(1.0)))) {
 		return SURFACE_NOT_INTERSECT;
 	}
 
@@ -222,7 +223,7 @@ fb_traversal_result __name (vec3 dir, vec3 pos_ws, uint f) { \
 	FIND_UPPEST_LOD(__init_func, pos); \
 	float dir_z_per_xy = dir.z / length(dir.xy); \
 	\
-	while(true) { \
+	for(int i = 0; i < 100; ++i) { \
 		if(is_out_of_fb(pos)) return fb_traversal_result(TRAVERSAL_OUT_OF_FB, cell_pos(uvec2(0u), uvec2(0u), 0.0)); \
 		\
 		cell_pos prev = pos; \
@@ -235,6 +236,10 @@ fb_traversal_result __name (vec3 dir, vec3 pos_ws, uint f) { \
 				dist *= mul; \
 				pos.m = uvec2(ivec2(prev.m) + ivec2(float(max_inner_value) * dist * dir_xy)); \
 				pos.z = lower_depth; \
+				__init_func(pos, level, udir); \
+				UPDATE_UPPER_DEPTH(pos); \
+				FIND_UPPEST_LOD(__init_func, pos); \
+				UPDATE_LOWER_DEPTH(pos); \
 				FIND_LOWEST_LOD(__init_func, pos); \
 				continue; \
 			} \
@@ -249,6 +254,7 @@ fb_traversal_result __name (vec3 dir, vec3 pos_ws, uint f) { \
 		\
 		/* switching the cell */ \
 		pos.m += uvec2(sign(dir_xy)); \
+		__init_func(pos, level, udir); \
 		if((pos.m >> cell_bits(level + 1u)) != ( prev.m >> cell_bits(level + 1u) )) { \
 			UPDATE_UPPER_DEPTH(pos); \
 		} \
@@ -256,6 +262,7 @@ fb_traversal_result __name (vec3 dir, vec3 pos_ws, uint f) { \
 		UPDATE_LOWER_DEPTH(pos); \
 		FIND_LOWEST_LOD(__init_func, pos); \
 	} \
+	return fb_traversal_result(TRAVERSAL_TOO_LONG, cell_pos(uvec2(0u), uvec2(0u), 0.0)); \
 }
 
 TRAVERSE_FUNC(traverse_fb_ru, next_cell_ru, cell_pos_init_ru)
@@ -304,7 +311,7 @@ fb_traversal_result traverse_fb(vec3 dir, vec3 pos, uint f) {
 }
 
 void main() {
-	const int steps = 3;
+	const int steps = 2;
 	const int max_index = steps - 1;
 	vec3 lights[steps];
 	vec3 colors[steps];
@@ -318,6 +325,12 @@ void main() {
 	vec3 incidence_cs = normalize(win_to_cam(pos_ws) - win_to_cam(vec3(gl_FragCoord.xy, 0)));
 
 	while(true) {
+		//if(pos_ws.z >= 1.) {
+		//	vec3 light = sky_color(mat3(frx_inverseViewMatrix) * incidence_cs);
+		//	lights[i] = light;
+		//	break;
+		//}
+
 		vec4 extras = texelFetch(u_extras, ivec3(pos_ws.xy, 0), 0);
 		float reflectivity = extras.x;
 		float sky_light = extras.y;
@@ -352,19 +365,25 @@ void main() {
 
 		fb_traversal_result res = traverse_fb(dir_ws, pos_ws, 0u);
 
-		if(res.pos.z < 1.0 && res.code == TRAVERSAL_SUCCESS) {
-			color = pow3(texelFetch(u_colors, ivec3(outer(res.pos), 0), 0).rgb, 2.2);
-			pos_ws.xy = outer(res.pos) + (vec2(res.pos.m & mask(0u)) / float(max_inner_value));
-			pos_ws.z = res.pos.z;
+		if(res.pos.z < 1. && res.code == TRAVERSAL_SUCCESS) {
+			lights[i] = vec3(1.0, 0.0, 1.0);
+			break;
+			//color = pow3(texelFetch(u_colors, ivec3(outer(res.pos), 0), 0).rgb, 2.2);
+			//pos_ws.xy = outer(res.pos) + (vec2(res.pos.m & mask(0u)) / float(max_inner_value));
+			//pos_ws.z = res.pos.z;
 		}
-		//else if(res.code == TRAVERSAL_POSSIBLY_UNDER) {
-		//	lights[i] = vec3(1.0, 0.0, 0.0);
-		//	break;
-		//}
-		//else if(res.code == TRAVERSAL_OUT_OF_FB) {
-		//	lights[i] = vec3(0.0, 1.0, 0.0);
-		//	break;
-		//}
+		else if(res.code == TRAVERSAL_POSSIBLY_UNDER) {
+			lights[i] = vec3(1.0, 0.0, 0.0);
+			break;
+		}
+		else if(res.code == TRAVERSAL_OUT_OF_FB) {
+			lights[i] = vec3(0.0, 1.0, 0.0);
+			break;
+		}
+		else if(res.code == TRAVERSAL_TOO_LONG) {
+			lights[i] = vec3(0.0, 0.0, 1.0);
+			break;
+		}
 		else {
 			vec3 light = sky_color(mat3(frx_inverseViewMatrix) * reflection_dir);
 			lights[i] = light * sky_light * sky_light;
@@ -376,9 +395,9 @@ void main() {
 
 	color = lights[i];
 
-	while(--i >= 0) {
-		color = color * colors[i] + lights[i];
-	}
+	//while(--i >= 0) {
+	//	color = color * colors[i] + lights[i];
+//	}
 
 	out_color = vec4(pow3(color, 1.0 / 2.2), 1.0);
 }
