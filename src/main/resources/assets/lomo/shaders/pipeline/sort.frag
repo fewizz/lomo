@@ -37,10 +37,10 @@ void main() {
 	out_values[0] = values[index_to_type[0]];
 
 	uint i = 0u;
-	while(index_to_type[i] != 0u) ++i;
+	while(index_to_type[i] == 0u) ++i;
 	out_values[1] = values[index_to_type[i]];
 
 	i = 0u;
-	while(index_to_type[i] != 0u && index_to_type[i] != 2u) ++i;
+	while(index_to_type[i] == 0u || index_to_type[i] == 2u) ++i;
 	out_values[2] = values[index_to_type[i]];
 }

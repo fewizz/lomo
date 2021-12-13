@@ -71,7 +71,9 @@
 		"vertexSource": "lomo:shaders/pipeline/full_frame_depth_1.vert",
 		"fragmentSource": "lomo:shaders/pipeline/post.frag",
 		"samplers": [
-			"u_colors", "u_normals", "u_extras", "u_depths", "u_win_normals"
+			"u_colors", "u_normals",
+			"u_extras", "u_depths",
+			"u_win_normals", "u_hi_depths"
 		]
 	},
 	{
@@ -186,19 +188,31 @@
 			]
 		},
 		{
-			"name": "win_normals",
+			"name": "win_normals_0",
 			"program": "win_normals",
-			"framebuffer": "win_normals_0",
+			"framebuffer": "win_normals_0_hi_depths_0",
 			"samplerImages": [
 				"depths", "normals"
-			]
+			],
+			"layer": 0
 		},
 		{
-			"name": "hi_depths_0",
-			"program": "depth_levels",
-			"framebuffer": "hi_depths_0",
-			"samplerImages": [ "depths" ],
-			"lod": 0
+			"name": "win_normals_1",
+			"program": "win_normals",
+			"framebuffer": "win_normals_1_hi_depths_1",
+			"samplerImages": [
+				"depths", "normals"
+			],
+			"layer": 1
+		},
+		{
+			"name": "win_normals_2",
+			"program": "win_normals",
+			"framebuffer": "win_normals_2_hi_depths_2",
+			"samplerImages": [
+				"depths", "normals"
+			],
+			"layer": 2
 		},
 		{
 			"name": "hi_depths_1",
@@ -237,7 +251,8 @@
 				"normals",
 				"extras",
 				"depths",
-				"win_normals"
+				"win_normals",
+				"hi_depths"
 			]
 		}
 	]
@@ -258,7 +273,7 @@
 	},
 	{
 		"name": "solid_n",
-		"internalFormat": "RGB32F",
+		"internalFormat": "RGB16F",
 		"pixelFormat": "RGB",
 		"pixelDataType": "FLOAT",
 		"texParams": [
@@ -307,7 +322,7 @@
 	},
 	{
 		"name": "solid_before_hand_n",
-		"internalFormat": "RGB32F",
+		"internalFormat": "RGB16F",
 		"pixelFormat": "RGB",
 		"pixelDataType": "FLOAT",
 		"texParams": [
@@ -353,7 +368,7 @@
 	},
 	{
 		"name": "translucent_n",
-		"internalFormat": "RGB32F",
+		"internalFormat": "RGB16F",
 		"pixelFormat": "RGB",
 		"pixelDataType": "FLOAT",
 		"texParams": [
@@ -399,7 +414,7 @@
 	},
 	{
 		"name": "entity_n",
-		"internalFormat": "RGB32F",
+		"internalFormat": "RGB16F",
 		"pixelFormat": "RGB",
 		"pixelDataType": "FLOAT",
 		"texParams": [
@@ -445,7 +460,7 @@
 	},
 	{
 		"name": "weather_n",
-		"internalFormat": "RGB32F",
+		"internalFormat": "RGB16F",
 		"pixelFormat": "RGB",
 		"pixelDataType": "FLOAT",
 		"texParams": [
@@ -491,7 +506,7 @@
 	},
 	{
 		"name": "cloud_n",
-		"internalFormat": "RGB32F",
+		"internalFormat": "RGB16F",
 		"pixelFormat": "RGB",
 		"pixelDataType": "FLOAT",
 		"texParams": [
@@ -537,7 +552,7 @@
 	},
 	{
 		"name": "particle_n",
-		"internalFormat": "RGB32F",
+		"internalFormat": "RGB16F",
 		"pixelFormat": "RGB",
 		"pixelDataType": "FLOAT",
 		"texParams": [
@@ -587,7 +602,7 @@
 		"name": "normals",
 		"target": "TEXTURE_2D_ARRAY",
 		"depth": 3,
-		"internalFormat": "RGB32F",
+		"internalFormat": "RGB16F",
 		"pixelFormat": "RGB",
 		"pixelDataType": "FLOAT",
 		"texParams": [
@@ -825,9 +840,24 @@
 		]
 	},
 	{
-		"name": "win_normals_0",
+		"name": "win_normals_0_hi_depths_0",
 		"colorAttachments": [
-			{ "image": "win_normals", "layer": 0 }
+			{ "image": "win_normals", "layer": 0 },
+			{ "image": "hi_depths", "layer": 0, "lod": 0 }
+		]
+	},
+	{
+		"name": "win_normals_1_hi_depths_1",
+		"colorAttachments": [
+			{ "image": "win_normals", "layer": 1 },
+			{ "image": "hi_depths", "layer": 1, "lod": 0 }
+		]
+	},
+	{
+		"name": "win_normals_2_hi_depths_2",
+		"colorAttachments": [
+			{ "image": "win_normals", "layer": 2 },
+			{ "image": "hi_depths", "layer": 2, "lod": 0 }
 		]
 	},
 	{
