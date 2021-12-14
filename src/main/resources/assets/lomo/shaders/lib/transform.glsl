@@ -77,11 +77,24 @@ vec3 cam_to_win(vec3 cam) {
 }
 
 vec3 cam_dir_to_win(vec3 pos_cs, vec3 dir_cs, mat4 projMat) {
-	vec3 pos_c = cam_to_win(pos_cs, projMat);
-	vec3 pos_dir_c = cam_to_win(pos_cs + dir_cs*0.1, projMat);
+	vec4 p = vec4(pos_cs, 1.);
+	vec4 n = vec4(dir_cs, 0.);
+	n*=0.01;
 
-	vec3 X = pos_dir_c - pos_c;
-	return normalize(X);
+	vec4 X = (projMat * (p + n));
+	vec4 Y = (projMat * p);
+
+	return normalize(
+		vec3(frxu_size, 1.) * (
+			//mat3(projMat) * n.xyz/* / dot(p+n, vec4(projMat[0][3], projMat[1][3], projMat[2][3], projMat[3][3]))*/
+			//(mat3(projMat) * (p+n).xyz + projMat[3].xyz) / dot(p + n, vec4(projMat[0][3], projMat[1][3], projMat[2][3], projMat[3][3]))
+			//-
+			//(mat3(projMat) * p.xyz + projMat[3].xyz) / dot(p, vec4(projMat[0][3], projMat[1][3], projMat[2][3], projMat[3][3]))
+			(X.xyz / X.w)
+			-
+			(Y.xyz / Y.w)
+		)
+	);
 }
 
 vec3 cam_dir_to_win(vec3 pos_cs, vec3 dir_cs) {
@@ -97,7 +110,6 @@ vec3 raw_normal_to_cam(vec3 raw_normal, mat4 viewMat) {
 vec3 raw_normal_to_cam(vec3 raw_normal) {
 	return raw_normal_to_cam(raw_normal, frx_viewMatrix);
 }
-
 
 mat3 rotation(float angle, vec3 v) {
 	float a = angle;

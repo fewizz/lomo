@@ -188,7 +188,7 @@
 		},
 		{ "name": "clear_solid_before_hand_render", "framebuffer": "solid_cned", "program": "frex_clear" },
 		{
-			"name": "solid_normal_from_depth",
+			"name": "solid_normal_from_depth_before_hand",
 			"program": "normal_from_depth",
 			"framebuffer": "solid_n",
 			"samplerImages": [
@@ -196,7 +196,7 @@
 			]
 		},
 		{
-			"name": "solid_extra_sky_1",
+			"name": "solid_extra_sky_1_before_hand",
 			"program": "extra_sky_1",
 			"framebuffer": "solid_e",
 			"samplerImages": []
@@ -829,6 +829,12 @@
 		"depthAttachment": { "image": "entity_d", "clearDepth": "c:" }
 	},
 	{
+		"name": "entity_n",
+		"colorAttachments": [
+			{ "image": "entity_n" }
+		]
+	},
+	{
 		"name": "weather_cned",
 		"colorAttachments": [
 			{ "image": "weather_c", "clearColor": "c:" },
@@ -840,7 +846,7 @@
 	{
 		"name": "weather_n",
 		"colorAttachments": [
-			{ "image": "weather_n", "clearColor": "c:" }
+			{ "image": "weather_n" }
 		]
 	},
 	{

@@ -16,14 +16,21 @@ void main() {
 	vec3 pos_win = vec3(gl_FragCoord.xy, depth_ws);
 	vec3 pos_cam = win_to_cam(pos_win);
 
-	vec3 normal_cam = normalize(texelFetch(u_normals, ivec3(gl_FragCoord.xy, frxu_layer), 0).xyz);
+	vec3 normal_cam = texelFetch(u_normals, ivec3(gl_FragCoord.xy, frxu_layer), 0).xyz;
+
+	if(length(normal_cam) < 0.5) {
+		out_normal = vec4(0.0, 0.0, -1.0, 1.0);
+		out_depth = vec4(depth_ws);
+		return;
+	}
+
 	plane p = plane_from_pos_and_normal(pos_cam, normal_cam);
 
 	vec3 points[2];
 
 	for(int d = 0; d < 2; ++d) {
 		vec2 add = vec2(0);
-		add[d] = 2.0;
+		add[d] = 1.0;
 
 		vec2 pos_win0 = pos_win.xy + add;
 		vec3 near_cam = win_to_cam(vec3(pos_win0, 0)); // point in near plane
@@ -45,6 +52,9 @@ void main() {
 				dir_x_win - pos_win
 			)
 		);
+	for(int i = 0; i < 3; ++i) {
+		if(abs(norm[i]) < 1./1000000.) norm[i] = 0;
+	}
 
 	out_normal = vec4(norm, 1.0);
 
@@ -59,5 +69,5 @@ void main() {
 		}
 	}
 
-	out_depth = vec4(min_depth, vec3(1.0));
+	out_depth = vec4(min_depth);
 }

@@ -198,7 +198,11 @@ int check_if_intersected(in cell_pos pos, vec3 dir, uint f) {
 
 	vec3 intersection_pos = ray_pos + dir * res.dist;
 
-	if((dot(normal_ws, dir) > 0 && res.dist == 0) || res.dist < 0. || any(lessThan(intersection_pos.xy, vec2(0.0))) || any(greaterThan(intersection_pos.xy, vec2(1.0)))) {
+	float add = 0.;
+
+	if(
+		(dot(normal_ws, dir) > 0 && res.dist == 0) ||
+		res.dist < 0. || any(lessThan(intersection_pos.xy, vec2(-add))) || any(greaterThan(intersection_pos.xy, vec2(1. + add)))) {
 		return SURFACE_NOT_INTERSECT;
 	}
 
@@ -231,19 +235,16 @@ fb_traversal_result __name (vec3 dir, vec3 pos_ws, uint f) { \
 		pos.z += dist * dir_z_per_xy; \
 		\
 		if(pos.z >= lower_depth) { \
-			if(level > 0u && prev.z < lower_depth) { \
+			if(level >= 0u && prev.z < lower_depth) { \
 				float mul = (lower_depth - prev.z) / (pos.z - prev.z); \
 				dist *= mul; \
 				pos.m = uvec2(ivec2(prev.m) + ivec2(float(max_inner_value) * dist * dir_xy)); \
 				pos.z = lower_depth; \
 				__init_func(pos, level, udir); \
-				UPDATE_UPPER_DEPTH(pos); \
-				FIND_UPPEST_LOD(__init_func, pos); \
-				UPDATE_LOWER_DEPTH(pos); \
 				FIND_LOWEST_LOD(__init_func, pos); \
 				continue; \
 			} \
-			else if(level == 0u) { \
+			if(level == 0u) { \
 				int result = check_if_intersected(prev, dir, f); \
 				if(result == SURFACE_INTERSECT) \
 					return fb_traversal_result(TRAVERSAL_SUCCESS, prev); \
@@ -311,7 +312,7 @@ fb_traversal_result traverse_fb(vec3 dir, vec3 pos, uint f) {
 }
 
 void main() {
-	const int steps = 2;
+	const int steps = 3;
 	const int max_index = steps - 1;
 	vec3 lights[steps];
 	vec3 colors[steps];
@@ -325,11 +326,11 @@ void main() {
 	vec3 incidence_cs = normalize(win_to_cam(pos_ws) - win_to_cam(vec3(gl_FragCoord.xy, 0)));
 
 	while(true) {
-		//if(pos_ws.z >= 1.) {
-		//	vec3 light = sky_color(mat3(frx_inverseViewMatrix) * incidence_cs);
-		//	lights[i] = light;
-		//	break;
-		//}
+		if(pos_ws.z >= 1.) {
+			vec3 light = sky_color(mat3(frx_inverseViewMatrix) * incidence_cs);
+			lights[i] = light;
+			break;
+		}
 
 		vec4 extras = texelFetch(u_extras, ivec3(pos_ws.xy, 0), 0);
 		float reflectivity = extras.x;
@@ -340,10 +341,13 @@ void main() {
 		colors[i] = color*(1.0 - block_light*block_light);
 
 		if(i >= max_index) break;
-		++i;
 
-		//vec3 raw_normal = texelFetch(u_normals, ivec3(pos_ws.xy, 0), 0).xyz;
-		vec3 normal_cs = normalize(texelFetch(u_normals, ivec3(pos_ws.xy, 0), 0).xyz);
+		vec3 normal_cs = texelFetch(u_normals, ivec3(pos_ws.xy, 0), 0).xyz;
+		if(length(normal_cs) < 0.5) {
+			break;
+		}
+
+		++i;
 
 		vec2 rand = hash22(pos_ws.xy) * 2. - 1.;
 
@@ -366,13 +370,16 @@ void main() {
 		fb_traversal_result res = traverse_fb(dir_ws, pos_ws, 0u);
 
 		if(res.pos.z < 1. && res.code == TRAVERSAL_SUCCESS) {
-			lights[i] = vec3(1.0, 0.0, 1.0);
-			break;
-			//color = pow3(texelFetch(u_colors, ivec3(outer(res.pos), 0), 0).rgb, 2.2);
-			//pos_ws.xy = outer(res.pos) + (vec2(res.pos.m & mask(0u)) / float(max_inner_value));
-			//pos_ws.z = res.pos.z;
+			//if(i == 1)
+			//	lights[i] = vec3(1.0, 0.0, 1.0);
+			//else
+			//	lights[i] = vec3(0.0, 1.0, 1.0);
+			//break;
+			color = pow3(texelFetch(u_colors, ivec3(outer(res.pos), 0), 0).rgb, 2.2);
+			pos_ws.xy = outer(res.pos) + (vec2(res.pos.m & mask(0u)) / float(max_inner_value));
+			pos_ws.z = res.pos.z;
 		}
-		else if(res.code == TRAVERSAL_POSSIBLY_UNDER) {
+		/*else if(res.code == TRAVERSAL_POSSIBLY_UNDER) {
 			lights[i] = vec3(1.0, 0.0, 0.0);
 			break;
 		}
@@ -383,7 +390,7 @@ void main() {
 		else if(res.code == TRAVERSAL_TOO_LONG) {
 			lights[i] = vec3(0.0, 0.0, 1.0);
 			break;
-		}
+		}*/
 		else {
 			vec3 light = sky_color(mat3(frx_inverseViewMatrix) * reflection_dir);
 			lights[i] = light * sky_light * sky_light;
@@ -395,9 +402,9 @@ void main() {
 
 	color = lights[i];
 
-	//while(--i >= 0) {
-	//	color = color * colors[i] + lights[i];
-//	}
+	while(--i >= 0) {
+		color = color * colors[i] + lights[i];
+	}
 
 	out_color = vec4(pow3(color, 1.0 / 2.2), 1.0);
 }
