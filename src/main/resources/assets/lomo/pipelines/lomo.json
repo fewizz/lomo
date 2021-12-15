@@ -652,7 +652,7 @@
 		"name": "win_normals",
 		"target": "TEXTURE_2D_ARRAY",
 		"depth": 3,
-		"internalFormat": "RGB32F",
+		"internalFormat": "RGB16F",
 		"pixelFormat": "RGB",
 		"pixelDataType": "FLOAT",
 		"texParams": [

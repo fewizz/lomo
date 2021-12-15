@@ -46,17 +46,15 @@ void main() {
 	vec3 dir_x_win = cam_to_win(points[0]);
 	vec3 dir_y_win = cam_to_win(points[1]);
 
-	vec3 norm = normalize(
-			cross(
-				dir_y_win - pos_win,
-				dir_x_win - pos_win
-			)
+	vec3 norm_raw =
+		cross(
+			dir_y_win - pos_win,
+			dir_x_win - pos_win
 		);
-	for(int i = 0; i < 3; ++i) {
-		if(abs(norm[i]) < 1./1000000.) norm[i] = 0;
-	}
 
-	out_normal = vec4(norm, 1.0);
+	out_normal = vec4(normalize(norm_raw * vec3(frxu_size, 1.)), 1.0);
+
+	vec3 norm = normalize(norm_raw);
 
 	p = plane_from_pos_and_normal(pos_win, norm);
 	float min_depth = depth_ws;

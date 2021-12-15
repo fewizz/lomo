@@ -157,7 +157,7 @@ bool is_out_of_fb(cell_pos pos) {
 int check_if_intersected(inout cell_pos pos, vec3 dir, uint f) {
 	uvec2 o = outer_as_uvec2(pos.m);
 	float real_depth = texelFetch(u_depths, ivec3(o, int(f)), 0).r;
-	vec3 normal_ws = normalize(texelFetch(u_win_normals, ivec3(o, int(f)), 0).rgb);
+	vec3 normal_ws = normalize(texelFetch(u_win_normals, ivec3(o, int(f)), 0).xyz / vec3(frxu_size, 1.));
 	plane p = plane_from_pos_and_normal(vec3(vec2(0.5), real_depth), normal_ws);
 
 	vec3 ray_pos = vec3(inner_as_vec2(pos.m), pos.z);
