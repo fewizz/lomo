@@ -41,12 +41,7 @@ const uint power = 2u;
 const uint levels = 5u;
 const uint last_level = levels - 1u;
 
-const uint inner_bits = 8u;
-const uint max_inner_value = 1u << inner_bits;
-const uint dir_bits = 10u;
-const uint max_dir_value = 1u << dir_bits;
-
-uint cell_bits(uint level) { return inner_bits + power * level; }
+uint cell_bits(uint level) { return 8u + power * level; }
 uint max_cell_value(uint level) { return 1u << cell_bits(level); }
 uint mask(uint level) { return max_cell_value(level) - 1u; }
 
