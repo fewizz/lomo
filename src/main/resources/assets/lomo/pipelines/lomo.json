@@ -121,9 +121,9 @@
 		]
 	},
 	{
-		"name": "extra_sky_1",
+		"name": "extra_1_1",
 		"vertexSource": "lomo:shaders/pipeline/full_frame_depth_1.vert",
-		"fragmentSource": "lomo:shaders/pipeline/extra_sky_1.frag",
+		"fragmentSource": "lomo:shaders/pipeline/extra_1_1.frag",
 		"samplers": []
 	}
 ],
@@ -136,21 +136,7 @@
 		{ "name": "clear_translucent", "framebuffer": "translucent_cned", "program": "frex_clear" },
 		{ "name": "clear_weather", "framebuffer": "weather_cned", "program": "frex_clear" },
 		{ "name": "clear_cloud", "framebuffer": "cloud_cned", "program": "frex_clear" },
-		{ "name": "clear_particle", "framebuffer": "particle_cned", "program": "frex_clear" },
-		{
-			"name": "solid_normal_from_depth",
-			"program": "normal_from_depth",
-			"framebuffer": "solid_n",
-			"samplerImages": [
-				"solid_d"
-			]
-		},
-		{
-			"name": "solid_extra_sky_1",
-			"program": "extra_sky_1",
-			"framebuffer": "solid_e",
-			"samplerImages": []
-		}
+		{ "name": "clear_particle", "framebuffer": "particle_cned", "program": "frex_clear" }
 	]
 },
 
@@ -173,8 +159,8 @@
 			]
 		},
 		{
-			"name": "cloud_extra_sky_1",
-			"program": "extra_sky_1",
+			"name": "cloud_extra_1_1",
+			"program": "extra_1_1",
 			"framebuffer": "cloud_e",
 			"samplerImages": []
 		},
@@ -186,21 +172,7 @@
 				"solid_c", "solid_n", "solid_e", "solid_d"
 			]
 		},
-		{ "name": "clear_solid_before_hand_render", "framebuffer": "solid_cned", "program": "frex_clear" },
-		{
-			"name": "solid_normal_from_depth_before_hand",
-			"program": "normal_from_depth",
-			"framebuffer": "solid_n",
-			"samplerImages": [
-				"solid_d"
-			]
-		},
-		{
-			"name": "solid_extra_sky_1_before_hand",
-			"program": "extra_sky_1",
-			"framebuffer": "solid_e",
-			"samplerImages": []
-		}
+		{ "name": "clear_solid_before_hand_render", "framebuffer": "solid_cned", "program": "frex_clear" }
 	]
 },
 

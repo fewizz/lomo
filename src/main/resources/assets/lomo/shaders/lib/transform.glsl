@@ -79,7 +79,7 @@ vec3 cam_to_win(vec3 cam) {
 vec3 cam_dir_to_win(vec3 pos_cs, vec3 dir_cs, mat4 projMat) {
 	vec4 p = vec4(pos_cs, 1.);
 	vec4 n = vec4(dir_cs, 0.);
-	n*=0.01;
+	n*=0.1;
 
 	vec4 X = (projMat * (p + n));
 	vec4 Y = (projMat * p);

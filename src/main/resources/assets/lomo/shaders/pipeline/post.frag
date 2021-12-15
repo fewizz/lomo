@@ -38,7 +38,7 @@ struct fb_traversal_result {
 };
 
 const uint power = 2u;
-const uint levels = 3u;
+const uint levels = 5u;
 const uint last_level = levels - 1u;
 
 const uint inner_bits = 8u;
@@ -50,18 +50,18 @@ uint cell_bits(uint level) { return inner_bits + power * level; }
 uint max_cell_value(uint level) { return 1u << cell_bits(level); }
 uint mask(uint level) { return max_cell_value(level) - 1u; }
 
-uint dist_negative(fp24_8 coord, uint level) {
-	return (coord.value & mask(level)) + 1u;
+fp24_8 dist_negative(fp24_8 coord, uint level) {
+	return fp24_8((coord.value & mask(level)) + 1u);
 }
 
-uint dist_positive(fp24_8 coord, uint level) {
-	return max_cell_value(level) - (coord.value & mask(level));
+fp24_8 dist_positive(fp24_8 coord, uint level) {
+	return fp24_8(max_cell_value(level) - (coord.value & mask(level)));
 }
 
 #define CELL_POS_INIT(__name, __x, __y) \
 void __name (inout cell_pos pos, uint level, uvec2_fp22_10 dir) { \
-	pos.t.x.value = __x (pos.m.x, level); \
-	pos.t.y.value = __y (pos.m.y, level); \
+	pos.t.x = __x (pos.m.x, level); \
+	pos.t.y = __y (pos.m.y, level); \
 	pos.t = div(pos.t, dir); \
 }
 
@@ -72,9 +72,8 @@ CELL_POS_INIT(cell_pos_init_ld, dist_negative, dist_negative)
 
 #define CELL_POS_INIT_STRAIGHT(__name, __element, __dist_func) \
 void __name (inout cell_pos pos, uint level, uvec2_fp22_10 dir) { \
-	pos.t.x.value = 0u - 1u; \
-	pos.t.y.value = 0u - 1u; \
-	pos.t. __element .value = __dist_func (pos.m. __element , level); \
+	pos.t = uvec2_fp24_8_from_uvec2(uvec2(0u - 1u)); \
+	pos.t. __element = __dist_func (pos.m. __element, level); \
 }
 
 CELL_POS_INIT_STRAIGHT(cell_pos_init_u, y, dist_positive)
@@ -82,50 +81,46 @@ CELL_POS_INIT_STRAIGHT(cell_pos_init_r, x, dist_positive)
 CELL_POS_INIT_STRAIGHT(cell_pos_init_d, y, dist_negative)
 CELL_POS_INIT_STRAIGHT(cell_pos_init_l, x, dist_negative)
 
-float next_cell_dist(cell_pos pos) {
-	return float(pos.t.x.value < pos.t.y.value ? pos.t.x.value : pos.t.y.value) / float(max_inner_value);
-}
-
-#define NEXT_CELL(__name,__x_op,__y_op,__x_dist_func,__y_dist_func) \
+#define NEXT_CELL(__name, __x_op, __y_op, __x_dist_func, __y_dist_func) \
 float __name (inout cell_pos pos, uint level, uvec2_fp22_10 dir) { \
-	uint cs = max_cell_value(level); \
-	uint dist = 0u; \
+	fp24_8 cs = fp24_8( max_cell_value(level) ); \
+	fp24_8 dist = fp24_8( 0u ); \
 	if(pos.t.x.value < pos.t.y.value) { \
-		uint x_d = __x_dist_func (pos.m.x, level); \
-		pos.m.x.value __x_op x_d; \
-		pos.m.y.value __y_op x_d * dir.y.value / dir.x.value; \
-		dist = x_d * max_dir_value / dir.x.value; \
-		pos.t.x.value += cs * max_dir_value / dir.x.value; \
+		fp24_8 x_d = __x_dist_func (pos.m.x, level); \
+		pos.m.x = __x_op (pos.m.x, x_d); \
+		pos.m.y = __y_op (pos.m.y, div(mul(x_d, dir.y), dir.x)); \
+		dist = div(x_d, dir.x); \
+		pos.t.x = add(pos.t.x, div(cs, dir.x)); \
 	} \
 	else { \
-		uint y_d = __y_dist_func (pos.m.y, level); \
-		pos.m.y.value __y_op y_d; \
-		pos.m.x.value __x_op y_d * dir.x.value / dir.y.value; \
-		dist = y_d * max_dir_value / dir.y.value; \
-		pos.t.y.value += cs * max_dir_value / dir.y.value; \
+		fp24_8 y_d = __y_dist_func (pos.m.y, level); \
+		pos.m.y = __y_op (pos.m.y, y_d); \
+		pos.m.x = __x_op (pos.m.x, div(mul(y_d, dir.x), dir.y)); \
+		dist = div(y_d, dir.y); \
+		pos.t.y = add(pos.t.y, div(cs, dir.y)); \
 	} \
-	return float(dist) / float(max_inner_value); \
+	return fp24_8_as_float(dist); \
 }
 
-NEXT_CELL(next_cell_ru,+=,+=, dist_positive, dist_positive)
-NEXT_CELL(next_cell_rd,+=,-=, dist_positive, dist_negative)
-NEXT_CELL(next_cell_lu,-=,+=, dist_negative, dist_positive)
-NEXT_CELL(next_cell_ld,-=,-=, dist_negative, dist_negative)
+NEXT_CELL(next_cell_ru, add, add, dist_positive, dist_positive)
+NEXT_CELL(next_cell_rd, add, sub, dist_positive, dist_negative)
+NEXT_CELL(next_cell_lu, sub, add, dist_negative, dist_positive)
+NEXT_CELL(next_cell_ld, sub, sub, dist_negative, dist_negative)
 
 #define NEXT_CELL_STRAIGHT(__name, __element, __op, __dist_func) \
 float __name (inout cell_pos pos, uint level, uvec2_fp22_10 dir) { \
-	uint dist = __dist_func(pos.m. __element , level); \
-	pos.m. __element .value __op dist; \
-	return float(dist) / float(max_inner_value); \
+	fp24_8 dist = __dist_func(pos.m. __element, level); \
+	pos.m. __element =  __op (pos.m. __element, dist); \
+	return fp24_8_as_float(dist); \
 }
 
-NEXT_CELL_STRAIGHT(next_cell_u, y,+=, dist_positive)
-NEXT_CELL_STRAIGHT(next_cell_r, x,+=, dist_positive)
-NEXT_CELL_STRAIGHT(next_cell_d, y,-=, dist_negative)
-NEXT_CELL_STRAIGHT(next_cell_l, x,-=, dist_negative)
+NEXT_CELL_STRAIGHT(next_cell_u, y, add, dist_positive)
+NEXT_CELL_STRAIGHT(next_cell_r, x, add, dist_positive)
+NEXT_CELL_STRAIGHT(next_cell_d, y, sub, dist_negative)
+NEXT_CELL_STRAIGHT(next_cell_l, x, sub, dist_negative)
 
 #define DEPTH_VALUE(__pos, __level) \
-	( texelFetch(u_hi_depths, ivec3(outer_as_uvec2(__pos.m) >> (power * __level), uint(f)), int(__level)).r )
+	( texelFetch(u_hi_depths, ivec3(uvec2_fp24_8_as_uvec2( __pos.m ) >> cell_bits(__level), uint(f)), int(__level)).r )
 
 #define UPPER_DEPTH_VALUE(__pos) \
 	( level < last_level ? DEPTH_VALUE(__pos, level+1u) : 0.0 )
@@ -181,7 +176,6 @@ int check_if_intersected(inout cell_pos pos, vec3 dir, uint f) {
 	uvec2 o = outer_as_uvec2(pos.m);
 	float real_depth = texelFetch(u_depths, ivec3(o, int(f)), 0).r;
 	vec3 normal_ws = normalize(texelFetch(u_win_normals, ivec3(o, int(f)), 0).rgb);
-
 	plane p = plane_from_pos_and_normal(vec3(vec2(0.5), real_depth), normal_ws);
 
 	vec3 ray_pos = vec3(inner_as_vec2(pos.m), pos.z);
@@ -203,7 +197,6 @@ int check_if_intersected(inout cell_pos pos, vec3 dir, uint f) {
 
 	pos.z = intersection_pos.z;
 	pos.m = add(clean_inner(pos.m), uvec2_fp24_8_from_vec2(intersection_pos.xy));
-
 	return SURFACE_INTERSECT;
 }
 
@@ -223,7 +216,7 @@ fb_traversal_result __name (vec3 dir, vec3 pos_ws, uint f) { \
 	FIND_UPPEST_LOD(__init_func, pos); \
 	float dir_z_per_xy = dir.z / length(dir.xy); \
 	\
-	for(int i = 0; i < 100; ++i) { \
+	while(true) { \
 		if(is_out_of_fb(pos)) return fb_traversal_result(TRAVERSAL_OUT_OF_FB, cell_pos(zero_uvec2_fp24_8(), zero_uvec2_fp24_8(), 0.0)); \
 		\
 		cell_pos prev = pos; \
@@ -245,18 +238,19 @@ fb_traversal_result __name (vec3 dir, vec3 pos_ws, uint f) { \
 				if(result == SURFACE_INTERSECT) \
 					return fb_traversal_result(TRAVERSAL_SUCCESS, prev); \
 				else if(result == SURFACE_UNDER) \
-					return fb_traversal_result(TRAVERSAL_POSSIBLY_UNDER, cell_pos(uvec2_fp24_8_from_vec2(vec2(i)), zero_uvec2_fp24_8(), prev.z)); \
+					return fb_traversal_result(TRAVERSAL_POSSIBLY_UNDER, cell_pos(zero_uvec2_fp24_8(), zero_uvec2_fp24_8(), 0.0)); \
 			} \
 		} \
 		\
 		/* switching the cell */ \
 		__init_func(pos, level, udir); \
-		UPDATE_UPPER_DEPTH(pos); \
+		if((uvec2_fp24_8_as_uvec2(pos.m) >> cell_bits(level + 1u)) != (uvec2_fp24_8_as_uvec2(prev.m) >> cell_bits(level + 1u) )) { \
+			UPDATE_UPPER_DEPTH(pos); \
+		} \
 		FIND_UPPEST_LOD(__init_func, pos); \
 		UPDATE_LOWER_DEPTH(pos); \
 		FIND_LOWEST_LOD(__init_func, pos); \
 	} \
-	return fb_traversal_result(TRAVERSAL_TOO_LONG, cell_pos(zero_uvec2_fp24_8(), zero_uvec2_fp24_8(), 0.0)); \
 }
 
 TRAVERSE_FUNC(traverse_fb_ru, next_cell_ru, cell_pos_init_ru)
@@ -275,7 +269,7 @@ fb_traversal_result traverse_fb(vec3 dir, vec3 pos, uint f) {
 		float d = texelFetch(u_depths, ivec3(upos, f), 0).r;
 
 		if(dir.z > 0 && d >= pos.z)
-			return fb_traversal_result(TRAVERSAL_SUCCESS, cell_pos(uvec2_fp24_8_from_vec2(pos.xy), zero_uvec2_fp24_8(), d));
+			return fb_traversal_result(TRAVERSAL_SUCCESS, cell_pos(uvec2_fp24_8_from_uvec2(upos), zero_uvec2_fp24_8(), d));
 
 		return fb_traversal_result(TRAVERSAL_OUT_OF_FB, cell_pos(zero_uvec2_fp24_8(), zero_uvec2_fp24_8(), 0.0));
 	}
@@ -363,27 +357,13 @@ void main() {
 		fb_traversal_result res = traverse_fb(dir_ws, pos_ws, 0u);
 
 		if(res.pos.z < 1. && res.code == TRAVERSAL_SUCCESS) {
-			lights[i] = vec3(1.0, 0.0, 1.0);
-			break;
-			//color = pow3(texelFetch(u_colors, ivec3(outer_as_uvec2(res.pos.m), 0), 0).rgb, 2.2);
-			//pos_ws.xy = fp_as_vec2(res.pos.m);
-			//pos_ws.z = res.pos.z;
-		}
-		else if(res.code == TRAVERSAL_POSSIBLY_UNDER) {
-			lights[i] = vec3(1.0, 0.0, 0.0);
-			break;
-		}
-		else if(res.code == TRAVERSAL_OUT_OF_FB) {
-			lights[i] = vec3(0.0, 1.0, 0.0);
-			break;
-		}
-		else if(res.code == TRAVERSAL_TOO_LONG) {
-			lights[i] = vec3(0.0, 0.0, 1.0);
-			break;
+			color = pow3(texelFetch(u_colors, ivec3(outer_as_uvec2(res.pos.m), 0), 0).rgb, 2.2);
+			pos_ws.xy = uvec2_fp24_8_as_vec2(res.pos.m);
+			pos_ws.z = res.pos.z;
 		}
 		else {
 			vec3 light = sky_color(mat3(frx_inverseViewMatrix) * reflection_dir);
-			lights[i] = light * sky_light * sky_light;
+			lights[i] = light * sky_light*sky_light;
 			break;
 		}
 
@@ -392,9 +372,9 @@ void main() {
 
 	color = lights[i];
 
-	//while(--i >= 0) {
-	//	color = color * colors[i] + lights[i];
-	//}
+	while(--i >= 0) {
+		color = color * colors[i] + lights[i];
+	}
 
 	out_color = vec4(pow3(color, 1.0 / 2.2), 1.0);
 }
