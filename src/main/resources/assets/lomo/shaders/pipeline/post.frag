@@ -114,47 +114,34 @@ NEXT_CELL_STRAIGHT(next_cell_r, x, add, dist_positive)
 NEXT_CELL_STRAIGHT(next_cell_d, y, sub, dist_negative)
 NEXT_CELL_STRAIGHT(next_cell_l, x, sub, dist_negative)
 
-#define DEPTH_VALUE(__pos, __level) \
-	( texelFetch(u_hi_depths, ivec3(uvec2_fp24_8_as_uvec2( __pos.m ) >> cell_bits(__level), uint(f)), int(__level)).r )
-
-#define UPPER_DEPTH_VALUE(__pos) \
-	( level < last_level ? DEPTH_VALUE(__pos, level+1u) : 0.0 )
-
-#define LOWER_DEPTH_VALUE(__pos) \
-	( DEPTH_VALUE(__pos, level) )
-
-#define UPDATE_UPPER_DEPTH(__pos) { \
-	upper_depth = UPPER_DEPTH_VALUE(__pos); \
+float depth_value(cell_pos pos, uint level, uint f) {
+	return texelFetch(u_hi_depths, ivec3(uvec2_fp24_8_as_uvec2(pos.m ) >> cell_bits(level), f), int(level)).r;
 }
 
-#define UPDATE_LOWER_DEPTH(__pos) { \
-	lower_depth = LOWER_DEPTH_VALUE(__pos); \
+float upper_depth_value(cell_pos pos, uint level, uint f) {
+	return level < last_level ? depth_value(pos, level+1u, f) : 0.0;
 }
 
-#define LOD_INCREASE(__init_func, __pos) { \
-	++level; \
-	__init_func (__pos, level, udir); \
-	lower_depth = upper_depth; \
-	upper_depth = UPPER_DEPTH_VALUE(__pos); \
+float lower_depth_value(cell_pos pos, uint level, uint f) {
+	return depth_value(pos, level, f);
 }
 
-#define LOD_DECREASE(__init_func, __pos) { \
-	--level; \
-	__init_func (__pos, level, udir); \
-	upper_depth = lower_depth; \
-	lower_depth = LOWER_DEPTH_VALUE(__pos); \
+void find_lowest_lod(inout cell_pos pos, inout uint level, inout float upper_depth, inout float lower_depth, uint f) {
+	while(level > 0u && pos.z >= lower_depth) {
+		--level;
+		upper_depth = lower_depth;
+		lower_depth = lower_depth_value(pos, level, f);
+	}
 }
 
-#define FIND_LOWEST_LOD(__init_func, __pos) { \
-	while(level > 0u && __pos.z >= lower_depth) { \
-		LOD_DECREASE(__init_func, __pos); \
-	} \
-}
-
-#define FIND_UPPEST_LOD(__init_func, __pos) { \
-	while(level < last_level && __pos.z < upper_depth) { \
-		LOD_INCREASE(__init_func, __pos); \
-	} \
+bool find_uppest_lod(inout cell_pos pos, inout uint level, inout float upper_depth, inout float lower_depth, uint f) {
+	int i = 0;
+	for(; level < last_level && pos.z < upper_depth; ++i) {
+		++level;
+		lower_depth = upper_depth;
+		upper_depth = upper_depth_value(pos, level, f);
+	}
+	return i > 0;
 }
 
 bool is_out_of_fb(cell_pos pos) {
@@ -204,31 +191,32 @@ fb_traversal_result __name (vec3 dir, vec3 pos_ws, uint f) { \
 	); \
 	vec2 dir_xy = normalize(dir.xy); \
 	uvec2_fp22_10 udir = uvec2_fp22_10_from_vec2(abs(dir_xy)); \
-	__init_func (pos, 0u, udir); \
 	uint level = 0u; \
-	float upper_depth = UPPER_DEPTH_VALUE(pos); \
-	float lower_depth = LOWER_DEPTH_VALUE(pos); \
-	FIND_UPPEST_LOD(__init_func, pos); \
+	float lower_depth = 0.0; \
+	float upper_depth = upper_depth_value(pos, level, f); \
+	if(!find_uppest_lod(pos, level, upper_depth, lower_depth, f)) { \
+		lower_depth = lower_depth_value(pos, level, f); \
+	} \
 	float dir_z_per_xy = dir.z / length(dir.xy); \
 	\
 	while(true) { \
 		if(is_out_of_fb(pos)) return fb_traversal_result(TRAVERSAL_OUT_OF_FB, cell_pos(zero_uvec2_fp24_8(), zero_uvec2_fp24_8(), 0.0)); \
 		\
+		__init_func (pos, level, udir); \
 		cell_pos prev = pos; \
 		float dist = __next_func (pos, level, udir); \
 		pos.z += dist * dir_z_per_xy; \
 		\
 		if(pos.z >= lower_depth) { \
-			if(level >= 0u && prev.z < lower_depth) { \
+			if(level > 0u) { \
 				float mul = (lower_depth - prev.z) / (pos.z - prev.z); \
 				dist *= mul; \
 				pos.m = add(prev.m, dist * dir_xy); \
 				pos.z = lower_depth; \
-				__init_func(pos, level, udir); \
-				FIND_LOWEST_LOD(__init_func, pos); \
+				find_lowest_lod(pos, level, upper_depth, lower_depth, f); \
 				continue; \
 			} \
-			if(level == 0u) { \
+			else { \
 				int result = check_if_intersected(prev, dir, f); \
 				if(result == SURFACE_INTERSECT) \
 					return fb_traversal_result(TRAVERSAL_SUCCESS, prev); \
@@ -238,13 +226,13 @@ fb_traversal_result __name (vec3 dir, vec3 pos_ws, uint f) { \
 		} \
 		\
 		/* switching the cell */ \
-		__init_func(pos, level, udir); \
 		if((uvec2_fp24_8_as_uvec2(pos.m) >> cell_bits(level + 1u)) != (uvec2_fp24_8_as_uvec2(prev.m) >> cell_bits(level + 1u) )) { \
-			UPDATE_UPPER_DEPTH(pos); \
+			upper_depth = upper_depth_value(pos, level, f); \
 		} \
-		FIND_UPPEST_LOD(__init_func, pos); \
-		UPDATE_LOWER_DEPTH(pos); \
-		FIND_LOWEST_LOD(__init_func, pos); \
+		if(!find_uppest_lod(pos, level, upper_depth, lower_depth, f)) { \
+			lower_depth = lower_depth_value(pos, level, f); \
+			find_lowest_lod(pos, level, upper_depth, lower_depth, f); \
+		} \
 	} \
 }
 
@@ -273,12 +261,10 @@ fb_traversal_result traverse_fb(vec3 dir, vec3 pos, uint f) {
 		return traverse_fb_r(dir, pos, f);
 	if(dir.x == -1.0)
 		return traverse_fb_l(dir, pos, f);
-
 	if(dir.y == 1.0)
 		return traverse_fb_u(dir, pos, f);
 	if(dir.y == -1.0)
 		return traverse_fb_d(dir, pos, f);
-
 	if(dir.x > 0.0) {
 		if(dir.y > 0.0)
 			return traverse_fb_ru(dir, pos, f);
