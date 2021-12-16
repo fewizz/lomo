@@ -11,8 +11,8 @@ uniform sampler2D u_particle_d;
 uniform sampler2D u_weather_d;
 uniform sampler2D u_cloud_d;
 
-layout(location = 0) out vec4 out_index_to_type;
-layout(location = 1) out vec4 out_type_to_index;
+layout(location = 0) out float out_index_to_type;
+layout(location = 1) out float out_type_to_index;
 
 void main() {
 	ivec2 coord = ivec2(gl_FragCoord.xy);
@@ -33,14 +33,6 @@ void main() {
 
 	uint begin = 0u;
 	float prev_min = -1;
-
-	//if(depths[0] != 1.0) {
-		//done[0] = true;
-		//type_to_index[0] = 0u;
-		//index_to_type[0] = 0u;
-		//prev_min = depths[0];
-		//++begin;
-	//}
 
 	for(uint i = begin; i < 7u; i++) {
 		float current_min = 1.01;
@@ -69,6 +61,6 @@ void main() {
 		result_index_to_type |= index_to_type[i] << (i*4u);
 	}
 
-	out_index_to_type = vec4(uintBitsToFloat(result_index_to_type), 0., 0., 0.);
-	out_type_to_index = vec4(uintBitsToFloat(result_type_to_index), 0., 0., 0.);
+	out_index_to_type = uintBitsToFloat(result_index_to_type);
+	out_type_to_index = uintBitsToFloat(result_type_to_index);
 }

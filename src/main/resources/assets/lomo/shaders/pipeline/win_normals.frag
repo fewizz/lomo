@@ -8,8 +8,8 @@
 uniform sampler2DArray u_depths;
 uniform sampler2DArray u_normals;
 
-layout(location = 0) out vec4 out_normal;
-layout(location = 1) out vec4 out_depth;
+layout(location = 0) out vec3 out_normal;
+layout(location = 1) out float out_depth;
 
 void main() {
 	float depth_ws = texelFetch(u_depths, ivec3(gl_FragCoord.xy, frxu_layer), 0).r;
@@ -19,8 +19,8 @@ void main() {
 	vec3 normal_cam = texelFetch(u_normals, ivec3(gl_FragCoord.xy, frxu_layer), 0).xyz;
 
 	if(length(normal_cam) < 0.5) {
-		out_normal = vec4(0.0, 0.0, -1.0, 1.0);
-		out_depth = vec4(depth_ws);
+		out_normal = vec3(0.0, 0.0, -1.0);
+		out_depth = depth_ws;
 		return;
 	}
 
@@ -52,7 +52,7 @@ void main() {
 			dir_x_win - pos_win
 		);
 
-	out_normal = vec4(normalize(norm_raw * vec3(frxu_size, 1.)), 1.0);
+	out_normal = normalize(norm_raw * vec3(frxu_size, 1.));
 
 	vec3 norm = normalize(norm_raw);
 
@@ -67,5 +67,5 @@ void main() {
 		}
 	}
 
-	out_depth = vec4(min_depth);
+	out_depth = min_depth;
 }

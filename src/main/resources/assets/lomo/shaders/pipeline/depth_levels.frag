@@ -5,7 +5,7 @@
 
 uniform sampler2DArray u_depths;
 
-layout(location = 0) out vec4 out_depths[3];
+layout(location = 0) out float out_depths[3];
 
 const int power = 2;
 const int mul = 1 << power;
@@ -32,5 +32,5 @@ void main() {
 		}
 	}
 
-	for(int i = 0; i < 3; ++i) out_depths[i] = vec4(min_depths[i]);
+	for(int i = 0; i < 3; ++i) out_depths[i] = min_depths[i];
 }

@@ -6,7 +6,7 @@
 
 uniform sampler2D u_depth;
 
-layout(location = 0) out vec4 out_normal;
+layout(location = 0) out vec3 out_normal;
 
 void main() {
 	float depth = texelFetch(u_depth, ivec2(gl_FragCoord.xy), 0).r;
@@ -36,7 +36,5 @@ void main() {
 		y - pos_cam
 	));
 
-	normal *= sign(n.x) * sign(n.y);
-
-	out_normal = vec4(normal, 1.0);
+	out_normal = normal * sign(n.x) * sign(n.y);
 }
