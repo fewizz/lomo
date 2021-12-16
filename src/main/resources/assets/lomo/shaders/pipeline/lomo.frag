@@ -9,8 +9,8 @@
 /* lomo:pipeline/lomo.frag */
 
 layout(location = 0) out vec4 out_color;
-layout(location = 1) out vec3 out_normal;
-layout(location = 2) out vec3 out_extra;
+layout(location = 1) out vec4 out_normal;
+layout(location = 2) out vec4 out_extra;
 
 void frx_pipelineFragment() {
 	vec4 a = frx_fragColor;
@@ -34,12 +34,12 @@ void frx_pipelineFragment() {
 		if(frag_normal == vec3(0.0)) frag_normal = normalize(frx_vertexNormal);
 		frag_normal = raw_normal_to_cam(frag_normal);
 
-		out_normal = frag_normal;
-		out_extra = vec3(reflectivity, frx_fragLight.y, frx_fragLight.x);
+		out_normal = vec4(frag_normal, 1.0);
+		out_extra = vec4(reflectivity, frx_fragLight.y, frx_fragLight.x, 1.0);
 	}
 	else {
-		out_normal = vec3(0);
-		out_extra = vec3(0);
+		out_normal = vec4(0);
+		out_extra = vec4(0);
 	}
 
 	gl_FragDepth = gl_FragCoord.z;

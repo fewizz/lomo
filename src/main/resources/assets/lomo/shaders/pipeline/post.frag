@@ -305,8 +305,8 @@ void main() {
 		float sky_light = extras.y;
 		float block_light = extras.z;
 	
-		lights[i] = color*block_light*block_light;
-		colors[i] = color*(1.0 - block_light*block_light);
+		lights[i] = color*pow(block_light, 4);
+		colors[i] = color*(1.0 - pow(block_light, 4));
 
 		if(i >= max_index) break;
 
@@ -317,13 +317,30 @@ void main() {
 
 		++i;
 
-		vec2 rand = hash22(pos_ws.xy) * 2. - 1.;
+		vec2 rand = hash22(pos_ws.xy);
 
-		rand.x *= (1. - reflectivity);
-		rand *= 3.1416 / 2.0;
+		float cosa = dot(-incidence_cs, normal_cs);
+		if(cosa < 0.) break;
+		float angle = acos(cosa);
 
-		vec3 new_normal_cs = rotation(rand.x, normalize(cross(incidence_cs, normal_cs))) * normal_cs;
-		normal_cs = rotation(rand.y, normal_cs) * new_normal_cs;
+		float max_angle = 3.1416 / 2.0 - angle;
+		float r = (1. - reflectivity) * 3.1416 / 2.0;
+		float x = (rand.x * 2.0 - 1.0) * r;
+
+		vec3 new_normal_cs = rotation(
+			x,
+			normalize(cross(-incidence_cs, normal_cs))
+		) * normal_cs;
+
+		if(x > max_angle)
+			cosa = max_angle / x;
+		else 
+			cosa = 1.0;
+		
+		max_angle = acos(cosa);
+		float y = max_angle + (3.1416 - max_angle) * (rand.y * 2.0);
+
+		normal_cs = rotation(y, normal_cs ) * new_normal_cs;
 
 		vec3 reflection_dir = normalize(
 			reflect(
@@ -342,6 +359,18 @@ void main() {
 			pos_ws.xy = uvec2_fp24_8_as_vec2(res.pos.m);
 			pos_ws.z = res.pos.z;
 		}
+		/*else if(res.code == TRAVERSAL_POSSIBLY_UNDER) {
+			lights[i] = vec3(1.0, 0.0, 0.0);
+			break;
+		}
+		else if(res.code == TRAVERSAL_OUT_OF_FB) {
+			lights[i] = vec3(0.0, 1.0, 0.0);
+			break;
+		}
+		else if(res.code == TRAVERSAL_TOO_LONG) {
+			lights[i] = vec3(0.0, 0.0, 1.0);
+			break;
+		}*/
 		else {
 			vec3 light = sky_color(mat3(frx_inverseViewMatrix) * reflection_dir);
 			lights[i] = light * sky_light*sky_light;
