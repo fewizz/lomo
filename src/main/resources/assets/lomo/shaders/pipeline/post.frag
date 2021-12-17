@@ -28,7 +28,6 @@ layout(location = 0) out vec4 out_color;
 
 struct cell_pos {
 	ufp24vec2 m;
-	ufp24vec2 t;
 	float z;
 };
 
@@ -53,57 +52,28 @@ ufp24 dist_positive(ufp24 coord, uint level) {
 	return ufp24(max_cell_value(level) - (coord.value & mask(level)));
 }
 
-void init_axis(inout ufp24 t, ufp24 m, uint level, fp22 d) {
-	if(d.value > 0)
-		t = div(dist_positive(m, level), ufp22(uint( d.value)));
-	else if(d.value < 0)
-		t = div(dist_negative(m, level), ufp22(uint(-d.value)));
-	else t = ufp24(0u-1u);
+ufp24 dist_for_axis(ufp24 pos0, uint level, fp22 dir0) {
+	if(dir0.value > 0)
+		return dist_positive(pos0, level);
+	else if(dir0.value < 0)
+		return dist_negative(pos0, level);
+	else
+		return ufp24(0u-1u);
 }
 
-void init_common(inout cell_pos pos, uint level, fp22vec2 dir) {
-	init_axis(pos.t.x, pos.m.x, level, dir.x);
-	init_axis(pos.t.y, pos.m.y, level, dir.y);
-}
+float next_cell_common(inout ufp24vec2 pos, fp22vec2 dir, uint level) {
+	ufp24vec2 axis_dists = ufp24vec2( dist_for_axis(pos.x, level, dir.x), dist_for_axis(pos.y, level, dir.y) );
+	ufp24vec2  dir_dists = ufp24vec2( div(axis_dists.x, abs_as_ufp22(dir.x)), div(axis_dists.y, abs_as_ufp22(dir.y)) );
 
-float next_cell_axis(inout ufp24 p0, inout ufp24 p1, uint level, fp22 d0, fp22 d1) {
-	ufp24 dist = zero_ufp24();
-
-	if(d0.value > 0) {
-		dist = dist_positive(p0, level);
+	if(dir_dists.x.value < dir_dists.y.value) {
+		pos.x = add(pos.x, fp24(int(axis_dists.x.value) * sign(dir.x.value)));
+		pos.y = add(pos.y, mul(dir_dists.x, dir.y));
+		return ufp24_as_float(dir_dists.x);
 	}
 	else {
-		dist = dist_negative(p0, level);
-	}
-	//ufp24 dist = //ufp24( 0u );
-
-	ivec2 signs = sign(ivec2(d0.value, d1.value));
-	uvec2 abss  = uvec2(abs(ivec2(d0.value, d1.value)));
-
-	p0 = add(p0, fp24(int(dist.value) * signs[0]));
-
-	p1 = add(
-		p1,
-		fp24(int(
-			div(
-				mul(
-					dist,
-					ufp22(abss[1])
-				),
-				ufp22(abss[0])
-			).value
-		) * signs[1])
-	);
-
-	return ufp24_as_float(div(dist, ufp22(abss[0])));
-}
-
-float next_cell_common (inout cell_pos pos, uint level, fp22vec2 dir, vec2 dir_xy) {
-	if(pos.t.x.value < pos.t.y.value) {
-		return next_cell_axis(pos.m.x, pos.m.y, pos.t.x, level, dir.x, dir.y);
-	}
-	else {
-		return next_cell_axis(pos.m.y, pos.m.x, pos.t.y, level, dir.y, dir.x);
+		pos.y = add(pos.y, fp24(int(axis_dists.y.value) * sign(dir.y.value)));
+		pos.x = add(pos.x, mul(dir_dists.y, dir.x));
+		return ufp24_as_float(dir_dists.y);
 	}
 }
 
@@ -154,7 +124,7 @@ int check_if_intersected(inout cell_pos pos, vec3 dir, uint f) {
 	plane p = plane_from_pos_and_normal(vec3(vec2(0.5), real_depth), normal_ws);
 	vec3 ray_pos = vec3(inner_as_vec2(pos.m), pos.z);
 	float depth_at_pos = ray_plane_intersection(ray(ray_pos, vec3(0, 0, 1)), p).dist;
-	//if(depth_at_pos < 0.) return SURFACE_UNDER;
+	if(depth_at_pos < 0.) return SURFACE_UNDER;
 	ray r = ray(ray_pos, dir);
 	ray_plane_intersection_result res = ray_plane_intersection(r, p);
 	vec3 intersection_pos = ray_pos + dir * res.dist;
@@ -173,7 +143,6 @@ int check_if_intersected(inout cell_pos pos, vec3 dir, uint f) {
 fb_traversal_result tr (vec3 dir, vec3 pos_ws, uint f) {
 	cell_pos pos = cell_pos(
 		ufp24vec2_from_vec2(pos_ws.xy),
-		zero_ufp24vec2(),
 		pos_ws.z
 	);
 	vec2 dir_xy = normalize(dir.xy);
@@ -187,12 +156,11 @@ fb_traversal_result tr (vec3 dir, vec3 pos_ws, uint f) {
 	float dir_z_per_xy = dir.z / length(dir.xy);
 	
 	for(int i = 0; true; ++i) {
-		if(i >= 100) return fb_traversal_result(TRAVERSAL_TOO_LONG, cell_pos(zero_ufp24vec2(), zero_ufp24vec2(), 0.0));
-		if(is_out_of_fb(pos)) return fb_traversal_result(TRAVERSAL_OUT_OF_FB, cell_pos(zero_ufp24vec2(), zero_ufp24vec2(), 0.0));
-		
-		init_common(pos, level, d);
+		if(i >= 100) return fb_traversal_result(TRAVERSAL_TOO_LONG, cell_pos(zero_ufp24vec2(), 0.0));
+		if(is_out_of_fb(pos)) return fb_traversal_result(TRAVERSAL_OUT_OF_FB, cell_pos(zero_ufp24vec2(), 0.0));
+
 		cell_pos prev = pos;
-		float dist = next_cell_common(pos, level, d, dir_xy);
+		float dist = next_cell_common(pos.m, d, level);
 		pos.z += dist * dir_z_per_xy;
 		
 		if(pos.z >= lower_depth) {
@@ -209,7 +177,7 @@ fb_traversal_result tr (vec3 dir, vec3 pos_ws, uint f) {
 				if(result == SURFACE_INTERSECT)
 					return fb_traversal_result(TRAVERSAL_SUCCESS, prev);
 				else if(result == SURFACE_UNDER)
-					return fb_traversal_result(TRAVERSAL_POSSIBLY_UNDER, cell_pos(zero_ufp24vec2(), zero_ufp24vec2(), 0.0));
+					return fb_traversal_result(TRAVERSAL_POSSIBLY_UNDER, cell_pos(zero_ufp24vec2(), 0.0));
 			}
 		}
 		
@@ -230,9 +198,9 @@ fb_traversal_result traverse_fb(vec3 dir, vec3 pos, uint f) {
 		float d = texelFetch(u_depths, ivec3(upos, f), 0).r;
 
 		if(dir.z > 0 && d >= pos.z)
-			return fb_traversal_result(TRAVERSAL_SUCCESS, cell_pos(ufp24vec2_from_uvec2(upos), zero_ufp24vec2(), d));
+			return fb_traversal_result(TRAVERSAL_SUCCESS, cell_pos(ufp24vec2_from_uvec2(upos), d));
 
-		return fb_traversal_result(TRAVERSAL_OUT_OF_FB, cell_pos(zero_ufp24vec2(), zero_ufp24vec2(), 0.0));
+		return fb_traversal_result(TRAVERSAL_OUT_OF_FB, cell_pos(zero_ufp24vec2(), 0.0));
 	}
 
 	return tr(dir, pos, f);

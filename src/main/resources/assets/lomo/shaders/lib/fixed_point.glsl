@@ -35,6 +35,7 @@ ufp24 div(ufp24 x, ufp24 y) { return ufp24((x.value << 8u ) / y.value); }
 ufp24 div(ufp24 x, ufp22 y) { return ufp24((x.value << 10u) / y.value); }
 
 ufp24 mul(ufp24 x, ufp22 y) { return ufp24((x.value * y.value) >> 10u); }
+ fp24 mul(ufp24 x,  fp22 y) { return  fp24((int(x.value) * y.value) >> 10u); }
 
 ufp24 add(ufp24 x, ufp24 y) { return ufp24(x.value + y.value); }
 ufp24 add(ufp24 x,  fp24 y) { return ufp24(uint(int(x.value) + y.value)); }
@@ -64,3 +65,6 @@ ufp24vec2 add(ufp24vec2 x, vec2 y) { return add(x, ivec2(y * float(1u << 8u))); 
 
 ufp24 clean_inner(ufp24 v) { return ufp24( outer_as_uint(v) << 8u ); }
 ufp24vec2 clean_inner(ufp24vec2 v) { return ufp24vec2( clean_inner(v.x), clean_inner(v.y) ); }
+
+ufp24 abs_as_ufp24(fp24 v) { return ufp24(uint(abs(v.value))); }
+ufp22 abs_as_ufp22(fp22 v) { return ufp22(uint(abs(v.value))); }
