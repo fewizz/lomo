@@ -24,6 +24,9 @@ void main() {
 		return;
 	}
 
+	normal_cam = normalize(normal_cam);
+	if(dot(normal_cam, cam_dir_to_z1(gl_FragCoord.xy)) > 0) normal_cam *= -1;
+
 	plane p = plane_from_pos_and_normal(pos_cam, normal_cam);
 
 	vec3 points[2];

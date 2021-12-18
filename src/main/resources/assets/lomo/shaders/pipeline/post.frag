@@ -119,7 +119,7 @@ bool find_uppest_lod(inout cell_pos pos, inout uint level, inout float upper_dep
 bool is_out_of_fb(cell_pos pos) {
 	return
 		any(greaterThanEqual(outer_as_uvec2(pos.m), uvec2(frxu_size))) ||
-		pos.z < 0 || pos.z >= 1;
+		pos.z < gl_DepthRange.near || pos.z >= gl_DepthRange.far;
 }
 
 #define SURFACE_NOT_INTERSECT 0
@@ -136,7 +136,7 @@ int check_if_intersects(inout cell_pos pos, vec3 dir, uint f) {
 	if(depth_at_pos < 0.0) return SURFACE_UNDER;
 	ray r = ray(ray_pos, dir);
 	ray_plane_intersection_result res = ray_plane_intersection(r, p);
-	vec3 intersection_pos = ray_pos + dir * res.dist;
+	vec3 intersection_pos = r.pos + r.dir * res.dist;
 
 	if(
 		(dot(normal_ws, dir) > 0 && res.dist == 0) ||
@@ -155,10 +155,12 @@ fb_traversal_result traverse_fb (vec3 dir_ws, ufp16vec2 xy, float z, uint f) {
 
 	if(length(dir_ws.xy) == 0 || (dir.x.value == 0 && dir.y.value == 0)) {
 		float depth = texelFetch(u_depths, ivec3(outer_as_uvec2(xy), f), 0).r;
-		if(dir_ws.z > 0 && depth >= z)
-			return fb_traversal_result(TRAVERSAL_SUCCESS, cell_pos(xy, depth));
-		else
-			return fb_traversal_result(TRAVERSAL_OUT_OF_FB, cell_pos(zero_ufp16vec2(), 0.0));
+		cell_pos pos = cell_pos(xy, depth);
+		if(dir_ws.z > 0 && depth >= z && depth < gl_DepthRange.far)
+			return fb_traversal_result(TRAVERSAL_SUCCESS, pos);
+		if(depth < z && depth < gl_DepthRange.far)
+			return fb_traversal_result(TRAVERSAL_POSSIBLY_UNDER, pos);
+		return fb_traversal_result(TRAVERSAL_OUT_OF_FB, pos);
 	}
 
 	cell_pos pos = cell_pos(xy, z);
@@ -172,7 +174,7 @@ fb_traversal_result traverse_fb (vec3 dir_ws, ufp16vec2 xy, float z, uint f) {
 	float dir_z_per_xy = dir_ws.z / length(dir_ws.xy);
 	
 	while(true) {
-		if(is_out_of_fb(pos)) return fb_traversal_result(TRAVERSAL_OUT_OF_FB, cell_pos(zero_ufp16vec2(), 0.0));
+		if(is_out_of_fb(pos)) return fb_traversal_result(TRAVERSAL_OUT_OF_FB, pos);
 
 		cell_pos prev = pos;
 		float dist = next_cell_common(pos.m, dir, level);
@@ -189,10 +191,12 @@ fb_traversal_result traverse_fb (vec3 dir_ws, ufp16vec2 xy, float z, uint f) {
 			}
 			else {
 				int result = check_if_intersects(prev, dir_ws, f);
+				if(prev.z >= gl_DepthRange.far)
+					return fb_traversal_result(TRAVERSAL_OUT_OF_FB, prev);
 				if(result == SURFACE_INTERSECT)
 					return fb_traversal_result(TRAVERSAL_SUCCESS, prev);
-				else if(result == SURFACE_UNDER)
-					return fb_traversal_result(TRAVERSAL_POSSIBLY_UNDER, cell_pos(zero_ufp16vec2(), 0.0));
+				if(result == SURFACE_UNDER)
+					return fb_traversal_result(TRAVERSAL_POSSIBLY_UNDER, prev);
 			}
 		}
 		
@@ -225,7 +229,7 @@ void main() {
 
 	vec3 dir_cs = cam_dir_to_z1(gl_FragCoord.xy);
 	vec3 dir_ws = vec3(0.0, 0.0, 1.0);
-	float sky_light = 1.0;
+	float sky_light = 0.0;
 
 	for(;true; ++i) {
 		vec3 prev_pos_ws = pos_ws;
@@ -235,6 +239,10 @@ void main() {
 		xy = res.pos.m;
 		z = res.pos.z;
 		uvec2 uxy = outer_as_uvec2(xy);
+
+		bool success = res.code == TRAVERSAL_SUCCESS;
+		bool under = res.code == TRAVERSAL_POSSIBLY_UNDER;
+		bool out_of_fb = res.code == TRAVERSAL_OUT_OF_FB;
 
 		/*if(res.code == TRAVERSAL_POSSIBLY_UNDER) {
 			lights[i] = vec3(1.0, 0.0, 0.0);
@@ -248,30 +256,35 @@ void main() {
 			lights[i] = vec3(1.0, 0.0, 1.0);
 			break;
 		}*/
+
 		pos_ws = vec3(ufp16vec2_as_vec2(xy), z);
 		pos_cs = win_to_cam(pos_ws);
 
 		float dist = -1;
+		
+		if(out_of_fb && z >= gl_DepthRange.far) {
+			sky_light = 1.0;
+		}
 
-		if(res.code == TRAVERSAL_SUCCESS && z < 1) {
+		vec4 extras;
+		if(success) {
 			// well, not really
-			dist = distance(prev_pos_cs, pos_cs) / 5000.;
+			dist = distance(prev_pos_cs, pos_cs) / 2000.;
+			extras = texelFetch(u_extras, ivec3(uxy, 0), 0);
+			sky_light = extras.y;
 		}
 
 		vec3 light = sky_color(mat3(frx_inverseViewMatrix) * dir_cs, dist);
+		light *= sky_light * sky_light;
 
-		if(res.code != TRAVERSAL_SUCCESS || z >= 1) {
+		if(!success) {
 			lights[i] = light;
 			break;
 		}
 
-		light *= sky_light * sky_light;
-
 		vec3 color = pow3(texelFetch(u_colors, ivec3(uxy, 0), 0).rgb, 2.2);
 
-		vec4 extras = texelFetch(u_extras, ivec3(uxy, 0), 0);
 		float reflectivity = extras.x;
-		sky_light = extras.y;
 		float block_light = extras.z;
 	
 		lights[i] = light + color*pow(block_light, 4);
