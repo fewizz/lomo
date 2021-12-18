@@ -149,22 +149,20 @@ int check_if_intersects(inout cell_pos pos, vec3 dir, uint f) {
 	return SURFACE_INTERSECT;
 }
 
-fb_traversal_result traverse_fb (vec3 dir_ws, vec3 pos_ws, uint f) {
+fb_traversal_result traverse_fb (vec3 dir_ws, ufp16vec2 xy, float z, uint f) {
 	vec2 dir_xy = normalize(dir_ws.xy);
 	fp16vec2 dir = fp16vec2_from_vec2(dir_xy);
 
 	if(length(dir_ws.xy) == 0 || (dir.x.value == 0 && dir.y.value == 0)) {
-		float depth = texelFetch(u_depths, ivec3(pos_ws.xy, f), 0).r;
-		if(dir_ws.z > 0 && depth >= pos_ws.z)
-			return fb_traversal_result(TRAVERSAL_SUCCESS, cell_pos(ufp16vec2_from_vec2(pos_ws.xy), depth));
+		float depth = texelFetch(u_depths, ivec3(outer_as_uvec2(xy), f), 0).r;
+		if(dir_ws.z > 0 && depth >= z)
+			return fb_traversal_result(TRAVERSAL_SUCCESS, cell_pos(xy, depth));
 		else
 			return fb_traversal_result(TRAVERSAL_OUT_OF_FB, cell_pos(zero_ufp16vec2(), 0.0));
 	}
 
-	cell_pos pos = cell_pos(
-		ufp16vec2_from_vec2(pos_ws.xy),
-		pos_ws.z
-	);
+	cell_pos pos = cell_pos(xy, z);
+
 	uint level = 0u;
 	float lower_depth = 0.0;
 	float upper_depth = upper_depth_value(pos, level, f);
@@ -217,19 +215,25 @@ void main() {
 	vec3 lights[steps];
 	vec3 colors[steps];
 
+	ufp16vec2 xy = ufp16vec2_from_vec2(gl_FragCoord.xy);
+	float z = 0.0;
 	vec3 pos_ws = vec3(gl_FragCoord.xy, 0.0);
-	vec3 pos_cs = win_to_cam(pos_ws);
+	vec3 pos_cs = win_to_cam(vec3(gl_FragCoord.xy, 0));
 
 	int i = 0;
 
-	vec3 dir_cs = normalize(win_to_cam(vec3(gl_FragCoord.xy, 1)) - win_to_cam(vec3(gl_FragCoord.xy, 0)));//normalize(win_to_cam(pos_ws) - win_to_cam(vec3(gl_FragCoord.xy, 0)));
+	vec3 dir_cs = normalize(win_to_cam(vec3(gl_FragCoord.xy, 1)) - win_to_cam(vec3(gl_FragCoord.xy, 0)));
 	vec3 dir_ws = vec3(0.0, 0.0, 1.0);
 	float sky_light = 1.0;
 
 	for(;true; ++i) {
-		fb_traversal_result res = traverse_fb(dir_ws, pos_ws, 0u);
-		pos_ws.xy = ufp16vec2_as_vec2(res.pos.m);
-		pos_ws.z = res.pos.z;
+		vec3 prev_pos_ws = pos_ws;
+		vec3 prev_pos_cs = pos_cs;
+
+		fb_traversal_result res = traverse_fb(dir_ws, xy, z, 0u);
+		xy = res.pos.m;
+		z = res.pos.z;
+		uvec2 uxy = outer_as_uvec2(xy);
 
 		/*if(res.code == TRAVERSAL_POSSIBLY_UNDER) {
 			lights[i] = vec3(1.0, 0.0, 0.0);
@@ -243,29 +247,28 @@ void main() {
 			lights[i] = vec3(1.0, 0.0, 1.0);
 			break;
 		}*/
-
-		vec3 prev_pos_cs = pos_cs;
+		pos_ws = vec3(ufp16vec2_as_vec2(xy), z);
 		pos_cs = win_to_cam(pos_ws);
 
 		float dist = -1;
 
-		if(res.code == TRAVERSAL_SUCCESS && res.pos.z < 1) {
+		if(res.code == TRAVERSAL_SUCCESS && z < 1) {
 			// well, not really
 			dist = distance(prev_pos_cs, pos_cs) / 5000.;
 		}
 
 		vec3 light = sky_color(mat3(frx_inverseViewMatrix) * dir_cs, dist);
 
-		if(res.code != TRAVERSAL_SUCCESS || res.pos.z >= 1) {
+		if(res.code != TRAVERSAL_SUCCESS || z >= 1) {
 			lights[i] = light;
 			break;
 		}
 
 		light *= sky_light * sky_light;
 
-		vec3 color = pow3(texelFetch(u_colors, ivec3(pos_ws.xy, 0), 0).rgb, 2.2);
+		vec3 color = pow3(texelFetch(u_colors, ivec3(uxy, 0), 0).rgb, 2.2);
 
-		vec4 extras = texelFetch(u_extras, ivec3(pos_ws.xy, 0), 0);
+		vec4 extras = texelFetch(u_extras, ivec3(uxy, 0), 0);
 		float reflectivity = extras.x;
 		sky_light = extras.y;
 		float block_light = extras.z;
@@ -275,7 +278,7 @@ void main() {
 
 		if(i >= max_index) break;
 
-		vec3 normal_cs = texelFetch(u_normals, ivec3(pos_ws.xy, 0), 0).xyz;
+		vec3 normal_cs = texelFetch(u_normals, ivec3(uxy, 0), 0).xyz;
 		if(length(normal_cs) < 0.5) {
 			break;
 		}

@@ -39,9 +39,11 @@ uvec2 inner_as_uvec2(ufp16vec2 v) { return uvec2(inner_as_uint (v.x), inner_as_u
 
 uint outer_as_uint(ufp24 v) { return v.value >> 8u; }
 uint outer_as_uint(ufp16 v) { return v.value >> 16u; }
+ int outer_as_int (ufp16 v) { return int(v.value >> 16u); }
 
 uvec2 outer_as_uvec2(ufp24vec2 v) { return uvec2( outer_as_uint(v.x), outer_as_uint(v.y)); }
 uvec2 outer_as_uvec2(ufp16vec2 v) { return uvec2( outer_as_uint(v.x), outer_as_uint(v.y)); }
+ivec2 outer_as_ivec2(ufp16vec2 v) { return ivec2( outer_as_int(v.x), outer_as_int(v.y)); }
 
 float ufp24_as_float (ufp24 v) { return float( outer_as_uint(v) ) + inner_as_float(v); }
 float ufp16_as_float (ufp16 v) { return float( outer_as_uint(v) ) + inner_as_float(v); }
