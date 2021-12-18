@@ -71,17 +71,14 @@ const planet earth = planet(
 	0.06          // atmos_h
 );
 
-vec3 resulting_attenuation(ray v, vec3 star_dir, planet p, vec3 coeffs, float phase) {
+vec3 resulting_attenuation(ray v, float dist, vec3 star_dir, planet p, vec3 coeffs, float phase) {
 	vec3 result = vec3(0.0);
 	
-	ray_sphere_intersection_result pl_p = ray_planet_path(v, earth, false);
-	
 	float path = 0.0;
-	float dist = (pl_p.far - pl_p.close);
 	float stp = dist / float(sky_steps);
 	
 	ray begin = v;
-	v.pos += v.dir * (pl_p.close + stp / 2.0);
+	v.pos += v.dir * (stp / 2.0);
 	
 	for(int i = 0; i < sky_steps; i++) {
 		ray r0 = ray(v.pos, star_dir);
@@ -104,7 +101,20 @@ vec3 resulting_attenuation(ray v, vec3 star_dir, planet p, vec3 coeffs, float ph
 	return phase*coeffs*result;
 }
 
-vec3 sky_color(vec3 dir) {
+vec3 resulting_attenuation(ray v, vec3 star_dir, planet p, vec3 coeffs, float phase, float max_dist) {
+	ray_sphere_intersection_result pl_p = ray_planet_path(v, earth, false);
+
+	float dist = (pl_p.far - pl_p.close);
+	v.pos += v.dir * pl_p.close;
+
+	if(max_dist != -1) {
+		dist = min(dist, max_dist);
+	}
+
+	return resulting_attenuation(v, dist, star_dir, p, coeffs, phase);
+}
+
+vec3 sky_color(vec3 dir, float dist) {
 	float t = frx_skyAngleRadians + 3.14 / 2.0;
 	vec3 sun_dir = vec3(cos(t), sin(t), 0);
 	
@@ -130,11 +140,20 @@ vec3 sky_color(vec3 dir) {
 	);
 
 	vec3 color =
-		vec3(2.0, 2.0, 3.0) *
-		resulting_attenuation(eye, sun_dir, molecules, 10000.0/rgb, 1.0)
-		+
-		resulting_attenuation(eye, sun_dir, aerosols, rgb/100000.0, henyey_greenstein_phase_function(0.97, a))
+		vec3(2.5, 1.8, 4.0) *
+		resulting_attenuation(eye, sun_dir, molecules, 10000.0/rgb, 1.0, dist) + 
+		resulting_attenuation(eye, sun_dir, aerosols, vec3(1.0), henyey_greenstein_phase_function(0.2, a), dist)
 	;
 
+	if(dist == -1) {
+		color +=
+			resulting_attenuation(eye, sun_dir, aerosols, rgb/100000.0, henyey_greenstein_phase_function(0.97, a), dist);
+	}
+
 	return color;
+}
+
+
+vec3 sky_color(vec3 dir) {
+	return sky_color(dir, -1);
 }

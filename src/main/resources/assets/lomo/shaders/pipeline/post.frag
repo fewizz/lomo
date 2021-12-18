@@ -218,6 +218,7 @@ void main() {
 	vec3 colors[steps];
 
 	vec3 pos_ws = vec3(gl_FragCoord.xy, 0.0);
+	vec3 pos_cs = win_to_cam(pos_ws);
 
 	int i = 0;
 
@@ -227,6 +228,8 @@ void main() {
 
 	for(;true; ++i) {
 		fb_traversal_result res = traverse_fb(dir_ws, pos_ws, 0u);
+		pos_ws.xy = ufp16vec2_as_vec2(res.pos.m);
+		pos_ws.z = res.pos.z;
 
 		/*if(res.code == TRAVERSAL_POSSIBLY_UNDER) {
 			lights[i] = vec3(1.0, 0.0, 0.0);
@@ -241,22 +244,33 @@ void main() {
 			break;
 		}*/
 
-		if(res.pos.z >= 1 || res.code != TRAVERSAL_SUCCESS) {
-			vec3 light = sky_color(mat3(frx_inverseViewMatrix) * dir_cs);
-			lights[i] = light * sky_light*sky_light;
+		vec3 prev_pos_cs = pos_cs;
+		pos_cs = win_to_cam(pos_ws);
+
+		float dist = -1;
+
+		if(res.code == TRAVERSAL_SUCCESS && res.pos.z < 1) {
+			// well, not really
+			dist = distance(prev_pos_cs, pos_cs) / 5000.;
+		}
+
+		vec3 light = sky_color(mat3(frx_inverseViewMatrix) * dir_cs, dist);
+
+		if(res.code != TRAVERSAL_SUCCESS || res.pos.z >= 1) {
+			lights[i] = light;
 			break;
 		}
 
-		vec3 color = pow3(texelFetch(u_colors, ivec3(outer_as_uvec2(res.pos.m), 0), 0).rgb, 2.2);
-		pos_ws.xy = ufp16vec2_as_vec2(res.pos.m);
-		pos_ws.z = res.pos.z;
+		light *= sky_light * sky_light;
+
+		vec3 color = pow3(texelFetch(u_colors, ivec3(pos_ws.xy, 0), 0).rgb, 2.2);
 
 		vec4 extras = texelFetch(u_extras, ivec3(pos_ws.xy, 0), 0);
 		float reflectivity = extras.x;
 		sky_light = extras.y;
 		float block_light = extras.z;
 	
-		lights[i] = color*pow(block_light, 4);
+		lights[i] = light + color*pow(block_light, 4);
 		colors[i] = color*(1.0 - pow(block_light, 4));
 
 		if(i >= max_index) break;
@@ -270,11 +284,7 @@ void main() {
 		vec2 rand = hash22(pos_ws.xy);
 
 		vec3 incidence_cs = dir_cs;
-		//float cosa = dot(-incidence_cs, normal_cs);
-		//float angle = acos(cosa);
 
-		//float max_angle = 3.1416 / 2.0 - angle;
-		//float min_angle = -3.1416 / 2.0;
 		if(dot(-incidence_cs, normal_cs) < 0) normal_cs *= -1;
 
 		float x = (rand.x * 2.0 - 1.0) * r;
@@ -306,7 +316,6 @@ void main() {
 			)
 		);
 
-		vec3 pos_cs = win_to_cam(pos_ws);
 		dir_ws = cam_dir_to_win(pos_cs, dir_cs);
 	}
 
