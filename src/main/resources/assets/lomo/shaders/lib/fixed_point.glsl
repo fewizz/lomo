@@ -54,8 +54,9 @@ uvec2 ufp16vec2_as_uvec2(ufp16vec2 v) { return uvec2(v.x.value, v.y.value); }
 
 ufp24 div(ufp24 x, ufp24 y) { return ufp24((x.value << 8u ) / y.value); }
 ufp16 div(ufp16 x, ufp16 y) {
-	// uint64_t please...
-	return ufp16(uint(float(x.value) / float(y.value) * float(1u << 16u)));
+	uint left = (x.value >> 16u) << 16u;
+	uint right = x.value << 16u;
+	return ufp16(((left / y.value) << 16u) | (right / y.value));
 }
 
 ufp24 div(ufp24 x, ufp22 y) { return ufp24((x.value << 10u) / y.value); }
@@ -63,8 +64,8 @@ ufp24 div(ufp24 x, ufp22 y) { return ufp24((x.value << 10u) / y.value); }
 ufp24 mul(ufp24 x, ufp22 y) { return ufp24((x.value * y.value) >> 10u); }
  fp24 mul(ufp24 x,  fp22 y) { return  fp24((int(x.value) * y.value) >> 10u); }
 
-ufp16 mul(ufp16 x, ufp16 y) { return ufp16(uint(float(x.value) / float(1u << 16u) * float(y.value))); }
- fp16 mul(ufp16 x,  fp16 y) { return  fp16( int(float(x.value) / float(1u << 16u) * float(y.value))); }
+ufp16 mul(ufp16 x, ufp16 y) { return ufp16((x.value >> 8u) * (y.value >> 8u)); }
+ fp16 mul(ufp16 x,  fp16 y) { return  fp16(int(x.value >> 8u) * (y.value >> 8)); }
 
 ufp24 add(ufp24 x, ufp24 y) { return ufp24(x.value + y.value); }
 ufp16 add(ufp16 x, ufp16 y) { return ufp16(x.value + y.value); }

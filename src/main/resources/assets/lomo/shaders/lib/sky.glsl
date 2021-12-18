@@ -140,9 +140,8 @@ vec3 sky_color(vec3 dir, float dist) {
 	);
 
 	vec3 color =
-		vec3(2.5, 1.8, 4.0) *
-		resulting_attenuation(eye, sun_dir, molecules, 10000.0/rgb, 1.0, dist) + 
-		resulting_attenuation(eye, sun_dir, aerosols, vec3(1.0), henyey_greenstein_phase_function(0.2, a), dist)
+		vec3(2.0, 1.8, 4.0) *
+		resulting_attenuation(eye, sun_dir, molecules, 10000.0/rgb, 1.0, dist)
 	;
 
 	if(dist == -1) {
