@@ -216,13 +216,14 @@ void main() {
 	vec3 colors[steps];
 
 	ufp16vec2 xy = ufp16vec2_from_vec2(gl_FragCoord.xy);
-	float z = 0.0;
-	vec3 pos_ws = vec3(gl_FragCoord.xy, 0.0);
-	vec3 pos_cs = win_to_cam(vec3(gl_FragCoord.xy, 0));
+
+	vec3 pos_ws = win_near(gl_FragCoord.xy);
+	float z = pos_ws.z;
+	vec3 pos_cs = cam_near(gl_FragCoord.xy);
 
 	int i = 0;
 
-	vec3 dir_cs = normalize(win_to_cam(vec3(gl_FragCoord.xy, 1)) - win_to_cam(vec3(gl_FragCoord.xy, 0)));
+	vec3 dir_cs = cam_dir_to_z1(gl_FragCoord.xy);
 	vec3 dir_ws = vec3(0.0, 0.0, 1.0);
 	float sky_light = 1.0;
 

@@ -8,7 +8,7 @@ vec2 win_xy_to_ndc(vec2 win_xy) {
 }
 
 float win_z_to_ndc(float win_z) {
-	return win_z * 2.0 - 1.0;
+	return (win_z - (gl_DepthRange.near + gl_DepthRange.far) / 2.0) / (gl_DepthRange.diff / 2.0);
 }
 
 vec3 win_to_ndc(vec3 win) {
@@ -24,7 +24,7 @@ vec2 ndc_to_win(vec2 ndc_xy) {
 }
 
 float ndc_z_to_win(float ndc_z) {
-	return ndc_z * 0.5 + 0.5;
+	return (gl_DepthRange.diff / 2.0 * ndc_z) + (gl_DepthRange.near + gl_DepthRange.far) / 2.0;
 }
 
 vec3 ndc_to_win(vec3 ndc) {
@@ -85,11 +85,7 @@ vec3 cam_dir_to_win(vec3 pos_cs, vec3 dir_cs, mat4 projMat) {
 	vec4 Y = (projMat * p);
 
 	return normalize(
-		vec3(frxu_size, 1.) * (
-			//mat3(projMat) * n.xyz/* / dot(p+n, vec4(projMat[0][3], projMat[1][3], projMat[2][3], projMat[3][3]))*/
-			//(mat3(projMat) * (p+n).xyz + projMat[3].xyz) / dot(p + n, vec4(projMat[0][3], projMat[1][3], projMat[2][3], projMat[3][3]))
-			//-
-			//(mat3(projMat) * p.xyz + projMat[3].xyz) / dot(p, vec4(projMat[0][3], projMat[1][3], projMat[2][3], projMat[3][3]))
+		vec3(frxu_size, gl_DepthRange.diff) * (
 			(X.xyz / X.w)
 			-
 			(Y.xyz / Y.w)
@@ -133,4 +129,24 @@ mat3 rotation(float angle, vec3 v) {
 	r[2][2] = c + temp[2] * axis[2];
 
 	return r;
+}
+
+vec3 win_near(vec2 xy) {
+	return vec3(xy, gl_DepthRange.near);
+}
+
+vec3 cam_near(vec2 xy) {
+	return win_to_cam(win_near(xy));
+}
+
+vec3 win_far(vec2 xy) {
+	return vec3(xy, gl_DepthRange.far);
+}
+
+vec3 cam_far(vec2 xy) {
+	return win_to_cam(win_far(xy));
+}
+
+vec3 cam_dir_to_z1(vec2 xy) {
+	return normalize(cam_far(xy) - cam_near(xy));
 }

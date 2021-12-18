@@ -33,14 +33,11 @@ void main() {
 		add[d] = 1.0;
 
 		vec2 pos_win0 = pos_win.xy + add;
-		vec3 near_cam = win_to_cam(vec3(pos_win0, 0)); // point in near plane
-		vec3 far_cam = win_to_cam(vec3(pos_win0, 1)); // point in far plane
 
-		vec3 dir_cam = normalize(far_cam-near_cam);
-		ray r = ray(near_cam, dir_cam);
+		ray r = ray(cam_near(pos_win0), cam_dir_to_z1(pos_win0));
 
 		ray_plane_intersection_result res = ray_plane_intersection(r, p);
-		points[d] = near_cam + dir_cam * res.dist;
+		points[d] = r.pos + r.dir * res.dist;
 	}
 
 	vec3 dir_x_win = cam_to_win(points[0]);

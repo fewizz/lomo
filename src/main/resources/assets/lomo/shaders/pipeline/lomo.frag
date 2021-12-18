@@ -32,7 +32,9 @@ void frx_pipelineFragment() {
 		frx_renderTargetEntity
 	) {
 		if(frag_normal == vec3(0.0)) frag_normal = normalize(frx_vertexNormal);
-		frag_normal = raw_normal_to_cam(frag_normal);
+
+		if(!frx_isHand)
+			frag_normal = raw_normal_to_cam(frag_normal);
 
 		out_normal = vec4(frag_normal, 1.0);
 		out_extra = vec4(reflectivity, frx_fragLight.y, frx_fragLight.x, 1.0);
