@@ -13,6 +13,4 @@ void frx_pipelineVertex() {
 		frx_distance = length(viewCoord.xyz);
 		gl_Position = frx_projectionMatrix * viewCoord;
 	}
-
-	pv_diffuse = p_diffuse(frx_vertexNormal);
 }
