@@ -114,7 +114,7 @@ bool find_uppest_lod(
 bool is_out_of_fb(fb_pos pos) {
 	return
 		any(greaterThanEqual(outer_as_uvec2(pos.m), uvec2(frxu_size))) ||
-		pos.z < gl_DepthRange.near || pos.z >= gl_DepthRange.far;
+		pos.z < 0.0 || pos.z >= 1.0;
 }
 
 #define SURFACE_DONT_INTERSECT 0
@@ -161,7 +161,7 @@ fb_traversal_result traverse_fb(
 		float depth = texelFetch(s_depth, ivec3(outer_as_uvec2(pos.m), f), 0).r;
 		pos.z = depth;
 
-		if(!backwards && depth < gl_DepthRange.far) {
+		if(!backwards && depth < 1.0) {
 			if(z <= depth)
 				return fb_traversal_result(TRAVERSAL_SUCCESS, pos);
 			else
@@ -196,7 +196,7 @@ fb_traversal_result traverse_fb(
 			}
 			else {
 				int result = check_if_intersects(prev, dir_ws, s_depth, s_win_normal, f);
-				if(prev.z >= gl_DepthRange.far)
+				if(prev.z >= 1.0)
 					return fb_traversal_result(TRAVERSAL_OUT_OF_FB, prev);
 				if(result == SURFACE_INTERSECT)
 					return fb_traversal_result(TRAVERSAL_SUCCESS, prev);

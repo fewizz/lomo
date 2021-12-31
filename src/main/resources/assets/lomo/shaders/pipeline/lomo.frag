@@ -10,7 +10,8 @@
 
 layout(location = 0) out vec4 out_color;
 layout(location = 1) out vec4 out_normal;
-layout(location = 2) out vec4 out_extra;
+layout(location = 2) out vec4 out_geometric_normal;
+layout(location = 3) out vec4 out_extra;
 
 void frx_pipelineFragment() {
 	vec4 a = frx_fragColor;
@@ -31,11 +32,16 @@ void frx_pipelineFragment() {
 		frx_renderTargetParticles ||
 		frx_renderTargetEntity
 	) {
-		if(frag_normal == vec3(0.0)) frag_normal = normalize(frx_vertexNormal);
+		vec3 geometric_normal = normalize(frx_vertexNormal);
 
-		if(!frx_isHand)
+		if(frag_normal == vec3(0.0)) frag_normal = geometric_normal;
+
+		if(!frx_isHand) {
 			frag_normal = raw_normal_to_cam(frag_normal);
+			geometric_normal = raw_normal_to_cam(geometric_normal);
+		}
 
+		out_geometric_normal = vec4(geometric_normal, 1.0);
 		out_normal = vec4(frag_normal, 1.0);
 		out_extra = vec4(reflectivity, frx_fragLight.y, frx_fragLight.x, 1.0);
 	}

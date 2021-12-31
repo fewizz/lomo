@@ -28,7 +28,7 @@ void main() {
 	vec3 lights[steps];
 	vec3 colors[steps];
 
-	fb_pos pos = fb_pos(ufp16vec2_from_vec2(gl_FragCoord.xy), gl_DepthRange.near);
+	fb_pos pos = fb_pos(ufp16vec2_from_vec2(gl_FragCoord.xy), 0);
 
 	vec3 pos_cs = cam_near(gl_FragCoord.xy);
 
@@ -73,7 +73,7 @@ void main() {
 		pos_cs = win_to_cam(vec3(ufp16vec2_as_vec2(pos.m), pos.z));
 
 		
-		if(out_of_fb && pos.z >= gl_DepthRange.far) {
+		if(out_of_fb && pos.z >= 1.0) {
 			sky_light = 1.0;
 		}
 

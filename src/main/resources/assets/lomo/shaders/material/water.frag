@@ -10,7 +10,7 @@ float lomo_water_h(vec3 pos) {
 	float t = frx_renderSeconds;
 	return snoise(
 		vec4(pos/4.0, t)
-	) / 48.0;
+	) / 64.0;
 }
 
 void frx_materialFragment() {
