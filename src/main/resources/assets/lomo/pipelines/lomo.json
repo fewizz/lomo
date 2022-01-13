@@ -74,7 +74,7 @@
 			"u_colors", "u_normals",
 			"u_extras", "u_depths",
 			"u_win_normals", "u_hi_depths",
-			"u_accum_0"
+			"u_accum_0", "u_shadow"
 		]
 	},
 	{
@@ -319,7 +319,8 @@
 				"depths",
 				"win_normals",
 				"hi_depths",
-				"accum_0"
+				"accum_0",
+				"shadow_map"
 			]
 		},
 		{
@@ -869,7 +870,7 @@
 		]
 	},
 	{
-		"size": 256,
+		"size": 1024,
 		"name": "shadow_map",
 		"internalFormat": "DEPTH_COMPONENT32",
 		"pixelFormat": "DEPTH_COMPONENT",
