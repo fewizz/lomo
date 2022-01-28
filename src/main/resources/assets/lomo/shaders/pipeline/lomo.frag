@@ -11,7 +11,8 @@
 layout(location = 0) out vec4 out_color;
 layout(location = 1) out vec4 out_normal;
 layout(location = 2) out vec4 out_geometric_normal;
-layout(location = 3) out vec4 out_extra;
+layout(location = 3) out vec4 out_extra_0;
+layout(location = 4) out vec4 out_extra_1;
 
 void frx_pipelineFragment() {
 	vec4 a = frx_fragColor;
@@ -43,11 +44,13 @@ void frx_pipelineFragment() {
 
 		out_geometric_normal = vec4(geometric_normal, 1.0);
 		out_normal = vec4(frag_normal, 1.0);
-		out_extra = vec4(reflectivity, frx_fragLight.y, frx_fragLight.x, 1.0);
+		out_extra_0 = vec4(reflectivity, frx_fragLight.y, frx_fragLight.x, 1.0);
+		out_extra_1 = vec4(0.0);
 	}
 	else {
 		out_normal = vec4(0);
-		out_extra = vec4(0);
+		out_extra_0 = vec4(0);
+		out_extra_1 = vec4(0);
 	}
 
 	gl_FragDepth = gl_FragCoord.z;

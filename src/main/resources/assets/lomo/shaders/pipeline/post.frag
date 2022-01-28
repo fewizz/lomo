@@ -14,12 +14,13 @@
 
 uniform sampler2DArray u_colors;
 uniform sampler2DArray u_normals;
-uniform sampler2DArray u_extras;
+uniform sampler2DArray u_extras_0;
+uniform sampler2DArray u_extras_1;
 uniform sampler2DArray u_depths;
 uniform sampler2DArray u_win_normals;
 uniform sampler2DArray u_hi_depths;
 uniform sampler2D u_accum_0;
-uniform sampler2DArrayShadow u_shadow;
+uniform sampler2DArrayShadow u_shadow_map;
 
 layout(location = 0) out vec4 out_color;
 
@@ -75,6 +76,8 @@ void main() {
 	const int max_step_index = steps - 1;
 	vec3 lights[steps];
 	vec3 colors[steps];
+	vec3 sky_lights[steps];
+	vec3 sun_lights[steps];
 
 	float initial_depth = texelFetch(u_depths, ivec3(gl_FragCoord.xy, 0), 0).r;
 
@@ -101,11 +104,13 @@ void main() {
 
 		// fail branch
 		if(out_of_fb || under) {
-			lights[stp] = sky_color(mat3(frx_inverseViewMatrix) * dir_cam);
+			lights[stp] = vec3(0.0);
+			sun_lights[stp] = vec3(0.0);
+			sky_lights[stp] = sky_color(mat3(frx_inverseViewMatrix) * dir_cam);
 
 			if(result.pos.z < 1.0) {
-				vec4 extras = texelFetch(u_extras, ivec3(outer_as_uvec2(pos.m), 0), 0);
-				lights[stp] *= extras.y * extras.y;
+				vec4 extras = texelFetch(u_extras_0, ivec3(outer_as_uvec2(pos.m), 0), 0);
+				sky_lights[stp] *= extras.y * extras.y;
 			}
 
 			break;
@@ -123,15 +128,15 @@ void main() {
 		// prev reflection dir is now incidence
 		vec3 incidence_cam = dir_cam;
 
-		vec4 extras = texelFetch(u_extras, ivec3(uxy, 0), 0);
+		vec4 extras = texelFetch(u_extras_0, ivec3(uxy, 0), 0);
 		float reflectivity = extras.x;
 		float block_light = extras.z;
 		float sky_light = extras.y;
 
 		vec3 geometric_normal_cam = texelFetch(u_normals, ivec3(uxy, 0), 0).xyz;
-		if(length(geometric_normal_cam) < 0.5) {
-			break;
-		}
+		//if(length(geometric_normal_cam) < 0.5) {
+		//	break;
+		//}
 		geometric_normal_cam = normalize(geometric_normal_cam);
 
 		vec3 normal_cam = compute_normal(incidence_cam, geometric_normal_cam, ufp16vec2_as_vec2(pos.m), reflectivity);
@@ -148,22 +153,21 @@ void main() {
 		vec3 light = vec3(0.0);
 		vec3 color = pow3(texelFetch(u_colors, ivec3(uxy, 0), 0).rgb, 2.2);
 
-		float dist = distance(prev_pos_cam, pos_cam) / 1000000.;
-		light += fog_color(mat3(frx_inverseViewMatrix) * incidence_cam, dist);
+		float dist = distance(prev_pos_cam, pos_cam) / 1000000.0;
+		light = fog_color(mat3(frx_inverseViewMatrix) * dir_cam, dist) * sky_light * sky_light;
+		sky_lights[stp] = sky_color(mat3(frx_inverseViewMatrix) * dir_cam) * sky_light * sky_light;
 
-		if(stp == max_step_index) {
-			vec4 world = frx_inverseViewMatrix * vec4(pos_cam, 1.0);
-			vec4 shadow_pos_cam = frx_shadowViewMatrix * world;
-			int cascade = select_shadow_cascade(shadow_pos_cam.xyz);
+		vec4 world = frx_inverseViewMatrix * vec4(pos_cam, 1.0);
+		vec4 shadow_pos_cam = frx_shadowViewMatrix * world;
+		int cascade = select_shadow_cascade(shadow_pos_cam.xyz);
 
-			vec4 shadow_pos_proj = frx_shadowProjectionMatrix(cascade) * shadow_pos_cam;
-			shadow_pos_proj.xyz /= shadow_pos_proj.w;
+		vec4 shadow_pos_proj = frx_shadowProjectionMatrix(cascade) * shadow_pos_cam;
+		shadow_pos_proj.xyz /= shadow_pos_proj.w;
 
-			vec3 shadow_tex = shadow_pos_proj.xyz * 0.5 + 0.5;
-			float d = texture(u_shadow, vec4(shadow_tex.xy, cascade, shadow_tex.z));
-			float dt = clamp(dot(sun_dir(), normalize(mat3(frx_inverseViewMatrix) * normal_cam)), 0.0, 1.0);
-			light += d * dt * sky_color(sun_dir()); // TODO
-		}
+		vec3 shadow_tex = shadow_pos_proj.xyz * 0.5 + 0.5;
+		float d = texture(u_shadow_map, vec4(shadow_tex.xy, cascade, shadow_tex.z));
+		float dt = clamp(dot(sun_dir(), normalize(mat3(frx_inverseViewMatrix) * normal_cam)), 0.0, 1.0);
+		sun_lights[stp] = d * dt * sky_color(sun_dir());
 
 		lights[stp] = light + color*pow(block_light, 4);
 		colors[stp] = color*(1.0 - pow(block_light, 4));
@@ -183,11 +187,21 @@ void main() {
 		);
 	}
 
-	vec3 color = lights[stp];
+	float steps_were_made = float(stp + 1);
+
+	vec3 color = lights[stp] + sky_lights[stp] / steps_were_made;
 
 	while(stp > 0) {
 		--stp;
-		color = color * colors[stp] + lights[stp];
+		color =  colors[stp] * (
+			color
+			+
+			lights[stp]
+			+
+			sky_lights[stp] / steps_were_made
+			+
+			(steps_were_made > 1 ? sun_lights[stp] / (steps_were_made - 1) : vec3(0.0))
+		);
 	}
 
 	out_color = vec4(

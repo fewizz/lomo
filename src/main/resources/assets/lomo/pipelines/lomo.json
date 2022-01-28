@@ -1,7 +1,7 @@
 {
 
 "nameKey": "pipeline.lomo.name",
-"descriptionKey": "pipeline.canvas_basic.desc",
+"descriptionKey": "pipeline.lomo.desc",
 
 "materialProgram": {
 	"vertexSource": "lomo:shaders/pipeline/lomo.vert",
@@ -28,7 +28,7 @@
 "defaultFramebuffer": "solid_cd",
 
 "skyShadows": {
-	"framebuffer": "shadow",
+	"framebuffer": "shadow_map",
 	"vertexSource": "canvas:shaders/pipeline/shadow.vert",
 	"fragmentSource": "canvas:shaders/pipeline/shadow.frag"
 },
@@ -72,9 +72,10 @@
 		"fragmentSource": "lomo:shaders/pipeline/post.frag",
 		"samplers": [
 			"u_colors", "u_normals",
-			"u_extras", "u_depths",
+			"u_extras_0", "u_extras_1",
+			"u_depths",
 			"u_win_normals", "u_hi_depths",
-			"u_accum_0", "u_shadow"
+			"u_accum_0", "u_shadow_map"
 		]
 	},
 	{
@@ -110,7 +111,7 @@
 		"vertexSource": "lomo:shaders/pipeline/full_frame_depth_1.vert",
 		"fragmentSource": "lomo:shaders/pipeline/copy_solid.frag",
 		"samplers": [
-			"u_color", "u_normal", "u_geometric_normal", "u_extra", "u_depth"
+			"u_color", "u_normal", "u_geometric_normal", "u_extra_0", "u_extra_1", "u_depth"
 		]
 	},
 	{
@@ -176,7 +177,7 @@
 		{
 			"name": "cloud_extra_1_1",
 			"program": "extra_1_1",
-			"framebuffer": "cloud_e",
+			"framebuffer": "cloud_e_0",
 			"samplerImages": []
 		},
 		{
@@ -184,7 +185,7 @@
 			"program": "copy_solid",
 			"framebuffer": "solid_before_hand_cnged",
 			"samplerImages": [
-				"solid_c", "solid_n", "solid_g", "solid_e", "solid_d"
+				"solid_c", "solid_n", "solid_g", "solid_e_0", "solid_e_1", "solid_d"
 			]
 		},
 		{ "name": "clear_solid_before_hand_render", "framebuffer": "solid_cnged", "program": "frex_clear" }
@@ -230,12 +231,21 @@
 			]
 		},
 		{
-			"name": "sort_extras",
+			"name": "sort_extras_0",
 			"program": "sort",
-			"framebuffer": "extras",
+			"framebuffer": "extras_0",
 			"samplerImages": [
-				"solid_e", "solid_before_hand_e", "translucent_e", "entity_e",
-				"particle_e", "weather_e", "cloud_e", "index_to_type"
+				"solid_e_0", "solid_before_hand_e_0", "translucent_e_0", "entity_e_0",
+				"particle_e_0", "weather_e_0", "cloud_e_0", "index_to_type"
+			]
+		},
+		{
+			"name": "sort_extras_1",
+			"program": "sort",
+			"framebuffer": "extras_1",
+			"samplerImages": [
+				"solid_e_1", "solid_before_hand_e_1", "translucent_e_1", "entity_e_1",
+				"particle_e_1", "weather_e_1", "cloud_e_1", "index_to_type"
 			]
 		},
 		{
@@ -264,15 +274,6 @@
 				"depths", "geometric_normals"
 			],
 			"layer": 1
-		},
-		{
-			"name": "win_normals_2",
-			"program": "win_normals",
-			"framebuffer": "win_normals_2_hi_depths_2",
-			"samplerImages": [
-				"depths", "geometric_normals"
-			],
-			"layer": 2
 		},
 		{
 			"name": "hi_depths_1",
@@ -315,7 +316,8 @@
 			"samplerImages": [
 				"colors",
 				"normals",
-				"extras",
+				"extras_0",
+				"extras_1",
 				"depths",
 				"win_normals",
 				"hi_depths",
@@ -383,10 +385,22 @@
 		]
 	},
 	{
-		"name": "solid_e",
+		"name": "solid_e_0",
 		"internalFormat": "RGB8",
 		"pixelFormat": "RGB",
 		"pixelDataType": "UNSIGNED_BYTE",
+		"texParams": [
+			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
+		]
+	},
+	{
+		"name": "solid_e_1",
+		"internalFormat": "RGB16F",
+		"pixelFormat": "RGB",
+		"pixelDataType": "FLOAT",
 		"texParams": [
 			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
 			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
@@ -444,10 +458,22 @@
 		]
 	},
 	{
-		"name": "solid_before_hand_e",
+		"name": "solid_before_hand_e_0",
 		"internalFormat": "RGB8",
 		"pixelFormat": "RGB",
 		"pixelDataType": "UNSIGNED_BYTE",
+		"texParams": [
+			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
+		]
+	},
+	{
+		"name": "solid_before_hand_e_1",
+		"internalFormat": "RGB16F",
+		"pixelFormat": "RGB",
+		"pixelDataType": "FLOAT",
 		"texParams": [
 			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
 			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
@@ -502,10 +528,22 @@
 		]
 	},
 	{
-		"name": "translucent_e",
+		"name": "translucent_e_0",
 		"internalFormat": "RGB8",
 		"pixelFormat": "RGB",
 		"pixelDataType": "UNSIGNED_BYTE",
+		"texParams": [
+			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
+		]
+	},
+	{
+		"name": "translucent_e_1",
+		"internalFormat": "RGB16F",
+		"pixelFormat": "RGB",
+		"pixelDataType": "FLOAT",
 		"texParams": [
 			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
 			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
@@ -560,10 +598,22 @@
 		]
 	},
 	{
-		"name": "entity_e",
+		"name": "entity_e_0",
 		"internalFormat": "RGB8",
 		"pixelFormat": "RGB",
 		"pixelDataType": "UNSIGNED_BYTE",
+		"texParams": [
+			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
+		]
+	},
+	{
+		"name": "entity_e_1",
+		"internalFormat": "RGB16F",
+		"pixelFormat": "RGB",
+		"pixelDataType": "FLOAT",
 		"texParams": [
 			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
 			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
@@ -618,10 +668,22 @@
 		]
 	},
 	{
-		"name": "weather_e",
+		"name": "weather_e_0",
 		"internalFormat": "RGB8",
 		"pixelFormat": "RGB",
 		"pixelDataType": "UNSIGNED_BYTE",
+		"texParams": [
+			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
+		]
+	},
+	{
+		"name": "weather_e_1",
+		"internalFormat": "RGB16F",
+		"pixelFormat": "RGB",
+		"pixelDataType": "FLOAT",
 		"texParams": [
 			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
 			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
@@ -676,10 +738,22 @@
 		]
 	},
 	{
-		"name": "cloud_e",
+		"name": "cloud_e_0",
 		"internalFormat": "RGB8",
 		"pixelFormat": "RGB",
 		"pixelDataType": "UNSIGNED_BYTE",
+		"texParams": [
+			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
+		]
+	},
+	{
+		"name": "cloud_e_1",
+		"internalFormat": "RGB16F",
+		"pixelFormat": "RGB",
+		"pixelDataType": "FLOAT",
 		"texParams": [
 			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
 			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
@@ -734,7 +808,7 @@
 		]
 	},
 	{
-		"name": "particle_e",
+		"name": "particle_e_0",
 		"internalFormat": "RGB8",
 		"pixelFormat": "RGB",
 		"pixelDataType": "UNSIGNED_BYTE",
@@ -746,9 +820,21 @@
 		]
 	},
 	{
+		"name": "particle_e_1",
+		"internalFormat": "RGB16F",
+		"pixelFormat": "RGB",
+		"pixelDataType": "FLOAT",
+		"texParams": [
+			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
+		]
+	},
+	{
 		"name": "colors",
 		"target": "TEXTURE_2D_ARRAY",
-		"depth": 3,
+		"depth": 2,
 		"texParams": [
 			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
 			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
@@ -759,7 +845,7 @@
 	{
 		"name": "normals",
 		"target": "TEXTURE_2D_ARRAY",
-		"depth": 3,
+		"depth": 2,
 		"internalFormat": "RGB16_SNORM",
 		"pixelFormat": "RGB",
 		"pixelDataType": "SHORT",
@@ -773,7 +859,7 @@
 	{
 		"name": "geometric_normals",
 		"target": "TEXTURE_2D_ARRAY",
-		"depth": 3,
+		"depth": 2,
 		"internalFormat": "RGB16_SNORM",
 		"pixelFormat": "RGB",
 		"pixelDataType": "SHORT",
@@ -787,7 +873,7 @@
 	{
 		"name": "win_normals",
 		"target": "TEXTURE_2D_ARRAY",
-		"depth": 3,
+		"depth": 2,
 		"internalFormat": "RGB16_SNORM",
 		"pixelFormat": "RGB",
 		"pixelDataType": "SHORT",
@@ -799,9 +885,9 @@
 		]
 	},
 	{
-		"name": "extras",
+		"name": "extras_0",
 		"target": "TEXTURE_2D_ARRAY",
-		"depth": 3,
+		"depth": 2,
 		"internalFormat": "RGB8",
 		"pixelFormat": "RGB",
 		"pixelDataType": "UNSIGNED_BYTE",
@@ -813,9 +899,23 @@
 		]
 	},
 	{
+		"name": "extras_1",
+		"target": "TEXTURE_2D_ARRAY",
+		"depth": 2,
+		"internalFormat": "RGB16F",
+		"pixelFormat": "RGB",
+		"pixelDataType": "FLOAT",
+		"texParams": [
+			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
+		]
+	},
+	{
 		"name": "depths",
 		"target": "TEXTURE_2D_ARRAY",
-		"depth": 3,
+		"depth": 2,
 		"internalFormat": "R32F",
 		"pixelFormat": "RED",
 		"pixelDataType": "FLOAT",
@@ -830,7 +930,7 @@
 	{
 		"name": "hi_depths",
 		"target": "TEXTURE_2D_ARRAY",
-		"depth": 3,
+		"depth": 2,
 		"lod": 4,
 		"internalFormat": "R32F",
 		"pixelFormat": "RED",
@@ -870,7 +970,7 @@
 		]
 	},
 	{
-		"size": 1024,
+		"size": 512,
 		"name": "shadow_map",
 		"internalFormat": "DEPTH_COMPONENT32",
 		"pixelFormat": "DEPTH_COMPONENT",
@@ -932,7 +1032,8 @@
 			{ "image": "solid_c", "clearColor": "c:" },
 			{ "image": "solid_n", "clearColor": "c:" },
 			{ "image": "solid_g", "clearColor": "c:" },
-			{ "image": "solid_e", "clearColor": "c:" }
+			{ "image": "solid_e_0", "clearColor": "c:" },
+			{ "image": "solid_e_1", "clearColor": "c:" }
 		],
 		"depthAttachment": { "image": "solid_d", "clearDepth": 1.0 }
 	},
@@ -942,7 +1043,8 @@
 			{ "image": "solid_before_hand_c", "clearColor": "c:" },
 			{ "image": "solid_before_hand_n", "clearColor": "c:" },
 			{ "image": "solid_before_hand_g", "clearColor": "c:" },
-			{ "image": "solid_before_hand_e", "clearColor": "c:" },
+			{ "image": "solid_before_hand_e_0", "clearColor": "c:" },
+			{ "image": "solid_before_hand_e_1", "clearColor": "c:" },
 			{ "image": "solid_before_hand_d", "clearColor": "c:" }
 		]
 	},
@@ -952,7 +1054,8 @@
 			{ "image": "entity_c", "clearColor": "c:" },
 			{ "image": "entity_n", "clearColor": "c:" },
 			{ "image": "entity_g", "clearColor": "c:" },
-			{ "image": "entity_e", "clearColor": "c:" }
+			{ "image": "entity_e_0", "clearColor": "c:" },
+			{ "image": "entity_e_1", "clearColor": "c:" }
 		],
 		"depthAttachment": { "image": "entity_d", "clearDepth": 1.0 }
 	},
@@ -974,7 +1077,8 @@
 			{ "image": "weather_c", "clearColor": "c:" },
 			{ "image": "weather_n", "clearColor": "c:" },
 			{ "image": "weather_g", "clearColor": "c:" },
-			{ "image": "weather_e", "clearColor": "c:" }
+			{ "image": "weather_e_0", "clearColor": "c:" },
+			{ "image": "weather_e_1", "clearColor": "c:" }
 		],
 		"depthAttachment": { "image": "weather_d", "clearDepth": 1.0 }
 	},
@@ -996,7 +1100,8 @@
 			{ "image": "cloud_c", "clearColor": "c:" },
 			{ "image": "cloud_n", "clearColor": "c:" },
 			{ "image": "cloud_g", "clearColor": "c:" },
-			{ "image": "cloud_e", "clearColor": "c:" }
+			{ "image": "cloud_e_0", "clearColor": "c:" },
+			{ "image": "cloud_e_1", "clearColor": "c:" }
 		],
 		"depthAttachment": { "image": "cloud_d", "clearDepth": 1.0 }
 	},
@@ -1013,9 +1118,9 @@
 		]
 	},
 	{
-		"name": "cloud_e",
+		"name": "cloud_e_0",
 		"colorAttachments": [
-			{ "image": "cloud_e" }
+			{ "image": "cloud_e_0" }
 		]
 	},
 	{
@@ -1024,7 +1129,8 @@
 			{ "image": "particle_c", "clearColor": "c:" },
 			{ "image": "particle_n", "clearColor": "c:" },
 			{ "image": "particle_g", "clearColor": "c:" },
-			{ "image": "particle_e", "clearColor": "c:" }
+			{ "image": "particle_e_0", "clearColor": "c:" },
+			{ "image": "particle_e_1", "clearColor": "c:" }
 		],
 		"depthAttachment": { "image": "particle_d", "clearDepth": 1.0 }
 	},
@@ -1034,7 +1140,8 @@
 			{ "image": "translucent_c", "clearColor": "c:" },
 			{ "image": "translucent_n", "clearColor": "c:" },
 			{ "image": "translucent_g", "clearColor": "c:" },
-			{ "image": "translucent_e", "clearColor": "c:" }
+			{ "image": "translucent_e_0", "clearColor": "c:" },
+			{ "image": "translucent_e_1", "clearColor": "c:" }
 		],
 		"depthAttachment": { "image": "translucent_d", "clearDepth": 1.0 }
 	},
@@ -1042,40 +1149,35 @@
 		"name": "hi_depths_0",
 		"colorAttachments": [
 			{ "image": "hi_depths", "layer": 0, "lod": 0 },
-			{ "image": "hi_depths", "layer": 1, "lod": 0 },
-			{ "image": "hi_depths", "layer": 2, "lod": 0 }
+			{ "image": "hi_depths", "layer": 1, "lod": 0 }
 		]
 	},
 	{
 		"name": "hi_depths_1",
 		"colorAttachments": [
 			{ "image": "hi_depths", "layer": 0, "lod": 1 },
-			{ "image": "hi_depths", "layer": 1, "lod": 1 },
-			{ "image": "hi_depths", "layer": 2, "lod": 1 }
+			{ "image": "hi_depths", "layer": 1, "lod": 1 }
 		]
 	},
 	{
 		"name": "hi_depths_2",
 		"colorAttachments": [
 			{ "image": "hi_depths", "layer": 0, "lod": 2 },
-			{ "image": "hi_depths", "layer": 1, "lod": 2 },
-			{ "image": "hi_depths", "layer": 2, "lod": 2 }
+			{ "image": "hi_depths", "layer": 1, "lod": 2 }
 		]
 	},
 	{
 		"name": "hi_depths_3",
 		"colorAttachments": [
 			{ "image": "hi_depths", "layer": 0, "lod": 3 },
-			{ "image": "hi_depths", "layer": 1, "lod": 3 },
-			{ "image": "hi_depths", "layer": 2, "lod": 3 }
+			{ "image": "hi_depths", "layer": 1, "lod": 3 }
 		]
 	},
 	{
 		"name": "hi_depths_4",
 		"colorAttachments": [
 			{ "image": "hi_depths", "layer": 0, "lod": 4 },
-			{ "image": "hi_depths", "layer": 1, "lod": 4 },
-			{ "image": "hi_depths", "layer": 2, "lod": 4 }
+			{ "image": "hi_depths", "layer": 1, "lod": 4 }
 		]
 	},
 	{
@@ -1089,24 +1191,21 @@
 		"name": "colors",
 		"colorAttachments": [
 			{ "image": "colors", "layer": 0 },
-			{ "image": "colors", "layer": 1 },
-			{ "image": "colors", "layer": 2 }
+			{ "image": "colors", "layer": 1 }
 		]
 	},
 	{
 		"name": "normals",
 		"colorAttachments": [
 			{ "image": "normals", "layer": 0 },
-			{ "image": "normals", "layer": 1 },
-			{ "image": "normals", "layer": 2 }
+			{ "image": "normals", "layer": 1 }
 		]
 	},
 	{
 		"name": "geometric_normals",
 		"colorAttachments": [
 			{ "image": "geometric_normals", "layer": 0 },
-			{ "image": "geometric_normals", "layer": 1 },
-			{ "image": "geometric_normals", "layer": 2 }
+			{ "image": "geometric_normals", "layer": 1 }
 		]
 	},
 	{
@@ -1124,38 +1223,35 @@
 		]
 	},
 	{
-		"name": "win_normals_2_hi_depths_2",
+		"name": "extras_0",
 		"colorAttachments": [
-			{ "image": "win_normals", "layer": 2 },
-			{ "image": "hi_depths", "layer": 2, "lod": 0 }
+			{ "image": "extras_0", "layer": 0 },
+			{ "image": "extras_0", "layer": 1 }
 		]
 	},
 	{
-		"name": "extras",
+		"name": "extras_1",
 		"colorAttachments": [
-			{ "image": "extras", "layer": 0 },
-			{ "image": "extras", "layer": 1 },
-			{ "image": "extras", "layer": 2 }
+			{ "image": "extras_1", "layer": 0 },
+			{ "image": "extras_1", "layer": 1 }
 		]
 	},
 	{
 		"name": "depths",
 		"colorAttachments": [
 			{ "image": "depths", "layer": 0 },
-			{ "image": "depths", "layer": 1 },
-			{ "image": "depths", "layer": 2 }
+			{ "image": "depths", "layer": 1 }
 		]
 	},
 	{
 		"name": "hi_depths",
 		"colorAttachments": [
 			{ "image": "hi_depths", "layer": 0 },
-			{ "image": "hi_depths", "layer": 1 },
-			{ "image": "hi_depths", "layer": 2 }
+			{ "image": "hi_depths", "layer": 1 }
 		]
 	},
 	{
-		"name": "shadow",
+		"name": "shadow_map",
 		"depthAttachment": { "image": "shadow_map", "clearDepth": 1.0 }
 	},
 	{

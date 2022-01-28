@@ -1,3 +1,4 @@
 {
-	"pipeline.lomo.name": "Lomo"
+	"pipeline.lomo.name": "Lomo",
+	"pipeline.lomo.desc": ""
 }

@@ -35,7 +35,7 @@ void main() {
 		indices[i] = (index_to_type >> (4u*i)) & 0xFu;
 	}
 
-	// with hand, translucent
+	// with translucent
 	vec3 color = values[indices[6]].rgb;
 
 	for(int i = 5; i >= 0; --i) {
@@ -44,21 +44,13 @@ void main() {
 
 	out_colors[0] = vec4(color, 1.0);
 
-	// without hand
-	values[0] = vec4(0.0);
+	// without translucent
+	values[2] = vec4(0.0);
+
 	color = values[indices[6]].rgb;
 	for(int i = 5; i >= 0; --i) {
 		color = blend(color, values[indices[i]]);
 	}
 
 	out_colors[1] = vec4(color, 1.0);
-
-	// without hand and translucent
-	values[2] = vec4(0);
-	color = values[indices[6]].rgb;
-	for(int i = 5; i >= 0; --i) {
-		color = blend(color, values[indices[i]]);
-	}
-
-	out_colors[2] = vec4(color, 1.0);
 }
