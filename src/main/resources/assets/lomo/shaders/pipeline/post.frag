@@ -3,7 +3,6 @@
 #include frex:shaders/api/world.glsl
 
 #include lomo:shaders/lib/transform.glsl
-#include lomo:shaders/lib/math.glsl
 #include lomo:shaders/lib/sky.glsl
 #include lomo:shaders/lib/blend.glsl
 #include lomo:shaders/lib/ray_plane.glsl
@@ -44,7 +43,7 @@ int select_shadow_cascade(vec3 shadow_pos) {
 
 vec3 compute_normal(vec3 incidence, vec3 geometric_normal, vec2 pos_win_xy, float reflectivity) {
 	float r = (1. - reflectivity) * 3.1416 / 2.0;
-	vec2 rand = hash23(vec3(pos_win_xy, frx_renderSeconds));
+	vec2 rand = hash23(uvec3(pos_win_xy, frx_renderSeconds * 1000.0));
 
 	if(dot(-incidence, geometric_normal) < 0) geometric_normal *= -1;
 
@@ -72,7 +71,7 @@ vec3 compute_normal(vec3 incidence, vec3 geometric_normal, vec2 pos_win_xy, floa
 }
 
 void main() {
-	const int steps = 3;
+	const int steps = 2;
 	const int max_step_index = steps - 1;
 	vec3 lights[steps];
 	vec3 colors[steps];
@@ -105,22 +104,14 @@ void main() {
 		bool under = result.code == TRAVERSAL_POSSIBLY_UNDER;
 		bool out_of_fb = result.code == TRAVERSAL_OUT_OF_FB;
 
-		//if(!success) {
-		//	if(under) lights[stp] += vec3(1.0, 0.0, 0.0);
-		//	if(out_of_fb) lights[stp] += vec3(0.0, 0.0, 1.0);
-		//	break;
-		//}
-
 		// fail branch
 		if(out_of_fb || under) {
-			//lights[stp] = vec3(0.0);
-			//sun_lights[stp] = vec3(0.0);
-			lights[stp] = vec3(1.0);//sky_color(mat3(frx_inverseViewMatrix) * dir_cam);
+			lights[stp] = sky_color(mat3(frx_inverseViewMatrix) * dir_cam);
 
-			//if(result.pos.z < 1.0) {
-				//vec4 extras = texelFetch(u_extras_0, ivec3(outer_as_uvec2(pos.texel), 0), 0);
-				//lights[stp] *= extras.y * extras.y;
-			//}
+			if(result.pos.z < 1.0) {
+				vec4 extras = texelFetch(u_extras_0, ivec2(outer_as_uvec2(pos.texel)), 0);
+				lights[stp] *= pow(extras.y, 4.0);
+			}
 
 			break;
 		}
@@ -143,9 +134,6 @@ void main() {
 		float sky_light = extras.y;
 
 		vec3 geometric_normal_cam = texelFetch(u_normals, ivec2(uxy), 0).xyz;
-		//if(length(geometric_normal_cam) < 0.5) {
-		//	break;
-		//}
 		geometric_normal_cam = normalize(geometric_normal_cam);
 
 		vec3 normal_cam = compute_normal(incidence_cam, geometric_normal_cam, ufp16vec2_as_vec2(pos.texel), reflectivity);
@@ -159,21 +147,14 @@ void main() {
 		);
 		vec3 dir_win = cam_dir_to_win(pos_cam, dir_cam);
 
-		//vec3 light = vec3(0.0);
 		vec3 color = pow(texelFetch(u_colors, ivec2(uxy), 0).rgb, vec3(2.2));
 
-		//float dist = distance(prev_pos_cam, pos_cam) / 1000000.0;
-		//light = fog_color(mat3(frx_inverseViewMatrix) * dir_cam, dist) * sky_light * sky_light;
-		//sky_lights[stp] = sky_color(mat3(frx_inverseViewMatrix) * dir_cam) * sky_light * sky_light;
-
-		//sun_lights[stp] = d * dt * sky_color(sun_dir());
-
-		lights[stp] = color*pow(block_light, 4);
-		colors[stp] = color*(1.0 - pow(block_light, 4));
+		lights[stp] = color*pow(block_light, 4.0);
+		colors[stp] = color;
 
 		// done, leaving
 		if(stp == max_step_index) {
-			/*vec4 world = frx_inverseViewMatrix * vec4(pos_cam, 1.0);
+			vec4 world = frx_inverseViewMatrix * vec4(pos_cam, 1.0);
 			vec4 shadow_pos_cam = frx_shadowViewMatrix * world;
 			int cascade = select_shadow_cascade(shadow_pos_cam.xyz);
 
@@ -181,9 +162,18 @@ void main() {
 			shadow_pos_proj.xyz /= shadow_pos_proj.w;
 
 			vec3 shadow_tex = shadow_pos_proj.xyz * 0.5 + 0.5;
-			float d = texture(u_shadow_map, vec4(shadow_tex.xy, cascade, shadow_tex.z+0.00001));
-			float dt = max(dot(sun_dir(), normalize(mat3(frx_inverseViewMatrix) * normal_cam)), 0.0);*/
-			//lights[stp] += d * dt * sky_color(sun_dir());
+			float d = texture(u_shadow_map, vec4(shadow_tex.xy, cascade, shadow_tex.z));
+			float dt = max(dot(sun_dir(), normalize(mat3(frx_inverseViewMatrix) * normal_cam)), 0.0);
+			lights[stp] += d * dt * sky_color(sun_dir());
+
+			vec3 sky = sky_color(mat3(frx_inverseViewMatrix) * dir_cam);
+
+			if(pos.z < 1.0) {
+				sky *= pow(sky_light, 4.0);
+			}
+
+			lights[stp] += sky;
+
 			break;
 		}
 
@@ -196,9 +186,7 @@ void main() {
 		);
 	}
 
-	//float steps_were_made = float(stp + 1);
-
-	vec3 color = lights[stp];// + sky_lights[stp] / steps_were_made;
+	vec3 color = lights[stp];
 
 	while(stp > 0) {
 		--stp;

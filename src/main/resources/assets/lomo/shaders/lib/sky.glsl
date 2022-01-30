@@ -3,7 +3,6 @@
 #include frex:shaders/api/view.glsl
 
 #include lomo:shaders/lib/transform.glsl
-#include lomo:shaders/lib/math.glsl
 #include lomo:shaders/lib/ray_sphere.glsl
 
 /* lomo:lib/sky.glsl */
@@ -78,12 +77,12 @@ vec3 sun_dir() {
 }
 
 vec3 sky_color(vec3 dir) {
-	vec3 eye_pos = vec3(0, 6.0 + 0.02, 0.0) + frx_cameraPos / 1000000.0;
+	vec3 eye_pos = vec3(0, 6.0 + 0.03, 0.0) + frx_cameraPos / 1000000.0;
 
 	ray eye = ray(eye_pos, dir);
 
 	float a = dot(dir, sun_dir());
-	vec3 rgb = pow3(vec3(7.2, 5.7, 4.2), 4.0);
+	vec3 rgb = pow(vec3(7.2, 5.7, 4.2), vec3(4.0));
 
 	vec3 color = resulting_attenuation(eye, sun_dir(), layer(vec3(0.0), 6.0, 0.08), 25000.0/rgb);
 	float sun = 0.0;
@@ -98,7 +97,7 @@ vec3 sky_color(vec3 dir) {
 	}
 	sun*=15.0;
 	color += color * sun;
-	color *= vec3(3.3, 1.2, 6.0) / 9.0;
+	color *= vec3(1.2, 0.8, 1.5);
 
 	return color;
 }

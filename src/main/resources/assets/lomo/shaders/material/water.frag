@@ -1,5 +1,4 @@
 #include frex:shaders/api/fragment.glsl
-#include frex:shaders/lib/math.glsl
 #include frex:shaders/api/world.glsl
 #include frex:shaders/lib/noise/noise4d.glsl
 #include lomo:shaders/pipeline/lomo_frag_header.glsl
