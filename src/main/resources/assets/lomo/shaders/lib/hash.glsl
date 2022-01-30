@@ -12,8 +12,8 @@ vec2 hash22(uvec2 x ) {
 
 vec2 hash23(uvec3 x) {
 	x = ((x>>8U)^x.yzx)*k;
-	x = ((x>>8U)^x.yzx)*k;
-	x = ((x>>8U)^x.yzx)*k;
+	x = ((x>>8U)^x.xyz)*k;
+	x = ((x>>8U)^x.zxy)*k;
 	
-	return vec2(x.xy)*(1.0/float(0xffffffffU));
+	return vec2(x.xy + x.z)*(1.0/float(0xffffffffU));
 }

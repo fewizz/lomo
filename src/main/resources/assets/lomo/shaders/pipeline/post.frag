@@ -154,7 +154,7 @@ void main() {
 
 		// done, leaving
 		if(stp == max_step_index) {
-			vec4 world = frx_inverseViewMatrix * vec4(pos_cam, 1.0);
+			/*vec4 world = frx_inverseViewMatrix * vec4(pos_cam, 1.0);
 			vec4 shadow_pos_cam = frx_shadowViewMatrix * world;
 			int cascade = select_shadow_cascade(shadow_pos_cam.xyz);
 
@@ -164,7 +164,7 @@ void main() {
 			vec3 shadow_tex = shadow_pos_proj.xyz * 0.5 + 0.5;
 			float d = texture(u_shadow_map, vec4(shadow_tex.xy, cascade, shadow_tex.z));
 			float dt = max(dot(sun_dir(), normalize(mat3(frx_inverseViewMatrix) * normal_cam)), 0.0);
-			lights[stp] += d * dt * sky_color(sun_dir());
+			lights[stp] += d * dt * sky_color(sun_dir());*/
 
 			vec3 sky = sky_color(mat3(frx_inverseViewMatrix) * dir_cam);
 
