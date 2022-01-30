@@ -169,12 +169,7 @@
 			"program": "extra_1_1",
 			"framebuffer": "cloud_e_0",
 			"samplerImages": []
-		}
-	]
-},
-
-"afterRenderHand": {
-	"passes": [
+		},
 		{
 			"name": "indexed_sort",
 			"program": "indexed_sort",
