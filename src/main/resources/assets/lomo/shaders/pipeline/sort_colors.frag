@@ -13,7 +13,7 @@ uniform sampler2D u_cloud_c;
 
 uniform sampler2D u_index_to_type;
 
-layout(location = 0) out vec4 out_colors[3];
+layout(location = 0) out vec4 out_colors[2];
 
 void main() {
 	ivec2 coord = ivec2(gl_FragCoord.xy);

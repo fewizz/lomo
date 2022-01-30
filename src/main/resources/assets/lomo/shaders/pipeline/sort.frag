@@ -27,16 +27,14 @@ void main() {
 		texelFetch(u_cloud, coord, 0)
 	);
 
-	uint index_to_type0 = floatBitsToUint(texelFetch(u_index_to_type, coord, 0).r);
+	uint index_to_type = floatBitsToUint(texelFetch(u_index_to_type, coord, 0).r);
 
-	uint index_to_type[7];
-	for(uint i = 0u; i < 7u; i++) {
-		index_to_type[i] = (index_to_type0 >> (4u*i)) & 0xFu;
+	uint indices[2];
+
+	for(uint i = 0u; i < 2u; i++) {
+		indices[i] = (index_to_type >> (4u*i)) & 0xFu;
 	}
 
-	out_values[0] = values[index_to_type[0]];
-
-	uint i = 0u;
-	while(index_to_type[i] == 2u) ++i;
-	out_values[1] = values[index_to_type[i]];
+	out_values[0] = values[indices[0]];
+	out_values[1] = values[indices[0] != 2u ? indices[0] : indices[1]];
 }

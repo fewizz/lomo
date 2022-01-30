@@ -128,14 +128,15 @@ int check_if_intersects(inout fb_pos pos, vec3 dir, sampler2DArray s_depth, samp
 	plane p = plane_from_pos_and_normal(vec3(vec2(0.5), real_depth), normal_ws);
 	vec3 ray_pos = vec3(inner_as_vec2(pos.m), pos.z);
 	float depth_at_pos = ray_plane_intersection(ray(ray_pos, vec3(0, 0, 1)), p).dist;
-	if(depth_at_pos < 0.0) return SURFACE_UNDER;
+	//if(depth_at_pos < 0.0) return SURFACE_UNDER;
 	ray r = ray(ray_pos, dir);
 	ray_plane_intersection_result res = ray_plane_intersection(r, p);
 	vec3 intersection_pos = r.pos + r.dir * res.dist;
 
 	if(
 		(dot(normal_ws, dir) > 0 && res.dist == 0) ||
-		res.dist < 0. || any(lessThan(intersection_pos.xy, vec2(0.0))) || any(greaterThan(intersection_pos.xy, vec2(1.0)))) {	
+		res.dist < 0. || any(lessThan(intersection_pos.xy, vec2(0.0))) || any(greaterThan(intersection_pos.xy, vec2(1.0)))
+	) {
 		return SURFACE_DONT_INTERSECT;
 	}
 

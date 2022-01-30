@@ -76,10 +76,11 @@ void main() {
 	const int max_step_index = steps - 1;
 	vec3 lights[steps];
 	vec3 colors[steps];
-	vec3 sky_lights[steps];
-	vec3 sun_lights[steps];
 
-	float initial_depth = texelFetch(u_depths, ivec3(gl_FragCoord.xy, 0), 0).r;
+	for(int i = 0; i < steps; ++i) {
+		lights[i] = vec3(0.0);
+		colors[i] = vec3(0.0);
+	}
 
 	fb_pos pos = fb_pos(
 		ufp16vec2_from_vec2(gl_FragCoord.xy),
@@ -88,6 +89,8 @@ void main() {
 
 	vec3 pos_cam = cam_near(gl_FragCoord.xy);
 	vec3 dir_cam = cam_dir_to_z1(gl_FragCoord.xy);
+
+	float initial_depth = texelFetch(u_depths, ivec3(gl_FragCoord.xy, 0), 0).r;
 
 	fb_traversal_result result = fb_traversal_result(
 		initial_depth >= 1.0 ? TRAVERSAL_OUT_OF_FB : TRAVERSAL_SUCCESS,
@@ -102,16 +105,22 @@ void main() {
 		bool under = result.code == TRAVERSAL_POSSIBLY_UNDER;
 		bool out_of_fb = result.code == TRAVERSAL_OUT_OF_FB;
 
+		if(!success) {
+			if(under) lights[stp] += vec3(1.0, 0.0, 0.0);
+			if(out_of_fb) lights[stp] += vec3(0.0, 0.0, 1.0);
+			break;
+		}
+
 		// fail branch
 		if(out_of_fb || under) {
-			lights[stp] = vec3(0.0);
-			sun_lights[stp] = vec3(0.0);
-			sky_lights[stp] = sky_color(mat3(frx_inverseViewMatrix) * dir_cam);
+			//lights[stp] = vec3(0.0);
+			//sun_lights[stp] = vec3(0.0);
+			lights[stp] = vec3(1.0);//sky_color(mat3(frx_inverseViewMatrix) * dir_cam);
 
-			if(result.pos.z < 1.0) {
-				vec4 extras = texelFetch(u_extras_0, ivec3(outer_as_uvec2(pos.m), 0), 0);
-				sky_lights[stp] *= extras.y * extras.y;
-			}
+			//if(result.pos.z < 1.0) {
+				//vec4 extras = texelFetch(u_extras_0, ivec3(outer_as_uvec2(pos.m), 0), 0);
+				//lights[stp] *= extras.y * extras.y;
+			//}
 
 			break;
 		}
@@ -150,30 +159,31 @@ void main() {
 		);
 		vec3 dir_win = cam_dir_to_win(pos_cam, dir_cam);
 
-		vec3 light = vec3(0.0);
-		vec3 color = pow3(texelFetch(u_colors, ivec3(uxy, 0), 0).rgb, 2.2);
+		//vec3 light = vec3(0.0);
+		vec3 color = pow(texelFetch(u_colors, ivec3(uxy, 0), 0).rgb, vec3(2.2));
 
-		float dist = distance(prev_pos_cam, pos_cam) / 1000000.0;
-		light = fog_color(mat3(frx_inverseViewMatrix) * dir_cam, dist) * sky_light * sky_light;
-		sky_lights[stp] = sky_color(mat3(frx_inverseViewMatrix) * dir_cam) * sky_light * sky_light;
+		//float dist = distance(prev_pos_cam, pos_cam) / 1000000.0;
+		//light = fog_color(mat3(frx_inverseViewMatrix) * dir_cam, dist) * sky_light * sky_light;
+		//sky_lights[stp] = sky_color(mat3(frx_inverseViewMatrix) * dir_cam) * sky_light * sky_light;
 
-		vec4 world = frx_inverseViewMatrix * vec4(pos_cam, 1.0);
-		vec4 shadow_pos_cam = frx_shadowViewMatrix * world;
-		int cascade = select_shadow_cascade(shadow_pos_cam.xyz);
+		//sun_lights[stp] = d * dt * sky_color(sun_dir());
 
-		vec4 shadow_pos_proj = frx_shadowProjectionMatrix(cascade) * shadow_pos_cam;
-		shadow_pos_proj.xyz /= shadow_pos_proj.w;
-
-		vec3 shadow_tex = shadow_pos_proj.xyz * 0.5 + 0.5;
-		float d = texture(u_shadow_map, vec4(shadow_tex.xy, cascade, shadow_tex.z));
-		float dt = clamp(dot(sun_dir(), normalize(mat3(frx_inverseViewMatrix) * normal_cam)), 0.0, 1.0);
-		sun_lights[stp] = d * dt * sky_color(sun_dir());
-
-		lights[stp] = light + color*pow(block_light, 4);
+		lights[stp] = color*pow(block_light, 4);
 		colors[stp] = color*(1.0 - pow(block_light, 4));
 
-		// we're done, leaving
+		// done, leaving
 		if(stp == max_step_index) {
+			/*vec4 world = frx_inverseViewMatrix * vec4(pos_cam, 1.0);
+			vec4 shadow_pos_cam = frx_shadowViewMatrix * world;
+			int cascade = select_shadow_cascade(shadow_pos_cam.xyz);
+
+			vec4 shadow_pos_proj = frx_shadowProjectionMatrix(cascade) * shadow_pos_cam;
+			shadow_pos_proj.xyz /= shadow_pos_proj.w;
+
+			vec3 shadow_tex = shadow_pos_proj.xyz * 0.5 + 0.5;
+			float d = texture(u_shadow_map, vec4(shadow_tex.xy, cascade, shadow_tex.z+0.00001));
+			float dt = max(dot(sun_dir(), normalize(mat3(frx_inverseViewMatrix) * normal_cam)), 0.0);*/
+			//lights[stp] += d * dt * sky_color(sun_dir());
 			break;
 		}
 
@@ -187,27 +197,19 @@ void main() {
 		);
 	}
 
-	float steps_were_made = float(stp + 1);
+	//float steps_were_made = float(stp + 1);
 
-	vec3 color = lights[stp] + sky_lights[stp] / steps_were_made;
+	vec3 color = lights[stp];// + sky_lights[stp] / steps_were_made;
 
 	while(stp > 0) {
 		--stp;
-		color =  colors[stp] * (
-			color
-			+
-			lights[stp]
-			+
-			sky_lights[stp] / steps_were_made
-			+
-			(steps_were_made > 1 ? sun_lights[stp] / (steps_were_made - 1) : vec3(0.0))
-		);
+		color =  colors[stp] * (color + lights[stp]);
 	}
 
 	out_color = vec4(
 		mix(
 			max(texelFetch(u_accum_0, ivec2(gl_FragCoord.xy), 0).rgb, vec3(0.0)),
-			pow3(color, 1.0 / 2.2),
+			pow(color, vec3(1.0 / 2.2)),
 			0.5
 		),
 		1.0

@@ -8,110 +8,68 @@
 
 /* lomo:lib/sky.glsl */
 
-struct planet {
+struct layer {
 	vec3 pos;
-	float rad;
-	float atmos_h;
+	float bottom;
+	float height;
 };
 
-ray_sphere_intersection_result ray_planet_path(ray r,  planet p, bool to_star) {
-	sphere atmosphere = sphere(p.pos, p.rad + p.atmos_h);
-	sphere planet_sphere = sphere(p.pos, p.rad);
+vec2 ray_layer_intersection(ray r, layer l, bool to_space) {
+	sphere top_sphere = sphere(l.pos, l.bottom + l.height);
+	sphere bot_sphere = sphere(l.pos, l.bottom);
 	
-	ray_sphere_intersection_result atmos_dist = ray_sphere_intersection(r, atmosphere);
-	ray_sphere_intersection_result planet_dist = ray_sphere_intersection(r, planet_sphere);
+	ray_sphere_intersection_result top = ray_sphere_intersection(r, top_sphere);
+	ray_sphere_intersection_result bot = ray_sphere_intersection(r, bot_sphere);
 
-	if(planet_dist.success) {
-		if(planet_dist.close < 0. && planet_dist.far > 0.)
-			return ray_sphere_intersection_result(true, 0.0, atmos_dist.far);
-			
-		if(planet_dist.close > 0.)
-			return ray_sphere_intersection_result(true, max(atmos_dist.close, 0.), to_star ? atmos_dist.far : planet_dist.close);
-		if(atmos_dist.far > 0.)
-			return ray_sphere_intersection_result(true, max(planet_dist.far, 0.), atmos_dist.far);
+	if(bot.success) {
+		if(bot.close < 0.0 && bot.far > 0.0) {
+			return vec2(0.0, top.far);
+		}
+		if(bot.close > 0.0) {
+			return vec2(max(top.close, 0.0), to_space ? top.far : bot.close);
+		}
+		if(top.far > 0.0){
+			return vec2(max(bot.far, 0.0), top.far);
+		}
 	}
 	else {
-		return ray_sphere_intersection_result(true, max(atmos_dist.close, 0.), atmos_dist.far);
+		return vec2(max(top.close, 0.0), top.far);
 	}
 	
-	return ray_sphere_intersection_result(false, 0.0, 0.0);
+	return vec2(0.0, 0.0);
 }
 
-float density_ratio(float h, float H) {
-	return exp(-h/H);
+float density_ratio(float h) {
+	return exp(-h/0.06);
 }
 
-float density_ratio(vec3 point, planet p) {
-	return density_ratio(distance(point, p.pos) - p.rad, p.atmos_h);
+float density_ratio(vec3 point, layer l) {
+	return density_ratio(distance(point, l.pos) - l.bottom);
 }
 
-const int sky_steps = 3;
-
-vec3 od_integration(vec3 po, vec3 dir, float dist, planet p) {
-	float stp = dist / float(sky_steps);
-	vec3 result = vec3(0.0);
-	
-	po += dir * stp / 2.0;
-	
-	for(int i = 0; i < sky_steps; i++) {
-		result += density_ratio(po, p) * stp;
-		po += dir * stp;
-	}
-	
-	return result;
+float od_integration(vec3 po, vec3 dir, float dist, layer l) {	
+	return density_ratio(po + dir * dist / 2.0, l) * dist;
 }
 
-float henyey_greenstein_phase_function(float g, float cosa) {
-	return 3.0*(1.0-g*g)/(2.0*(2.0+g*g)) * (1.0+cosa*cosa)/pow(1.0+g*g-2.0*g*cosa, 3.0/2.0);
-}
+vec3 resulting_attenuation(ray v, vec3 star_dir, layer l, vec3 coeffs) {
+	vec2 atmo_range = ray_layer_intersection(v, l, false);
+	float atmo_dist = (atmo_range[1] - atmo_range[0]);
 
-const planet earth = planet(
-	vec3(0.0),    // pos
-	6.,           // earth_rad
-	0.06          // atmos_h
-);
+	v.pos += v.dir * atmo_range[0];
+	v.pos += v.dir * atmo_dist / 2.0;
 
-vec3 resulting_attenuation(ray v, float dist, vec3 star_dir, planet p, vec3 coeffs, float phase) {
-	vec3 result = vec3(0.0);
-	
-	float path = 0.0;
-	float stp = dist / float(sky_steps);
-	
-	ray begin = v;
-	v.pos += v.dir * (stp / 2.0);
-	
-	for(int i = 0; i < sky_steps; i++) {
-		ray r0 = ray(v.pos, star_dir);
-		ray_sphere_intersection_result pl_p0 = ray_planet_path(r0, earth, true);
-		
-		result +=
-			exp(
-				-density_ratio(v.pos, p)
-				-coeffs * (
-					od_integration(v.pos, star_dir, pl_p0.far, p) +
-					od_integration(begin.pos, v.dir, path, p)
-				)
+	ray ray_to_star = ray(v.pos, star_dir);
+	vec2 to_star_range = ray_layer_intersection(ray_to_star, l, true);
+
+	return
+		exp(
+			-density_ratio(v.pos, l)
+			-coeffs * (
+				od_integration(v.pos, star_dir, to_star_range[1], l)
 			)
-			* stp;
-		
-		path += stp;
-		v.pos += v.dir * stp;
-	}
-	
-	return phase*coeffs*result;
-}
-
-vec3 resulting_attenuation(ray v, vec3 star_dir, planet p, vec3 coeffs, float phase, float max_dist) {
-	ray_sphere_intersection_result pl_p = ray_planet_path(v, earth, false);
-
-	float dist = (pl_p.far - pl_p.close);
-	v.pos += v.dir * pl_p.close;
-
-	if(max_dist != -1) {
-		dist = min(dist, max_dist);
-	}
-
-	return resulting_attenuation(v, dist, star_dir, p, coeffs, phase);
+		) *
+		atmo_dist *
+		coeffs;
 }
 
 vec3 sun_dir() {
@@ -120,52 +78,27 @@ vec3 sun_dir() {
 }
 
 vec3 sky_color(vec3 dir) {
-	vec3 eye_pos = vec3(0, earth.rad + 0.01, 0.) + frx_cameraPos / 1000000.;
+	vec3 eye_pos = vec3(0, 6.0 + 0.02, 0.0) + frx_cameraPos / 1000000.0;
 
 	ray eye = ray(eye_pos, dir);
 
 	float a = dot(dir, sun_dir());
-	vec3 rgb1 = vec3(7.2, 5.7, 4.2);
-	vec3 rgb = pow3(rgb1, 4.0);
+	vec3 rgb = pow3(vec3(7.2, 5.7, 4.2), 4.0);
 
-	// TODO rename "planet"
-	planet molecules = planet(
-		vec3(0.),
-		earth.rad,
-		0.08
-	);
-
-	planet aerosols = planet(
-		vec3(0.0),
-		earth.rad,
-		0.012
-	);
-
-	vec3 color = vec3(0.0);
-
-	color += vec3(2.2, 2.0, 4.5) *
-		resulting_attenuation(eye, sun_dir(), molecules, 10000.0/rgb, 1.0, -1);
+	vec3 color = resulting_attenuation(eye, sun_dir(), layer(vec3(0.0), 6.0, 0.08), 25000.0/rgb);
+	float sun = 0.0;
+	float sun_a = 0.9999;
+	float h = 0.0003;
 	
-	color +=
-		resulting_attenuation(eye, sun_dir(), aerosols, rgb/100000.0, henyey_greenstein_phase_function(0.97, a), -1);
+	if(a > sun_a) {
+		sun = 1.0;
+	}
+	else if(a > sun_a - h) {
+		sun= (a - (sun_a - h)) / h;
+	}
+	sun*=15.0;
+	color += color * sun;
+	color *= vec3(3.3, 1.2, 6.0) / 9.0;
 
 	return color;
-}
-
-vec3 fog_color(vec3 dir, float dist) {
-	vec3 eye_pos = vec3(0, earth.rad + 0.001, 0.) + frx_cameraPos / 1000000.;
-
-	ray eye = ray(eye_pos, dir);
-
-	float a = dot(dir, sun_dir());
-	vec3 rgb1 = vec3(7.2, 5.7, 4.2);
-	vec3 rgb = pow3(rgb1, 4.0);
-
-	planet molecules = planet(
-		vec3(0.),
-		earth.rad,
-		0.002
-	);
-
-	return vec3(2.2, 2.0, 4.5) * resulting_attenuation(eye, sun_dir(), molecules, 1000000.0/rgb, 1.0, dist);
 }

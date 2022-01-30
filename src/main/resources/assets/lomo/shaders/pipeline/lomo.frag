@@ -48,6 +48,7 @@ void frx_pipelineFragment() {
 		out_extra_1 = vec4(0.0);
 	}
 	else {
+		out_geometric_normal = vec4(0.0);
 		out_normal = vec4(0);
 		out_extra_0 = vec4(0);
 		out_extra_1 = vec4(0);
