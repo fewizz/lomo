@@ -4,7 +4,6 @@
 /* lomo:pipeline/sort.frag */
 
 uniform sampler2D u_solid_d;
-uniform sampler2D u_solid_before_hand_d;
 uniform sampler2D u_translucent_d;
 uniform sampler2D u_entity_d;
 uniform sampler2D u_particle_d;
@@ -17,9 +16,8 @@ layout(location = 1) out float out_type_to_index;
 void main() {
 	ivec2 coord = ivec2(gl_FragCoord.xy);
 
-	float depths[7] = float[](
+	float depths[6] = float[](
 		texelFetch(u_solid_d, coord, 0).r,
-		texelFetch(u_solid_before_hand_d, coord, 0).r,
 		texelFetch(u_translucent_d, coord, 0).r,
 		texelFetch(u_entity_d, coord, 0).r,
 		texelFetch(u_particle_d, coord, 0).r,
@@ -27,16 +25,16 @@ void main() {
 		texelFetch(u_cloud_d, coord, 0).r
 	);
 
-	bool done[7] = bool[](false, false, false, false, false, false, false);
-	uint type_to_index[7];
-	uint index_to_type[7];
+	bool done[6] = bool[](false, false, false, false, false, false);
+	uint type_to_index[6];
+	uint index_to_type[6];
 
 	uint begin = 0u;
 	float prev_min = -1;
 
-	for(uint i = begin; i < 7u; i++) {
+	for(uint i = begin; i < 6u; i++) {
 		float current_min = 1.01;
-		for(uint x = 0u; x < 7u; x++) {
+		for(uint x = 0u; x < 6u; x++) {
 			if(done[x]) continue;
 
 			float d = depths[x];
@@ -56,7 +54,7 @@ void main() {
 	uint result_type_to_index = 0u;
 	uint result_index_to_type = 0u;
 
-	for(uint i = 0u; i < 7u; i++) {
+	for(uint i = 0u; i < 6u; i++) {
 		result_type_to_index |= type_to_index[i] << (i*4u);
 		result_index_to_type |= index_to_type[i] << (i*4u);
 	}

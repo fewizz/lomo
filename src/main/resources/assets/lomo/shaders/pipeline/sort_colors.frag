@@ -4,7 +4,6 @@
 /* lomo:pipeline/copy_to_array.frag */
 
 uniform sampler2D u_solid_c;
-uniform sampler2D u_solid_before_hand_c;
 uniform sampler2D u_translucent_c;
 uniform sampler2D u_entity_c;
 uniform sampler2D u_particle_c;
@@ -13,14 +12,13 @@ uniform sampler2D u_cloud_c;
 
 uniform sampler2D u_index_to_type;
 
-layout(location = 0) out vec4 out_colors[2];
+layout(location = 0) out vec4 out_colors;
 
 void main() {
 	ivec2 coord = ivec2(gl_FragCoord.xy);
 
-	vec4 values[7] = vec4[] (
+	vec4 values[6] = vec4[] (
 		texelFetch(u_solid_c, coord, 0),
-		texelFetch(u_solid_before_hand_c, coord, 0),
 		texelFetch(u_translucent_c, coord, 0),
 		texelFetch(u_entity_c, coord, 0),
 		texelFetch(u_particle_c, coord, 0),
@@ -29,28 +27,18 @@ void main() {
 	);
 
 	uint index_to_type = floatBitsToUint(texelFetch(u_index_to_type, coord, 0).r);
-	uint indices[7];
+	uint indices[6];
 
-	for(uint i = 0u; i < 7u; i++) {
+	for(uint i = 0u; i < 6u; i++) {
 		indices[i] = (index_to_type >> (4u*i)) & 0xFu;
 	}
 
 	// with translucent
-	vec3 color = values[indices[6]].rgb;
+	vec3 color = values[indices[5]].rgb;
 
-	for(int i = 5; i >= 0; --i) {
+	for(int i = 4; i >= 0; --i) {
 		color = blend(color, values[indices[i]]);
 	}
 
-	out_colors[0] = vec4(color, 1.0);
-
-	// without translucent
-	values[2] = vec4(0.0);
-
-	color = values[indices[6]].rgb;
-	for(int i = 5; i >= 0; --i) {
-		color = blend(color, values[indices[i]]);
-	}
-
-	out_colors[1] = vec4(color, 1.0);
+	out_colors = vec4(color, 1.0);
 }

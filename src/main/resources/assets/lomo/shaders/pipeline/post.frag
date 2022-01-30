@@ -12,13 +12,13 @@
 
 /* lomo:post.frag */
 
-uniform sampler2DArray u_colors;
-uniform sampler2DArray u_normals;
-uniform sampler2DArray u_extras_0;
-uniform sampler2DArray u_extras_1;
-uniform sampler2DArray u_depths;
-uniform sampler2DArray u_win_normals;
-uniform sampler2DArray u_hi_depths;
+uniform sampler2D u_colors;
+uniform sampler2D u_normals;
+uniform sampler2D u_extras_0;
+uniform sampler2D u_extras_1;
+uniform sampler2D u_depths;
+uniform sampler2D u_win_normals;
+uniform sampler2D u_hi_depths;
 uniform sampler2D u_accum_0;
 uniform sampler2DArrayShadow u_shadow_map;
 
@@ -90,7 +90,7 @@ void main() {
 	vec3 pos_cam = cam_near(gl_FragCoord.xy);
 	vec3 dir_cam = cam_dir_to_z1(gl_FragCoord.xy);
 
-	float initial_depth = texelFetch(u_depths, ivec3(gl_FragCoord.xy, 0), 0).r;
+	float initial_depth = texelFetch(u_depths, gl_FragCoord.xy, 0).r;
 
 	fb_traversal_result result = fb_traversal_result(
 		initial_depth >= 1.0 ? TRAVERSAL_OUT_OF_FB : TRAVERSAL_SUCCESS,
@@ -137,12 +137,12 @@ void main() {
 		// prev reflection dir is now incidence
 		vec3 incidence_cam = dir_cam;
 
-		vec4 extras = texelFetch(u_extras_0, ivec3(uxy, 0), 0);
+		vec4 extras = texelFetch(u_extras_0, vec2(uxy), 0);
 		float reflectivity = extras.x;
 		float block_light = extras.z;
 		float sky_light = extras.y;
 
-		vec3 geometric_normal_cam = texelFetch(u_normals, ivec3(uxy, 0), 0).xyz;
+		vec3 geometric_normal_cam = texelFetch(u_normals, vec2(uxy), 0).xyz;
 		//if(length(geometric_normal_cam) < 0.5) {
 		//	break;
 		//}
@@ -160,7 +160,7 @@ void main() {
 		vec3 dir_win = cam_dir_to_win(pos_cam, dir_cam);
 
 		//vec3 light = vec3(0.0);
-		vec3 color = pow(texelFetch(u_colors, ivec3(uxy, 0), 0).rgb, vec3(2.2));
+		vec3 color = pow(texelFetch(u_colors, ivec2(uxy), 0).rgb, vec3(2.2));
 
 		//float dist = distance(prev_pos_cam, pos_cam) / 1000000.0;
 		//light = fog_color(mat3(frx_inverseViewMatrix) * dir_cam, dist) * sky_light * sky_light;
@@ -192,8 +192,7 @@ void main() {
 			pos, dir_win,
 			u_hi_depths,
 			u_depths,
-			u_win_normals,
-			0u
+			u_win_normals
 		);
 	}
 

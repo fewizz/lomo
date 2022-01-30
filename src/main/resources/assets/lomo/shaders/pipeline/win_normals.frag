@@ -5,18 +5,18 @@
 
 /* lomo:pipeline/win_normals.frag */
 
-uniform sampler2DArray u_depths;
-uniform sampler2DArray u_normals;
+uniform sampler2D u_depths;
+uniform sampler2D u_normals;
 
 layout(location = 0) out vec3 out_normal;
 layout(location = 1) out float out_depth;
 
 void main() {
-	float depth_ws = texelFetch(u_depths, ivec3(gl_FragCoord.xy, frxu_layer), 0).r;
+	float depth_ws = texelFetch(u_depths, gl_FragCoord.xy, 0).r;
 	vec3 pos_win = vec3(gl_FragCoord.xy, depth_ws);
 	vec3 pos_cam = win_to_cam(pos_win);
 
-	vec3 normal_cam = texelFetch(u_normals, ivec3(gl_FragCoord.xy, frxu_layer), 0).xyz;
+	vec3 normal_cam = texelFetch(u_normals, gl_FragCoord.xy, 0).xyz;
 
 	if(length(normal_cam) < 0.5) {
 		out_normal = vec3(0.0, 0.0, -1.0);
