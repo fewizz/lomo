@@ -27,12 +27,6 @@ void main() {
 	);
 
 	uint index_to_type = floatBitsToUint(texelFetch(u_index_to_type, coord, 0).r);
-
-	//uint indices[2];
-
-	//for(uint i = 0u; i < 2u; i++) {
-	//	indices[i] = (index_to_type >> (4u*i)) & 0xFu;
-	//}
-	uint index = index_to_type & 0xFu;
-	out_values = values[indices[index]];
+	uint first_type = index_to_type & 0xFu;
+	out_values = values[first_type];
 }

@@ -90,7 +90,7 @@ void main() {
 	vec3 pos_cam = cam_near(gl_FragCoord.xy);
 	vec3 dir_cam = cam_dir_to_z1(gl_FragCoord.xy);
 
-	float initial_depth = texelFetch(u_depths, gl_FragCoord.xy, 0).r;
+	float initial_depth = texelFetch(u_depths, ivec2(gl_FragCoord.xy), 0).r;
 
 	fb_traversal_result result = fb_traversal_result(
 		initial_depth >= 1.0 ? TRAVERSAL_OUT_OF_FB : TRAVERSAL_SUCCESS,
@@ -105,11 +105,11 @@ void main() {
 		bool under = result.code == TRAVERSAL_POSSIBLY_UNDER;
 		bool out_of_fb = result.code == TRAVERSAL_OUT_OF_FB;
 
-		if(!success) {
-			if(under) lights[stp] += vec3(1.0, 0.0, 0.0);
-			if(out_of_fb) lights[stp] += vec3(0.0, 0.0, 1.0);
-			break;
-		}
+		//if(!success) {
+		//	if(under) lights[stp] += vec3(1.0, 0.0, 0.0);
+		//	if(out_of_fb) lights[stp] += vec3(0.0, 0.0, 1.0);
+		//	break;
+		//}
 
 		// fail branch
 		if(out_of_fb || under) {
@@ -118,7 +118,7 @@ void main() {
 			lights[stp] = vec3(1.0);//sky_color(mat3(frx_inverseViewMatrix) * dir_cam);
 
 			//if(result.pos.z < 1.0) {
-				//vec4 extras = texelFetch(u_extras_0, ivec3(outer_as_uvec2(pos.m), 0), 0);
+				//vec4 extras = texelFetch(u_extras_0, ivec3(outer_as_uvec2(pos.texel), 0), 0);
 				//lights[stp] *= extras.y * extras.y;
 			//}
 
@@ -129,26 +129,26 @@ void main() {
 		// swith to new pos
 		pos = result.pos;
 		vec3 prev_pos_cam = pos_cam;
-		pos_cam = win_to_cam(vec3(ufp16vec2_as_vec2(pos.m), pos.z));
+		pos_cam = win_to_cam(vec3(ufp16vec2_as_vec2(pos.texel), pos.z));
 
 		// for texture access
-		uvec2 uxy = outer_as_uvec2(pos.m);
+		uvec2 uxy = outer_as_uvec2(pos.texel);
 
 		// prev reflection dir is now incidence
 		vec3 incidence_cam = dir_cam;
 
-		vec4 extras = texelFetch(u_extras_0, vec2(uxy), 0);
+		vec4 extras = texelFetch(u_extras_0, ivec2(uxy), 0);
 		float reflectivity = extras.x;
 		float block_light = extras.z;
 		float sky_light = extras.y;
 
-		vec3 geometric_normal_cam = texelFetch(u_normals, vec2(uxy), 0).xyz;
+		vec3 geometric_normal_cam = texelFetch(u_normals, ivec2(uxy), 0).xyz;
 		//if(length(geometric_normal_cam) < 0.5) {
 		//	break;
 		//}
 		geometric_normal_cam = normalize(geometric_normal_cam);
 
-		vec3 normal_cam = compute_normal(incidence_cam, geometric_normal_cam, ufp16vec2_as_vec2(pos.m), reflectivity);
+		vec3 normal_cam = compute_normal(incidence_cam, geometric_normal_cam, ufp16vec2_as_vec2(pos.texel), reflectivity);
 
 		// update reflection dir
 		dir_cam = normalize(

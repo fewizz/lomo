@@ -66,14 +66,14 @@ float next_cell_common(inout ufp16vec2 pos, fp16vec2 dir, uint level) {
 }
 
 float depth_value(fb_pos pos, uint level, sampler2D s_hi_depth) {
-	return texelFetch(s_hi_depth, ufp16vec2_as_uvec2(pos.texel) >> cell_bits(level), int(level)).r;
+	return texelFetch(s_hi_depth, ivec2(ufp16vec2_as_uvec2(pos.texel) >> cell_bits(level)), int(level)).r;
 }
 
-float upper_depth_value(fb_pos pos, uint level, sampler2DArray s_hi_depth) {
+float upper_depth_value(fb_pos pos, uint level, sampler2D s_hi_depth) {
 	return level < last_level ? depth_value(pos, level+1u, s_hi_depth) : 0.0;
 }
 
-float lower_depth_value(fb_pos pos, uint level, sampler2DArray s_hi_depth) {
+float lower_depth_value(fb_pos pos, uint level, sampler2D s_hi_depth) {
 	return depth_value(pos, level, s_hi_depth);
 }
 
@@ -82,9 +82,8 @@ void find_lowest_lod(
 	inout uint level,
 	inout float upper_depth,
 	inout float lower_depth,
-	sampler2DArray s_hi_depth,
-	bool backwards,
-	uint f
+	sampler2D s_hi_depth,
+	bool backwards
 ) {
 	while(level > 0u && (pos.z > lower_depth || (!backwards && pos.z == lower_depth))) {
 		--level;
@@ -98,9 +97,8 @@ bool find_uppest_lod(
 	inout uint level,
 	inout float upper_depth,
 	inout float lower_depth,
-	sampler2DArray s_hi_depth,
-	bool backwards,
-	uint f
+	sampler2D s_hi_depth,
+	bool backwards
 ) {
 	int i = 0;
 	for(; level < last_level && (pos.z < upper_depth || (backwards && pos.z == upper_depth)); ++i) {
@@ -123,8 +121,8 @@ bool is_out_of_fb(fb_pos pos) {
 
 int check_if_intersects(inout fb_pos pos, vec3 dir, sampler2D s_depth, sampler2D s_win_normal) {
 	uvec2 o = outer_as_uvec2(pos.texel);
-	float real_depth = texelFetch(s_depth, vec2(o), 0).r;
-	vec3 normal_ws = normalize(texelFetch(s_win_normal, vec2(o), 0).xyz / vec3(frxu_size, 1.));
+	float real_depth = texelFetch(s_depth, ivec2(o), 0).r;
+	vec3 normal_ws = normalize(texelFetch(s_win_normal, ivec2(o), 0).xyz / vec3(frxu_size, 1.));
 	plane p = plane_from_pos_and_normal(vec3(vec2(0.5), real_depth), normal_ws);
 	vec3 ray_pos = vec3(inner_as_vec2(pos.texel), pos.z);
 	float depth_at_pos = ray_plane_intersection(ray(ray_pos, vec3(0, 0, 1)), p).dist;
@@ -158,7 +156,7 @@ fb_traversal_result traverse_fb(
 
 	if(length(dir_ws.xy) == 0 || (dir.x.value == 0 && dir.y.value == 0)) {
 		float z = pos.z;
-		float depth = texelFetch(s_depth, outer_as_uvec2(pos.texel), 0).r;
+		float depth = texelFetch(s_depth, ivec2(outer_as_uvec2(pos.texel)), 0).r;
 		pos.z = depth;
 
 		if(!backwards && depth < 1.0) {

@@ -920,17 +920,6 @@
 		"depthAttachment": { "image": "solid_d", "clearDepth": 1.0 }
 	},
 	{
-		"name": "solid_before_hand_cnged",
-		"colorAttachments": [
-			{ "image": "solid_before_hand_c", "clearColor": "c:" },
-			{ "image": "solid_before_hand_n", "clearColor": "c:" },
-			{ "image": "solid_before_hand_g", "clearColor": "c:" },
-			{ "image": "solid_before_hand_e_0", "clearColor": "c:" },
-			{ "image": "solid_before_hand_e_1", "clearColor": "c:" },
-			{ "image": "solid_before_hand_d", "clearColor": "c:" }
-		]
-	},
-	{
 		"name": "entity_cnged",
 		"colorAttachments": [
 			{ "image": "entity_c", "clearColor": "c:" },
