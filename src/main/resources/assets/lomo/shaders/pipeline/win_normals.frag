@@ -14,6 +14,10 @@ layout(location = 1) out float out_depth;
 void main() {
 	float depth_ws = texelFetch(u_depths, ivec2(gl_FragCoord.xy), 0).r;
 	vec3 pos_win = vec3(gl_FragCoord.xy, depth_ws);
+
+	vec3 pos_ndc = win_to_ndc(pos_win);
+	float depth_ndc = win_z_to_ndc(depth_ws);
+
 	vec3 pos_cam = win_to_cam(pos_win);
 
 	vec3 normal_cam = texelFetch(u_normals, ivec2(gl_FragCoord.xy), 0).xyz;
@@ -43,29 +47,26 @@ void main() {
 		points[d] = r.pos + r.dir * res.dist;
 	}
 
-	vec3 dir_x_win = cam_to_win(points[0]);
-	vec3 dir_y_win = cam_to_win(points[1]);
+	vec3 dir_x_ndc = cam_to_ndc(points[0]) - pos_ndc;
+	vec3 dir_y_ndc = cam_to_ndc(points[1]) - pos_ndc;
 
-	vec3 norm_raw =
-		cross(
-			dir_y_win - pos_win,
-			dir_x_win - pos_win
-		);
+	vec3 norm = normalize(cross(dir_y_ndc, dir_x_ndc));
 
-	out_normal = normalize(norm_raw * vec3(frxu_size, 1.));
+	out_normal = norm;
 
-	vec3 norm = normalize(norm_raw);
-
-	p = plane_from_pos_and_normal(pos_win, norm);
-	float min_depth = depth_ws;
+	p = plane_from_pos_and_normal(pos_ndc, norm);
+	float min_depth = depth_ndc;
 
 	for(int x = -1; x <= 1; x+=2) {
 		for(int y = -1; y <= 1; y+=2) {
-			ray r = ray(vec3(pos_win.xy, 0) + vec3(x, y, 0) / 2.0, vec3(0, 0, 1));
+			ray r = ray(
+				vec3(pos_ndc.xy, -1.0) + vec3(x, y, 0) / 2.0 / vec3(frxu_size.xy / 2.0, 1.0),
+				vec3(0, 0, 1)
+			);
 			ray_plane_intersection_result res = ray_plane_intersection(r, p);
-			min_depth = min(min_depth, res.dist);
+			min_depth = min(min_depth, (r.pos + r.dir * res.dist).z);
 		}
 	}
 
-	out_depth = min_depth;
+	out_depth = ndc_z_to_win(min_depth);
 }

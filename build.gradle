@@ -12,8 +12,8 @@ repositories {
 	maven { url "https://maven.terraformersmc.com/releases/" }
 }
 
-sourceCompatibility = JavaVersion.VERSION_16
-targetCompatibility = JavaVersion.VERSION_16
+sourceCompatibility = JavaVersion.VERSION_17
+targetCompatibility = JavaVersion.VERSION_17
 
 archivesBaseName = project.archives_base_name
 version = project.mod_version
@@ -41,11 +41,11 @@ processResources {
 
 tasks.withType(JavaCompile).configureEach {
 	it.options.encoding = "UTF-8"
-	it.options.release = 16
+	it.options.release = 17
 }
 
 task shaderpack(type: Zip) {
-	outputs.upToDateWhen { false }
+	//outputs.upToDateWhen { false }
 	archiveFileName = "${archiveBaseName.get()}-${archiveVersion.get()}.zip"
 	destinationDirectory = jar.destinationDirectory
 	from sourceSets.main.resources

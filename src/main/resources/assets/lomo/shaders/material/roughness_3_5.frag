@@ -4,5 +4,5 @@
 /* lomo:material/reflection.frag */
 
 void frx_materialFragment() {
-	reflectivity = 0.8;
+	roughness = 0.35;
 }

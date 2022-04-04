@@ -17,3 +17,7 @@ vec2 hash23(uvec3 x) {
 	
 	return vec2(x.xy + x.z)*(1.0/float(0xffffffffU));
 }
+
+float hash13(uvec3 x) {
+	return hash23(x).x;
+}

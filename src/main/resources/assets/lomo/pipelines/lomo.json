@@ -3,6 +3,8 @@
 "nameKey": "pipeline.lomo.name",
 "descriptionKey": "pipeline.lomo.desc",
 
+"glslVersion": 400,
+
 "materialProgram": {
 	"vertexSource": "lomo:shaders/pipeline/lomo.vert",
 	"fragmentSource": "lomo:shaders/pipeline/lomo.frag"
@@ -114,9 +116,9 @@
 		]
 	},
 	{
-		"name": "extra_1_1",
+		"name": "extra_1_1_0",
 		"vertexSource": "lomo:shaders/pipeline/full_frame_depth_1.vert",
-		"fragmentSource": "lomo:shaders/pipeline/extra_1_1.frag",
+		"fragmentSource": "lomo:shaders/pipeline/extra_1_1_0.frag",
 		"samplers": []
 	},
 	{
@@ -134,7 +136,13 @@
 		{ "name": "clear_translucent", "framebuffer": "translucent_cnged", "program": "frex_clear" },
 		{ "name": "clear_weather", "framebuffer": "weather_cnged", "program": "frex_clear" },
 		{ "name": "clear_cloud", "framebuffer": "cloud_cnged", "program": "frex_clear" },
-		{ "name": "clear_particle", "framebuffer": "particle_cnged", "program": "frex_clear" }
+		{ "name": "clear_particle", "framebuffer": "particle_cnged", "program": "frex_clear" },
+		{
+			"name": "solid_extra_1_1_0",
+			"program": "extra_1_1_0",
+			"framebuffer": "solid_e_0",
+			"samplerImages": []
+		}
 	]
 },
 
@@ -165,8 +173,8 @@
 			"samplerImages": [ "cloud_n" ]
 		},
 		{
-			"name": "cloud_extra_1_1",
-			"program": "extra_1_1",
+			"name": "cloud_extra_1_1_0",
+			"program": "extra_1_1_0",
 			"framebuffer": "cloud_e_0",
 			"samplerImages": []
 		},
@@ -339,7 +347,7 @@
 	},
 	{
 		"name": "solid_d",
-		"internalFormat": "DEPTH_COMPONENT",
+		"internalFormat": "DEPTH_COMPONENT32",
 		"pixelFormat": "DEPTH_COMPONENT",
 		"pixelDataType": "FLOAT",
 		"texParams": [
@@ -409,7 +417,7 @@
 	},
 	{
 		"name": "translucent_d",
-		"internalFormat": "DEPTH_COMPONENT",
+		"internalFormat": "DEPTH_COMPONENT32",
 		"pixelFormat": "DEPTH_COMPONENT",
 		"pixelDataType": "FLOAT",
 		"texParams": [
@@ -479,7 +487,7 @@
 	},
 	{
 		"name": "entity_d",
-		"internalFormat": "DEPTH_COMPONENT",
+		"internalFormat": "DEPTH_COMPONENT32",
 		"pixelFormat": "DEPTH_COMPONENT",
 		"pixelDataType": "FLOAT",
 		"texParams": [
@@ -549,7 +557,7 @@
 	},
 	{
 		"name": "weather_d",
-		"internalFormat": "DEPTH_COMPONENT",
+		"internalFormat": "DEPTH_COMPONENT32",
 		"pixelFormat": "DEPTH_COMPONENT",
 		"pixelDataType": "FLOAT",
 		"texParams": [
@@ -619,7 +627,7 @@
 	},
 	{
 		"name": "cloud_d",
-		"internalFormat": "DEPTH_COMPONENT",
+		"internalFormat": "DEPTH_COMPONENT32",
 		"pixelFormat": "DEPTH_COMPONENT",
 		"pixelDataType": "FLOAT",
 		"texParams": [
@@ -689,7 +697,7 @@
 	},
 	{
 		"name": "particle_d",
-		"internalFormat": "DEPTH_COMPONENT",
+		"internalFormat": "DEPTH_COMPONENT32",
 		"pixelFormat": "DEPTH_COMPONENT",
 		"pixelDataType": "FLOAT",
 		"texParams": [
@@ -759,9 +767,9 @@
 	},
 	{
 		"name": "win_normals",
-		"internalFormat": "RGB16_SNORM",
+		"internalFormat": "RGB32F",
 		"pixelFormat": "RGB",
-		"pixelDataType": "SHORT",
+		"pixelDataType": "FLOAT",
 		"texParams": [
 			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
 			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
@@ -865,24 +873,24 @@
 	},
 	{
 		"name": "accum_0",
-		"internalFormat": "RGB16F",
-		"pixelFormat": "RGB",
+		"internalFormat": "RGBA32F",
+		"pixelFormat": "RGBA",
 		"pixelDataType": "FLOAT",
 		"texParams": [
-			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
-			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_MIN_FILTER", "val": "LINEAR" },
+			{ "name": "TEXTURE_MAG_FILTER", "val": "LINEAR" },
 			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
 			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
 		]
 	},
 	{
 		"name": "accum_1",
-		"internalFormat": "RGB16F",
-		"pixelFormat": "RGB",
+		"internalFormat": "RGBA32F",
+		"pixelFormat": "RGBA",
 		"pixelDataType": "FLOAT",
 		"texParams": [
-			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
-			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_MIN_FILTER", "val": "LINEAR" },
+			{ "name": "TEXTURE_MAG_FILTER", "val": "LINEAR" },
 			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
 			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
 		]
@@ -987,6 +995,12 @@
 		"name": "cloud_e_0",
 		"colorAttachments": [
 			{ "image": "cloud_e_0" }
+		]
+	},
+	{
+		"name": "solid_e_0",
+		"colorAttachments": [
+			{ "image": "solid_e_0" }
 		]
 	},
 	{

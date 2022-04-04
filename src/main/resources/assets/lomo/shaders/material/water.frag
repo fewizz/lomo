@@ -30,7 +30,7 @@ void frx_materialFragment() {
 
 	frag_normal = normalize(cross(pos0 - orig, pos1 - orig));
 
-	frx_fragColor = frx_vertexColor*0.25 + vec4(0, 1, 1, 0)*0.75;
+	frx_fragColor = mix(frx_vertexColor, vec4(1, 1, 1, 0.0), 0.8);
 
-	reflectivity = 1.0;
+	roughness = 0.0;
 }

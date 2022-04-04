@@ -3,17 +3,21 @@
 
 /* lomo:lib/transform.frag */
 
-vec2 win_xy_to_ndc(vec2 win_xy) {
+vec2 win_to_ndc(vec2 win_xy) {
 	return (win_xy / vec2(frxu_size)) * 2.0 - 1.0;
 }
 
 float win_z_to_ndc(float win_z) {
-	return (win_z - (gl_DepthRange.near + gl_DepthRange.far) / 2.0) / (gl_DepthRange.diff / 2.0);
+	return win_z * 2.0 - 1.0;//(win_z - (gl_DepthRange.near + gl_DepthRange.far) / 2.0) / (gl_DepthRange.diff / 2.0);
+}
+
+double win_z_to_ndc(double win_z) {
+	return win_z * double(2.0) - double(1.0);
 }
 
 vec3 win_to_ndc(vec3 win) {
 	return vec3(
-		win_xy_to_ndc(win.xy),
+		win_to_ndc(win.xy),
 		win_z_to_ndc(win.z)
 	);
 }
@@ -24,7 +28,7 @@ vec2 ndc_to_win(vec2 ndc_xy) {
 }
 
 float ndc_z_to_win(float ndc_z) {
-	return (gl_DepthRange.diff / 2.0 * ndc_z) + (gl_DepthRange.near + gl_DepthRange.far) / 2.0;
+	return ndc_z * 0.5 + 0.5;//(gl_DepthRange.diff / 2.0 * ndc_z) + (gl_DepthRange.near + gl_DepthRange.far) / 2.0;
 }
 
 vec3 ndc_to_win(vec3 ndc) {
@@ -77,24 +81,48 @@ vec3 cam_to_win(vec3 cam) {
 }
 
 vec3 cam_dir_to_win(vec3 pos_cs, vec3 dir_cs, mat4 projMat) {
-	vec4 p = vec4(pos_cs, 1.);
-	vec4 n = vec4(dir_cs, 0.);
-	n*=0.1;
+	dvec4 p = dvec4(pos_cs, 1.);
+	dvec4 n = dvec4(dir_cs, 0.);
+	//n*=.1;
 
-	vec4 X = (projMat * (p + n));
-	vec4 Y = (projMat * p);
+	dvec4 X = (dmat4(projMat) * (p + n));
+	dvec4 Y = (dmat4(projMat) * p);
 
-	return normalize(
-		vec3(frxu_size, gl_DepthRange.diff) * (
+	dvec3 r = normalize(
+		dvec3(
+			frxu_size,
+			1.0//gl_DepthRange.diff
+		) * (
 			(X.xyz / X.w)
 			-
 			(Y.xyz / Y.w)
 		)
 	);
+
+	return vec3(r);
+}
+
+vec3 cam_dir_to_ndc(vec3 pos_cs, vec3 dir_cs, mat4 projMat) {
+	vec4 p = vec4(pos_cs, 1.);
+	vec4 n = vec4(dir_cs, 0.);
+	//n*=0.1;
+
+	vec4 X = (projMat * (p + n));
+	vec4 Y = (projMat * p);
+
+	return normalize(
+		(X.xyz / X.w)
+		-
+		(Y.xyz / Y.w)
+	);
 }
 
 vec3 cam_dir_to_win(vec3 pos_cs, vec3 dir_cs) {
 	return cam_dir_to_win(pos_cs, dir_cs, frx_projectionMatrix);
+}
+
+vec3 cam_dir_to_ndc(vec3 pos_cs, vec3 dir_cs) {
+	return cam_dir_to_ndc(pos_cs, dir_cs, frx_projectionMatrix);
 }
 
 vec3 raw_normal_to_cam(vec3 raw_normal, mat4 viewMat) {
