@@ -1,6 +1,7 @@
 #include frex:shaders/api/header.glsl
 #include frex:shaders/api/view.glsl
 #include frex:shaders/api/world.glsl
+#include frex:shaders/lib/noise/noise3d.glsl
 
 #include lomo:shaders/lib/transform.glsl
 #include lomo:shaders/lib/sky.glsl
@@ -94,16 +95,42 @@ float sun_light_at(vec3 pos) {
 	return sun_light_at_world_pos(world.xyz / world.w);
 }
 
+vec3 fog(vec3 begin, vec3 end) {
+	float dist = distance(begin, end);
+
+	vec4 begin_sh0 = frx_shadowViewMatrix * frx_inverseViewMatrix * vec4(begin, 1.0);
+	vec3 begin_sh = begin_sh0.xyz / begin_sh0.w;
+
+	vec4 end_sh0 = frx_shadowViewMatrix * frx_inverseViewMatrix * vec4(end, 1.0);
+	vec3 end_sh = end_sh0.xyz / end_sh0.w;
+
+	float stp = 0.2;
+
+	vec3 result = vec3(0);
+
+	for(float i = -2; i <= 2; i+=stp) {
+		float i0 = i + stp * hash13(uvec3(gl_FragCoord.xy, (frx_renderSeconds + i) * 1000.0));
+
+		float t = exp(i0) / exp(2);
+		vec3 cur_sh = mix(begin_sh, end_sh, t);
+
+		vec3 fc = fog_color(
+			mat3(frx_inverseViewMatrix) * mix(begin, end, t)
+		);
+
+		result += fc * sun_light_at_shadow_pos(cur_sh) * dist * t;
+	}
+
+	return result;
+}
+
 void main() {
 	const int steps = 2;
-	const int max_step_index = steps - 1;
-	vec3 lights[steps];
-	vec3 sky_lights[steps];
-	vec3 colors[steps];
+	vec3 lights[steps + 1];
+	vec3 colors[steps + 1];
 
-	for(int i = 0; i < steps; ++i) {
+	for(int i = 0; i < steps + 1; ++i) {
 		lights[i] = vec3(0.0);
-		sky_lights[i] = vec3(0.0);
 		colors[i] = vec3(0.0);
 	}
 
@@ -118,108 +145,82 @@ void main() {
 
 	float initial_depth = texelFetch(u_depths, ivec2(gl_FragCoord.xy), 0).r;
 
-	vec3 sun_light = vec3(0.0);
-
-	if(frx_worldIsOverworld == 1) {
-		vec4 begin_sh0 = frx_shadowViewMatrix * frx_inverseViewMatrix * vec4(pos_cam, 1.0);
-		vec3 begin_sh = begin_sh0.xyz / begin_sh0.w;
-
-		vec3 dest_cam = win_to_cam(vec3(gl_FragCoord.xy, initial_depth));
-		float dist = distance(pos_cam, dest_cam);
-
-		vec4 end_sh0 = frx_shadowViewMatrix * frx_inverseViewMatrix * vec4(dest_cam, 1.0);
-		vec3 end_sh = end_sh0.xyz / end_sh0.w;
-
-		float stp = 0.2;
-
-		for(float i = -2; i <= 2; i+=stp) {
-			float i0 = i + stp * hash13(uvec3(gl_FragCoord.xy, (frx_renderSeconds + i) * 1000.0));
-
-			float t = exp(i0) / exp(2);
-			vec3 cur_sh = mix(begin_sh, end_sh, t);
-			sun_light += fog_color(
-				mat3(frx_inverseViewMatrix) * mix(pos_cam, dest_cam, t)
-			) * sun_light_at_shadow_pos(cur_sh) * dist * t;
-		}
-	}
-
 	fb_traversal_result result = fb_traversal_result(
 		initial_depth >= 1.0 ? TRAVERSAL_OUT_OF_FB : TRAVERSAL_SUCCESS,
 		fb_pos(uvec2(gl_FragCoord.xy), vec2(0.5), initial_depth)
 	);
 
 	int stp = 0;
-	bool success;
-	bool under;
-	bool out_of_fb;
 
-	for(;true; ++stp) {
-		// check ray trace result
-		success = result.code == TRAVERSAL_SUCCESS;
-		under = result.code == TRAVERSAL_POSSIBLY_UNDER;
-		out_of_fb = result.code == TRAVERSAL_OUT_OF_FB;
+	vec3 normal_cam;
+	float roughness;
+	float sky_light;
+	fb_pos prev_pos;
+	vec3 prev_pos_cam;
 
-		// fail branch
-		if(!success) {
-			--stp;
+	for(;true;) {
+		bool success   = result.code == TRAVERSAL_SUCCESS;
+		bool under     = result.code == TRAVERSAL_POSSIBLY_UNDER;
+		bool out_of_fb = result.code == TRAVERSAL_OUT_OF_FB;
+
+		prev_pos = pos;
+		pos = result.pos;
+
+		prev_pos_cam = pos_cam;
+		pos_cam = win_to_cam(vec3(pos.texel + pos.inner, pos.z));
+
+		if(frx_worldIsOverworld == 1) {
+			lights[stp] += fog(prev_pos_cam, pos_cam);
+
+			if(!success || stp == steps) {
+				vec3 light = sky_color(mat3(frx_inverseViewMatrix) * dir_cam);
+				if(stp > 0) {
+					float d = sun_light_at(pos_cam);
+					float dt = max(dot(sun_dir(), normalize(mat3(frx_inverseViewMatrix) * normal_cam)), 0.0);
+					vec3 sun = d * dt * sky_color(sun_dir());
+					light += sun * roughness;
+					light *= pow(sky_light, 8.0);
+					if(under) {
+						light *= 0.2;
+					}
+				}
+				lights[stp] += light;
+			}
+		}
+
+		if(!success || stp == steps) {
 			break;
 		}
 
-		// success branch
-		// swith to new pos
-		pos = result.pos;
-		vec3 prev_pos_cam = pos_cam;
-		pos_cam = win_to_cam(vec3(pos.texel + pos.inner, pos.z));
-
-		// prev reflection dir is now incidence
-		vec3 incidence_cam = dir_cam;
-
 		vec4 extras = texelFetch(u_extras_0, ivec2(pos.texel), 0);
-		float roughness = extras.x;
+		roughness = extras.x;
+		sky_light = extras.y;
 		float block_light = extras.z;
-		float sky_light = extras.y;
+
+		colors[stp] += pow(texelFetch(u_colors, ivec2(pos.texel), 0).rgb, vec3(2.2));
+		lights[stp] += colors[stp] * block_light * 256.0;
 
 		vec3 geometric_normal_cam = texelFetch(u_normals, ivec2(pos.texel), 0).xyz;
 		if(dot(geometric_normal_cam, geometric_normal_cam) < 0.4) {
 			break;
 		}
 		geometric_normal_cam = normalize(geometric_normal_cam);
+		normal_cam = compute_normal(dir_cam, geometric_normal_cam, pos.texel, roughness);
 
-		vec3 normal_cam = compute_normal(incidence_cam, geometric_normal_cam, pos.texel, roughness);
-
-		// update reflection dir
 		dir_cam = normalize(
 			reflect(
-				incidence_cam,
+				dir_cam,
 				normal_cam
 			)
 		);
 
-		vec3 color = pow(texelFetch(u_colors, ivec2(pos.texel), 0).rgb, vec3(2.2));
-
-		lights[stp] = vec3(1.0) * pow(block_light * 1.23, 16.0);
-		colors[stp] = color;
-
-		if(frx_worldIsOverworld == 1) {
-			float d = sun_light_at(pos_cam);
-			float dt = max(dot(sun_dir(), normalize(mat3(frx_inverseViewMatrix) * normal_cam)), 0.0);
-
-			vec3 sun = d * dt * sky_color(sun_dir());
-			vec3 sky = sky_color(mat3(frx_inverseViewMatrix) * dir_cam);
-
-			if(pos.z < 1.0) {
-				sky *= pow(sky_light, 8.0);
-			}
-
-			sky_lights[stp] += sun + sky;
-			sky_lights[stp] *= roughness;
-		}
-
-		if(stp == max_step_index) {
-			break;
+		if(!success || stp == steps - 1) {
+			++stp;
+			continue;
 		}
 
 		// traverse, check results at next iteration
+		++stp;
 		pos.z -= (0.00001 + roughness * 0.00001) * pow(2, stp);
 
 		result = traverse_fb(
@@ -232,21 +233,11 @@ void main() {
 		);
 	}
 
-	vec3 light = vec3(0.0);
-
-	if(frx_worldIsOverworld == 1) {
-		light = sky_color(mat3(frx_inverseViewMatrix) * dir_cam);
-		if(result.pos.z < 1.0) {
-			vec4 extras = texelFetch(u_extras_0, ivec2(pos.texel), 0);
-			float roughness = extras.x;
-			float sky_light = extras.y;
-			light *= pow(fix_light_value(sky_light), 8.0) * (1.0 - roughness);
-		}
-	}
+	vec3 light = lights[stp];
+	--stp;
 
 	while(stp >= 0) {
-		//--stp;
-		light = colors[stp] * (light + sky_lights[stp] + lights[stp]);
+		light = lights[stp] + colors[stp] * light;
 		--stp;
 	}
 
@@ -261,7 +252,7 @@ void main() {
 	vec3 prev_ndc = prev_ndc0.xyz  / prev_ndc0.w;
 	vec3 prev_win = ndc_to_win(prev_ndc);
 
-	vec3 current_color = pow(sun_light + light, vec3(1.0 / 2.2));
+	vec3 current_color = pow(light, vec3(1.0 / 2.2));
 
 	vec3 prev_color = max(texture(u_accum_0, prev_ndc.xy * 0.5 + 0.5).rgb, vec3(0.0));
 	float prev_depth = texelFetch(u_accum_0, ivec2(prev_win.xy), 0).w;
@@ -281,7 +272,7 @@ void main() {
 		ratio = 1.0;
 	} else {
 		float prev_t = texelFetch(u_accum_0, ivec2(0), 0).w;
-		ratio = 0.1 + distance(current_world, prev_world) / (frx_renderSeconds - prev_t) / 60.0;
+		ratio = 0.1 + distance(current_world, prev_world) / (frx_renderSeconds - prev_t) / 50.0;
 		ratio = clamp(ratio, 0.0, 1.0);
 	}
 

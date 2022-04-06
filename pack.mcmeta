@@ -1,6 +1,6 @@
 {
 	"pack": {
 		"pack_format": 8,
-		"description": "Lomo shaders version ${version}"
+		"description": "Should be used with built-in canvas shaders for materials"
 	}
 }

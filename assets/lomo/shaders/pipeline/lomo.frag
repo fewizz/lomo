@@ -44,14 +44,14 @@ void frx_pipelineFragment() {
 
 		out_geometric_normal = vec4(geometric_normal, 1.0);
 		out_normal = vec4(frag_normal, 1.0);
-		out_extra_0 = vec4(roughness, frx_fragLight.y, frx_fragLight.x, 1.0);
-		out_extra_1 = vec4(0.0);
+		out_extra_0 = vec4(roughness, frx_fragLight.y, frx_fragEmissive, 1.0);
+		//out_extra_1 = vec4(0.0);
 	}
 	else {
 		out_geometric_normal = vec4(0.0);
 		out_normal = vec4(0);
 		out_extra_0 = vec4(0);
-		out_extra_1 = vec4(0);
+		//out_extra_1 = vec4(0);
 	}
 
 	gl_FragDepth = gl_FragCoord.z;

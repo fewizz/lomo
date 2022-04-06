@@ -143,7 +143,7 @@ float lower_depth_value(fb_pos pos, uint level, sampler2D s_hi_depth) {
 }
 
 void find_lowest_lod(
-	inout fb_pos pos,
+	fb_pos pos,
 	inout uint level,
 	inout float upper_depth,
 	inout float lower_depth,
@@ -152,14 +152,13 @@ void find_lowest_lod(
 ) {
 	while(level > 0u && (pos.z > lower_depth || (!backwards && pos.z == lower_depth))) {
 		--level;
-
 		upper_depth = lower_depth;
 		lower_depth = lower_depth_value(pos, level, s_hi_depth);
 	}
 }
 
 void find_uppest_lod(
-	inout fb_pos pos,
+	fb_pos pos,
 	inout uint level,
 	inout float upper_depth,
 	inout float lower_depth,
@@ -196,14 +195,18 @@ int check_if_intersects(inout fb_pos pos, vec3 dir_ndc, sampler2D s_depth, sampl
 
 	vec3 ray_pos = vec3(pos.inner / vec2(frxu_size.xy / 2.0), win_z_to_ndc(pos.z));
 	float depth_at_pos = ray_plane_intersection(ray(ray_pos, vec3(0, 0, 1)), p).dist;
+
 	if(depth_at_pos < 0.0) return SURFACE_UNDER;
+
 	ray r = ray(ray_pos, dir_ndc);
 	ray_plane_intersection_result res = ray_plane_intersection(r, p);
 	vec3 intersection_pos = r.pos + r.dir * res.dist;
 
 	if(
 		(dot(normal_ndc, dir_ndc) > 0 && res.dist == 0) ||
-		res.dist < 0. || any(lessThan(intersection_pos.xy, vec2(0.0))) || any(greaterThan(intersection_pos.xy, vec2(1.0) / vec2(frxu_size.xy / 2.0)))
+		res.dist < 0. ||
+		any(lessThan(intersection_pos.xy, vec2(0.0))) ||
+		any(greaterThan(intersection_pos.xy, vec2(1.0) / vec2(frxu_size.xy / 2.0)))
 	) {
 		return SURFACE_DONT_INTERSECT;
 	}
@@ -251,7 +254,7 @@ fb_traversal_result traverse_fb(
 		fb_pos prev = pos;
 		float dist = next_cell_common(pos, dir, level);
 		pos.z += dist * (dir_ws.z / length(dir_ws.xy));
-		
+
 		if(pos.z > lower_depth || (!backwards && pos.z == lower_depth)) {
 			if(level > 0u) {
 				float mul = (lower_depth - prev.z) / (pos.z - prev.z);
@@ -263,20 +266,20 @@ fb_traversal_result traverse_fb(
 
 				if(y > 0.0) {
 					prev.texel.y += uint(y);
-					prev.inner.y = fract(y);
+					prev.inner.y = y - uint(y);
 				}
 				else {
 					prev.texel.y -= uint(-y) + 1u;
-					prev.inner.y = 1.0 - fract(-y);
+					prev.inner.y = uint(-y) + 1u - -y;
 				}
 
 				if(x > 0.0) {
 					prev.texel.x += uint(x);
-					prev.inner.x = fract(x);
+					prev.inner.x = x - uint(x);
 				}
 				else {
 					prev.texel.x -= uint(-x) + 1u;
-					prev.inner.x = 1.0 - fract(-x);
+					prev.inner.x = uint(-x) + 1u - -x;
 				}
 
 				pos = prev;
@@ -287,10 +290,12 @@ fb_traversal_result traverse_fb(
 			}
 			else {
 				int result = check_if_intersects(prev, dir_ndc, s_depth, s_win_normal);
-				if(prev.z >= 1.0)
-					return fb_traversal_result(TRAVERSAL_OUT_OF_FB, prev);
-				if(result == SURFACE_INTERSECT)
+				if(result == SURFACE_INTERSECT) {
+					if(prev.z >= 1.0) {
+						return fb_traversal_result(TRAVERSAL_OUT_OF_FB, prev);
+					}
 					return fb_traversal_result(TRAVERSAL_SUCCESS, prev);
+				}
 				if(result == SURFACE_UNDER)
 					return fb_traversal_result(TRAVERSAL_POSSIBLY_UNDER, prev);
 			}
@@ -298,8 +303,8 @@ fb_traversal_result traverse_fb(
 
 		/* switching the cell */
 		//if((pos.texel >> cell_size(level + 1u)) != (prev.texel >> cell_size(level + 1u) )) {
-		upper_depth = upper_depth_value(pos, level, s_hi_depth);
-		//}	
+			upper_depth = upper_depth_value(pos, level, s_hi_depth);
+		//}
 		lower_depth = lower_depth_value(pos, level, s_hi_depth);
 		//if(!find_uppest_lod(pos, level, upper_depth, lower_depth, s_hi_depth, backwards))
 		//{
