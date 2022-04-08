@@ -184,9 +184,9 @@ void main() {
 					vec3 sun = d * dt * sky_color(sun_dir());
 					light += sun * roughness;
 					light *= pow(sky_light, 8.0);
-					//if(under) {
-						//light *= 0.2;
-					//}
+					if(under && roughness > 0) { // TODO hack
+						light *= 0.2;
+					}
 				}
 				lights[stp] += light;
 			}
