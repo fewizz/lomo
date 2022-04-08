@@ -14,7 +14,7 @@ float lomo_water_h(vec3 pos) {
 void frx_materialFragment() {
 	frx_fragColor = mix(frx_vertexColor, vec4(1, 1, 1, 0.0), 0.8);
 
-	vec3 pos = frx_vertex.xyz + frx_modelToWorld.xyz;
+	vec3 pos = frx_vertex.xyz;
 
 	vec3 norm = normalize(frx_vertexNormal);
 	vec3 dir = vec3(norm.z, norm.x, norm.y);
