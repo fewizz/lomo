@@ -4,6 +4,7 @@
 "descriptionKey": "pipeline.lomo.desc",
 
 "glslVersion": 400,
+"enablePBR": true,
 
 "materialProgram": {
 	"vertexSource": "lomo:shaders/pipeline/lomo.vert",

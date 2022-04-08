@@ -124,7 +124,7 @@ vec3 sky_color(vec3 dir) {
 	}
 	sun*= 15.0;
 
-	return vec3(0.0, 0.5, 1.0) + sun;
+	return vec3(0.0, 1.0, 2.0) + sun;
 }
 
 vec3 fog_color(vec3 eye_offset) {

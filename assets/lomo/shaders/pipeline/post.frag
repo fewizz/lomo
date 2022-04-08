@@ -169,10 +169,14 @@ void main() {
 		prev_pos_cam = pos_cam;
 		pos_cam = win_to_cam(vec3(pos.texel + pos.inner, pos.z));
 
-		if(frx_worldIsOverworld == 1) {
-			lights[stp] += fog(prev_pos_cam, pos_cam);
+		bool end = !success || stp == steps;
 
-			if(!success || stp == steps) {
+		if(frx_worldIsOverworld == 1) {
+			if(!end) {
+				lights[stp] += fog(prev_pos_cam, pos_cam);
+			}
+
+			if(end) {
 				vec3 light = sky_color(mat3(frx_inverseViewMatrix) * dir_cam);
 				if(stp > 0) {
 					float d = sun_light_at(pos_cam);
@@ -188,7 +192,7 @@ void main() {
 			}
 		}
 
-		if(!success || stp == steps) {
+		if(end) {
 			break;
 		}
 
@@ -214,7 +218,7 @@ void main() {
 			)
 		);
 
-		if(!success || stp == steps - 1) {
+		if(stp == steps - 1) {
 			++stp;
 			continue;
 		}

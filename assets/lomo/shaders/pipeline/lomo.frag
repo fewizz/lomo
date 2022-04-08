@@ -1,5 +1,6 @@
 #include canvas:shaders/pipeline/diffuse.glsl
 #include canvas:shaders/pipeline/glint.glsl
+
 #include frex:shaders/api/world.glsl
 #include frex:shaders/api/player.glsl
 #include frex:shaders/api/material.glsl
@@ -35,16 +36,24 @@ void frx_pipelineFragment() {
 	) {
 		vec3 geometric_normal = normalize(frx_vertexNormal);
 
-		if(frag_normal == vec3(0.0)) frag_normal = geometric_normal;
+		if(dot(frx_fragNormal, frx_fragNormal) < 1.5) {
+			frx_fragNormal = geometric_normal;
+		}
+		else {
+			frx_fragNormal /= 2.0;
+		}
 
 		if(!frx_isHand) {
-			frag_normal = raw_normal_to_cam(frag_normal);
+			frx_fragNormal = raw_normal_to_cam(frx_fragNormal);
 			geometric_normal = raw_normal_to_cam(geometric_normal);
 		}
 
 		out_geometric_normal = vec4(geometric_normal, 1.0);
-		out_normal = vec4(frag_normal, 1.0);
-		out_extra_0 = vec4(roughness, frx_fragLight.y, frx_fragEmissive, 1.0);
+		out_normal = vec4(frx_fragNormal, 1.0);
+
+		if(frx_fragRoughness == 0) frx_fragRoughness = 0.99;
+
+		out_extra_0 = vec4(frx_fragRoughness, frx_fragLight.y, frx_fragEmissive, 1.0);
 		//out_extra_1 = vec4(0.0);
 	}
 	else {

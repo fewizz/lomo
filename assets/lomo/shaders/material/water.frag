@@ -1,7 +1,6 @@
 #include frex:shaders/api/fragment.glsl
 #include frex:shaders/api/world.glsl
 #include frex:shaders/lib/noise/noise4d.glsl
-#include lomo:shaders/pipeline/lomo_frag_header.glsl
 
 /* lomo:material/water.glsl */
 
@@ -13,6 +12,8 @@ float lomo_water_h(vec3 pos) {
 }
 
 void frx_materialFragment() {
+	frx_fragColor = mix(frx_vertexColor, vec4(1, 1, 1, 0.0), 0.8);
+
 	vec3 pos = frx_vertex.xyz + frx_modelToWorld.xyz;
 
 	vec3 norm = normalize(frx_vertexNormal);
@@ -28,9 +29,6 @@ void frx_materialFragment() {
 	pos0 += norm * lomo_water_h(pos0);
 	pos1 += norm * lomo_water_h(pos1);
 
-	frag_normal = normalize(cross(pos0 - orig, pos1 - orig));
-
-	frx_fragColor = mix(frx_vertexColor, vec4(1, 1, 1, 0.0), 0.8);
-
-	roughness = 0.0;
+	frx_fragNormal = normalize(cross(pos0 - orig, pos1 - orig)) * 2.0;
+	frx_fragRoughness = 0.0000001;
 }
