@@ -35,32 +35,31 @@ void frx_pipelineFragment() {
 		frx_renderTargetEntity
 	) {
 		vec3 geometric_normal = normalize(frx_vertexNormal);
+		vec3 tangent = normalize(frx_vertexTangent.xyz);
+		mat3 TBN = mat3(
+			tangent,
+			cross(geometric_normal, tangent),
+			geometric_normal
+		);
 
-		if(dot(frx_fragNormal, frx_fragNormal) < 1.5) {
-			frx_fragNormal = geometric_normal;
-		}
-		else {
-			frx_fragNormal /= 2.0;
-		}
+		vec3 normal = TBN * frx_fragNormal;
 
 		if(!frx_isHand) {
-			frx_fragNormal = raw_normal_to_cam(frx_fragNormal);
+			normal = raw_normal_to_cam(normal);
 			geometric_normal = raw_normal_to_cam(geometric_normal);
 		}
 
 		out_geometric_normal = vec4(geometric_normal, 1.0);
-		out_normal = vec4(frx_fragNormal, 1.0);
+		out_normal = vec4(normal, 1.0);
 
 		if(frx_fragRoughness == 0) frx_fragRoughness = 0.99;
 
 		out_extra_0 = vec4(frx_fragRoughness, frx_fragLight.y, frx_fragEmissive, 1.0);
-		//out_extra_1 = vec4(0.0);
 	}
 	else {
 		out_geometric_normal = vec4(0.0);
 		out_normal = vec4(0);
 		out_extra_0 = vec4(0);
-		//out_extra_1 = vec4(0);
 	}
 
 	gl_FragDepth = gl_FragCoord.z;
