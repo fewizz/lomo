@@ -7,6 +7,10 @@ vec2 win_to_ndc(vec2 win_xy) {
 	return (win_xy / vec2(frxu_size)) * 2.0 - 1.0;
 }
 
+dvec2 win_to_ndc(dvec2 win_xy) {
+	return (win_xy / dvec2(frxu_size)) * 2.0 - 1.0;
+}
+
 float win_z_to_ndc(float win_z) {
 	return win_z * 2.0 - 1.0;//(win_z - (gl_DepthRange.near + gl_DepthRange.far) / 2.0) / (gl_DepthRange.diff / 2.0);
 }
@@ -22,17 +26,40 @@ vec3 win_to_ndc(vec3 win) {
 	);
 }
 
+dvec3 win_to_ndc(dvec3 win) {
+	return dvec3(
+		win_to_ndc(win.xy),
+		win_z_to_ndc(win.z)
+	);
+}
+
+
 // ndc to win
 vec2 ndc_to_win(vec2 ndc_xy) {
 	return (ndc_xy * 0.5 + 0.5) * vec2(frxu_size);
 }
 
+dvec2 ndc_to_win(dvec2 ndc_xy) {
+	return (ndc_xy * 0.5 + 0.5) * dvec2(frxu_size);
+}
+
 float ndc_z_to_win(float ndc_z) {
-	return ndc_z * 0.5 + 0.5;//(gl_DepthRange.diff / 2.0 * ndc_z) + (gl_DepthRange.near + gl_DepthRange.far) / 2.0;
+	return ndc_z * 0.5 + 0.5;
+}
+
+double ndc_z_to_win(double ndc_z) {
+	return ndc_z * 0.5 + 0.5;
 }
 
 vec3 ndc_to_win(vec3 ndc) {
 	return vec3(
+		ndc_to_win(ndc.xy),
+		ndc_z_to_win(ndc.z)
+	);
+}
+
+dvec3 ndc_to_win(dvec3 ndc) {
+	return dvec3(
 		ndc_to_win(ndc.xy),
 		ndc_z_to_win(ndc.z)
 	);
@@ -60,8 +87,17 @@ vec3 ndc_to_cam(vec3 ndc, mat4 invProj) {
 	return v.xyz / v.w;
 }
 
+dvec3 ndc_to_cam(dvec3 ndc, dmat4 invProj) {
+	dvec4 v = invProj * dvec4(ndc, 1.0);
+	return v.xyz / v.w;
+}
+
 vec3 ndc_to_cam(vec3 ndc) {
 	return ndc_to_cam(ndc, frx_inverseProjectionMatrix);
+}
+
+dvec3 ndc_to_cam(dvec3 ndc) {
+	return ndc_to_cam(ndc, dmat4(frx_inverseProjectionMatrix));
 }
 
 vec3 win_to_cam(vec3 win, mat4 invProj) {

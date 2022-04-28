@@ -40,32 +40,31 @@ float dist_positive(uint texel, float inner, uint level) {
 	return cell_size_f(level) - dist_negative(texel, inner, level);
 }
 
-vec2 dists_for_axis(uint texel0, float inner0, uint level, float dir0) {
+float diag_for_axis(uint texel0, float inner0, uint level, float dir0) {
 	if(dir0 > 0) {
 		float axis = dist_positive(texel0, inner0, level);
 		float diag = axis / abs(dir0);
-		return vec2(axis, diag);
+		return diag;
 	} else
 	if(dir0 < 0) {
 		float axis = dist_negative(texel0, inner0, level);
 		float diag = axis / abs(dir0);
-		return vec2(axis, diag);
+		return diag;
 	}
 	else
-		return vec2(100000000.0F);
+		return 100000000.0F;
 }
 
 float next_cell_common(inout fb_pos pos, vec2 dir, uint level) {
-	vec2 x = dists_for_axis(pos.texel.x, pos.inner.x, level, dir.x);
-	vec2 y = dists_for_axis(pos.texel.y, pos.inner.y, level, dir.y);
+	float x = diag_for_axis(pos.texel.x, pos.inner.x, level, dir.x);
+	float y = diag_for_axis(pos.texel.y, pos.inner.y, level, dir.y);
 
-	vec2 axis_dists = vec2( x.x, y.x );
-	vec2  dir_dists = vec2( x.y, y.y );
+	vec2  dir_signs = sign(dir);
 
-	if(dir_dists.x < dir_dists.y) {
+	if(x < y) {
 		pos.texel.x -= pos.texel.x & cell_mask(level);
 
-		if(sign(dir.x) > 0.0) {
+		if(dir_signs.x > 0.0) {
 			pos.texel.x += cell_size(level);
 			pos.inner.x = 0.0;
 		} else {
@@ -73,7 +72,7 @@ float next_cell_common(inout fb_pos pos, vec2 dir, uint level) {
 			pos.inner.x = 1.0;
 		}
 
-		float y = pos.inner.y + dir.y * dir_dists.x;
+		float y = pos.inner.y + dir.y * x;
 		if(y > 0.0) {
 			pos.texel.y += uint(y);
 			pos.inner.y = fract(y);
@@ -82,12 +81,12 @@ float next_cell_common(inout fb_pos pos, vec2 dir, uint level) {
 			pos.texel.y -= uint(-y) + 1u;
 			pos.inner.y = 1.0 - fract(-y);
 		}
-		return dir_dists.x;
-	} else 
-	if(dir_dists.x > dir_dists.y) {
+		return x;
+	} else
+	if(x > y) {
 		pos.texel.y -= pos.texel.y & cell_mask(level);
 
-		if(sign(dir.y) > 0.0) {
+		if(dir_signs.y > 0.0) {
 			pos.texel.y += cell_size(level);
 			pos.inner.y = 0.0;
 		} else {
@@ -95,7 +94,7 @@ float next_cell_common(inout fb_pos pos, vec2 dir, uint level) {
 			pos.inner.y = 1.0;
 		}
 
-		float x = pos.inner.x + dir.x * dir_dists.y;
+		float x = pos.inner.x + dir.x * y;
 		if(x > 0.0) {
 			pos.texel.x += uint(x);
 			pos.inner.x = fract(x);
@@ -104,11 +103,11 @@ float next_cell_common(inout fb_pos pos, vec2 dir, uint level) {
 			pos.texel.x -= uint(-x) + 1u;
 			pos.inner.x = 1.0 - fract(-x);
 		}
-		return dir_dists.y;
+		return y;
 	} else {
 		pos.texel.x -= pos.texel.x & cell_mask(level);
 
-		if(sign(dir.x) > 0.0) {
+		if(dir_signs.x > 0.0) {
 			pos.texel.x += cell_size(level);
 			pos.inner.x = 0.0;
 		} else {
@@ -118,7 +117,7 @@ float next_cell_common(inout fb_pos pos, vec2 dir, uint level) {
 
 		pos.texel.y -= pos.texel.y & cell_mask(level);
 
-		if(sign(dir.y) > 0.0) {
+		if(dir_signs.y > 0.0) {
 			pos.texel.y += cell_size(level);
 			pos.inner.y = 0.0;
 		} else {
@@ -126,7 +125,7 @@ float next_cell_common(inout fb_pos pos, vec2 dir, uint level) {
 			pos.inner.y = 1.0;
 		}
 
-		return dir_dists.x;
+		return x;
 	}
 }
 
@@ -196,7 +195,7 @@ int check_if_intersects(inout fb_pos pos, vec3 dir_ndc, sampler2D s_depth, sampl
 	vec3 ray_pos = vec3(pos.inner / vec2(frxu_size.xy / 2.0), win_z_to_ndc(pos.z));
 	float depth_at_pos = ray_plane_intersection(ray(ray_pos, vec3(0, 0, 1)), p).dist;
 
-	if(depth_at_pos < 0.0) return SURFACE_UNDER;
+	//if(depth_at_pos < 0.0) return SURFACE_UNDER;
 
 	ray r = ray(ray_pos, dir_ndc);
 	ray_plane_intersection_result res = ray_plane_intersection(r, p);

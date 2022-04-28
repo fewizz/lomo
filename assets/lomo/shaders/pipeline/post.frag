@@ -43,12 +43,15 @@ int select_shadow_cascade(vec3 shadow_pos) {
 }
 
 vec3 compute_normal(vec3 incidence, vec3 geometric_normal, vec2 pos_win_xy, float roughness) {
-	float r = roughness * 3.1416 / 2.0;
+	float r = 3.1416 / 2.0;
 	vec2 rand = hash23(uvec3(frx_renderSeconds * 1000.0, pos_win_xy));
 
 	if(dot(-incidence, geometric_normal) < 0) geometric_normal *= -1;
 
-	float x = (rand.x * 2.0 - 1.0) * r;
+	float x = (rand.x * 2.0 - 1.0);
+	float s = sign(x);
+	x = pow(abs(x), 0.3 / (roughness + 0.00001)) * s;
+	x *= r;
 
 	vec3 new_normal = rotation(
 		x,
@@ -202,7 +205,7 @@ void main() {
 		float block_light = extras.z;
 
 		colors[stp] += pow(texelFetch(u_colors, ivec2(pos.texel), 0).rgb, vec3(2.2));
-		lights[stp] += colors[stp] * block_light * 256.0;
+		lights[stp] += colors[stp] * block_light * 4024.0;
 
 		vec3 geometric_normal_cam = texelFetch(u_normals, ivec2(pos.texel), 0).xyz;
 		if(dot(geometric_normal_cam, geometric_normal_cam) < 0.4) {
@@ -252,13 +255,13 @@ void main() {
 	vec4 current_world0 = frx_inverseViewMatrix * vec4(current_cam, 1.0);
 	vec3 current_world = current_world0.xyz / current_world0.w;
 
-	vec4 prev_ndc0 = frx_lastViewProjectionMatrix * vec4(current_world + (frx_cameraPos - frx_lastCameraPos), 1.0);
+	vec4 prev_ndc0 = frx_lastViewProjectionMatrix * vec4(dvec3(current_world) + (dvec3(frx_cameraPos) - dvec3(frx_lastCameraPos)), 1.0);
 	vec3 prev_ndc = prev_ndc0.xyz  / prev_ndc0.w;
 	vec3 prev_win = ndc_to_win(prev_ndc);
 
 	vec3 current_color = pow(light, vec3(1.0 / 2.2));
 
-	vec3 prev_color = max(texture(u_accum_0, prev_ndc.xy * 0.5 + 0.5).rgb, vec3(0.0));
+	vec3 prev_color = max(texture(u_accum_0, vec2(prev_ndc.xy * 0.5 + 0.5)).rgb, vec3(0.0));
 	float prev_depth = texelFetch(u_accum_0, ivec2(prev_win.xy), 0).w;
 
 	prev_win.z = prev_depth;
@@ -268,7 +271,7 @@ void main() {
 	vec4 prev_world0 = inverse(frx_lastViewProjectionMatrix) * vec4(prev_ndc, 1.0);
 	vec3 prev_world = prev_world0.xyz / prev_world0.w;
 
-	prev_world -= (frx_cameraPos - frx_lastCameraPos);
+	prev_world -= vec3(dvec3(frx_cameraPos) - dvec3(frx_lastCameraPos));
 
 	if(
 		texelFetch(u_extras_0, ivec2(gl_FragCoord.xy), 0).x == 0.0 ||
@@ -276,7 +279,7 @@ void main() {
 		ratio = 1.0;
 	} else {
 		float prev_t = texelFetch(u_accum_0, ivec2(0), 0).w;
-		ratio = 0.1 + distance(current_world, prev_world) / (frx_renderSeconds - prev_t) / 50.0;
+		ratio = float(0.1 + distance(current_world, prev_world) / (frx_renderSeconds - prev_t) / 50.0);
 		ratio = clamp(ratio, 0.0, 1.0);
 	}
 
