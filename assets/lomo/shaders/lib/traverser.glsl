@@ -186,6 +186,8 @@ int check_if_intersects(inout fb_pos pos, vec3 dir_ndc, sampler2D s_depth, sampl
 	float real_depth_ndc = win_z_to_ndc(real_depth_win);
 
 	vec3 normal_ndc = texelFetch(s_win_normal, ivec2(pos.texel), 0).xyz;
+	//normal_ndc.z *= 1.0;
+	//normal_ndc = normalize(normal_ndc);
 
 	plane p = plane_from_pos_and_normal(
 		vec3(vec2(0.5) / vec2(frxu_size.xy / 2.0), real_depth_ndc),
@@ -221,7 +223,8 @@ fb_traversal_result traverse_fb(
 	vec3 dir_ndc,
 	sampler2D s_hi_depth,
 	sampler2D s_depth,
-	sampler2D s_win_normal
+	sampler2D s_win_normal,
+	uint max_steps
 ) {
 	vec2 dir_xy = normalize(dir_ws.xy);
 	vec2 dir = dir_xy;
@@ -246,8 +249,8 @@ fb_traversal_result traverse_fb(
 	float upper_depth = upper_depth_value(pos, level, s_hi_depth);
 	find_uppest_lod(pos, level, upper_depth, lower_depth, s_hi_depth, backwards);
 	
-	int steps = 0;
-	while(steps++ < 100) {
+	uint steps = 0;
+	while(steps++ < max_steps) {
 		if(is_out_of_fb(pos)) return fb_traversal_result(TRAVERSAL_OUT_OF_FB, pos);
 
 		fb_pos prev = pos;

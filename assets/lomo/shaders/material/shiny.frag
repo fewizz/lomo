@@ -3,5 +3,5 @@
 /* lomo:material/reflection.frag */
 
 void frx_materialFragment() {
-	frx_fragRoughness = 0.0000001;
+	frx_fragRoughness = 0.0;
 }

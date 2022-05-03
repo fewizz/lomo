@@ -205,7 +205,7 @@ void main() {
 		float block_light = extras.z;
 
 		colors[stp] += pow(texelFetch(u_colors, ivec2(pos.texel), 0).rgb, vec3(2.2));
-		lights[stp] += colors[stp] * block_light * 4024.0;
+		lights[stp] += colors[stp] * block_light;
 
 		vec3 geometric_normal_cam = texelFetch(u_normals, ivec2(pos.texel), 0).xyz;
 		if(dot(geometric_normal_cam, geometric_normal_cam) < 0.4) {
@@ -236,7 +236,8 @@ void main() {
 			cam_dir_to_ndc(pos_cam, dir_cam),
 			u_hi_depths,
 			u_depths,
-			u_win_normals
+			u_win_normals,
+			uint(mix(30, 100, 1.0 - roughness))
 		);
 	}
 
@@ -273,15 +274,18 @@ void main() {
 
 	prev_world -= vec3(dvec3(frx_cameraPos) - dvec3(frx_lastCameraPos));
 
-	if(
-		texelFetch(u_extras_0, ivec2(gl_FragCoord.xy), 0).x == 0.0 ||
-		any(greaterThan(prev_ndc.xyz, vec3(1.0))) || any(lessThan(prev_ndc.xyz, vec3(-1.0)))) {
+	if(any(greaterThan(prev_ndc.xyz, vec3(1.0))) || any(lessThan(prev_ndc.xyz, vec3(-1.0)))) {
 		ratio = 1.0;
 	} else {
 		float prev_t = texelFetch(u_accum_0, ivec2(0), 0).w;
-		ratio = float(0.1 + distance(current_world, prev_world) / (frx_renderSeconds - prev_t) / 50.0);
-		ratio = clamp(ratio, 0.0, 1.0);
-	}
+		float r = texelFetch(u_extras_0, ivec2(gl_FragCoord.xy), 0).x;
+		ratio = 1.0 - pow(r, 0.1);
+		ratio = clamp(
+			ratio,
+			0.05 + distance(current_world, prev_world) / (frx_renderSeconds - prev_t) / 40.0,
+			1.0
+		);
+	};
 
 	out_color = vec4(
 		mix(

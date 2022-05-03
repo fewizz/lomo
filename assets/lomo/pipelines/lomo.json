@@ -361,9 +361,9 @@
 	},
 	{
 		"name": "solid_e_0",
-		"internalFormat": "RGB8",
+		"internalFormat": "RGB16F",
 		"pixelFormat": "RGB",
-		"pixelDataType": "UNSIGNED_BYTE",
+		"pixelDataType": "FLOAT",
 		"texParams": [
 			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
 			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
@@ -431,9 +431,9 @@
 	},
 	{
 		"name": "translucent_e_0",
-		"internalFormat": "RGB8",
+		"internalFormat": "RGB16F",
 		"pixelFormat": "RGB",
-		"pixelDataType": "UNSIGNED_BYTE",
+		"pixelDataType": "FLOAT",
 		"texParams": [
 			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
 			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
@@ -501,9 +501,9 @@
 	},
 	{
 		"name": "entity_e_0",
-		"internalFormat": "RGB8",
+		"internalFormat": "RGB16F",
 		"pixelFormat": "RGB",
-		"pixelDataType": "UNSIGNED_BYTE",
+		"pixelDataType": "FLOAT",
 		"texParams": [
 			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
 			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
@@ -571,9 +571,9 @@
 	},
 	{
 		"name": "weather_e_0",
-		"internalFormat": "RGB8",
+		"internalFormat": "RGB16F",
 		"pixelFormat": "RGB",
-		"pixelDataType": "UNSIGNED_BYTE",
+		"pixelDataType": "FLOAT",
 		"texParams": [
 			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
 			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
@@ -641,9 +641,9 @@
 	},
 	{
 		"name": "cloud_e_0",
-		"internalFormat": "RGB8",
+		"internalFormat": "RGB16F",
 		"pixelFormat": "RGB",
-		"pixelDataType": "UNSIGNED_BYTE",
+		"pixelDataType": "FLOAT",
 		"texParams": [
 			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
 			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
@@ -711,9 +711,9 @@
 	},
 	{
 		"name": "particle_e_0",
-		"internalFormat": "RGB8",
+		"internalFormat": "RGB16F",
 		"pixelFormat": "RGB",
-		"pixelDataType": "UNSIGNED_BYTE",
+		"pixelDataType": "FLOAT",
 		"texParams": [
 			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
 			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
@@ -768,9 +768,8 @@
 	},
 	{
 		"name": "win_normals",
-		"internalFormat": "RGB32F",
+		"internalFormat": "RGB16_SNORM",
 		"pixelFormat": "RGB",
-		"pixelDataType": "FLOAT",
 		"texParams": [
 			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
 			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
@@ -780,9 +779,9 @@
 	},
 	{
 		"name": "extras_0",
-		"internalFormat": "RGB8",
+		"internalFormat": "RGB16F",
 		"pixelFormat": "RGB",
-		"pixelDataType": "UNSIGNED_BYTE",
+		"pixelDataType": "FLOAT",
 		"texParams": [
 			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
 			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },

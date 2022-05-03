@@ -28,7 +28,7 @@ void main() {
 		return;
 	}
 
-	normal_cam = normalize(normal_cam);
+	//normal_cam = normalize(normal_cam);
 	if(dot(normal_cam, cam_dir_to_z1(gl_FragCoord.xy)) > 0) normal_cam *= -1;
 
 	plane p = plane_from_pos_and_normal(pos_cam, normal_cam);
@@ -50,8 +50,9 @@ void main() {
 	vec3 dir_x_ndc = cam_to_ndc(points[0]) - pos_ndc;
 	vec3 dir_y_ndc = cam_to_ndc(points[1]) - pos_ndc;
 
-	vec3 norm = normalize(cross(dir_y_ndc, dir_x_ndc));
-
+	vec3 norm = cross(dir_y_ndc, dir_x_ndc);
+	//norm.z /= 2.0;
+	norm = normalize(norm);
 	out_normal = norm;
 
 	p = plane_from_pos_and_normal(pos_ndc, norm);

@@ -52,7 +52,12 @@ void frx_pipelineFragment() {
 		out_geometric_normal = vec4(geometric_normal, 1.0);
 		out_normal = vec4(normal, 1.0);
 
-		out_extra_0 = vec4(frx_fragRoughness, frx_fragLight.y, frx_fragEmissive, 1.0);
+		out_extra_0 = vec4(
+			frx_fragRoughness,
+			frx_fragLight.y,
+			frx_fragEmissive * 1024.0 + pow(frx_fragLight.x, 4.0) * 0.5,
+			1.0
+		);
 	}
 	else {
 		out_geometric_normal = vec4(0.0);

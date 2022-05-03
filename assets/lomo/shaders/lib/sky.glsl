@@ -130,9 +130,8 @@ vec3 sky_color(vec3 dir) {
 	else if(a > sun_a - h) {
 		sun= (a - (sun_a - h)) / h;
 	}
-	sun*= 15.0;
 
-	color += color * vec3(10.0, 5.0, 1.0) * sun;
+	color += color * vec3(10.0, 5.0, 1.0) * 20 * sun;
 	return color * 10.0;
 	//return vec3(0.0, 1.0, 2.0) + sun;
 }

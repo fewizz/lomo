@@ -16,5 +16,5 @@ void frx_materialFragment() {
 		) / 64.0,
 		1.0
 	));
-	frx_fragRoughness = 0.0000001;
+	frx_fragRoughness = 0.0;
 }
