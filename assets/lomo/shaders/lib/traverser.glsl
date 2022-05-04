@@ -197,7 +197,7 @@ int check_if_intersects(inout fb_pos pos, vec3 dir_ndc, sampler2D s_depth, sampl
 	vec3 ray_pos = vec3(pos.inner / vec2(frxu_size.xy / 2.0), win_z_to_ndc(pos.z));
 	float depth_at_pos = ray_plane_intersection(ray(ray_pos, vec3(0, 0, 1)), p).dist;
 
-	//if(depth_at_pos < 0.0) return SURFACE_UNDER;
+	if(depth_at_pos < 0.0) return SURFACE_UNDER;
 
 	ray r = ray(ray_pos, dir_ndc);
 	ray_plane_intersection_result res = ray_plane_intersection(r, p);
@@ -298,8 +298,9 @@ fb_traversal_result traverse_fb(
 					}
 					return fb_traversal_result(TRAVERSAL_SUCCESS, prev);
 				}
-				if(result == SURFACE_UNDER)
+				if(result == SURFACE_UNDER) {
 					return fb_traversal_result(TRAVERSAL_POSSIBLY_UNDER, prev);
+				}
 			}
 		}
 

@@ -151,5 +151,5 @@ vec3 fog_color(vec3 eye_offset) {
 		DENSITY_CLOUDS
 	);
 
-	return color * 10.;
+	return color * 10.0;
 }

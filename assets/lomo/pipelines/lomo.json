@@ -123,6 +123,12 @@
 		"samplers": []
 	},
 	{
+		"name": "extra_0_1_0",
+		"vertexSource": "lomo:shaders/pipeline/full_frame_depth_1.vert",
+		"fragmentSource": "lomo:shaders/pipeline/extra_0_1_0.frag",
+		"samplers": []
+	},
+	{
 		"name": "combine",
 		"vertexSource": "lomo:shaders/pipeline/full_frame_depth_1.vert",
 		"fragmentSource": "lomo:shaders/pipeline/combine.frag",
@@ -162,6 +168,12 @@
 			"samplerImages": [ "cloud_n" ]
 		},
 		{
+			"name": "cloud_extra_1_1_0",
+			"program": "extra_1_1_0",
+			"framebuffer": "cloud_e_0",
+			"samplerImages": []
+		},
+		{
 			"name": "weather_normal_from_depth",
 			"program": "normal_from_depth",
 			"framebuffer": "weather_n",
@@ -170,13 +182,13 @@
 		{
 			"name": "copy_weather_normal",
 			"program": "copy",
-			"framebuffer": "cloud_g",
-			"samplerImages": [ "cloud_n" ]
+			"framebuffer": "weather_g",
+			"samplerImages": [ "weather_n" ]
 		},
 		{
-			"name": "cloud_extra_1_1_0",
-			"program": "extra_1_1_0",
-			"framebuffer": "cloud_e_0",
+			"name": "weather_extra_0_1_0",
+			"program": "extra_0_1_0",
+			"framebuffer": "weather_e_0",
 			"samplerImages": []
 		},
 		{
@@ -299,12 +311,6 @@
 				"accum_0",
 				"shadow_map"
 			]
-		},
-		{
-			"name": "copy_accum_to_solid",
-			"program": "copy",
-			"framebuffer": "solid_c",
-			"samplerImages": [ "accum_1" ]
 		}
 	]
 },
@@ -770,6 +776,7 @@
 		"name": "win_normals",
 		"internalFormat": "RGB16_SNORM",
 		"pixelFormat": "RGB",
+		"pixelDataType": "SHORT",
 		"texParams": [
 			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
 			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
@@ -969,6 +976,12 @@
 		]
 	},
 	{
+		"name": "weather_e_0",
+		"colorAttachments": [
+			{ "image": "weather_e_0" }
+		]
+	},
+	{
 		"name": "cloud_cnged",
 		"colorAttachments": [
 			{ "image": "cloud_c", "clearColor": "c:" },
@@ -1124,7 +1137,8 @@
 	{
 		"name": "accum_1",
 		"colorAttachments": [
-			{ "image": "accum_1" }
+			{ "image": "accum_1" },
+			{ "image": "solid_c" }
 		]
 	}
 ]

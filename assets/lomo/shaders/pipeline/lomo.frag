@@ -52,6 +52,8 @@ void frx_pipelineFragment() {
 		out_geometric_normal = vec4(geometric_normal, 1.0);
 		out_normal = vec4(normal, 1.0);
 
+		frx_fragRoughness *= 1.0 - min(1.0, frx_smoothedRainGradient * frx_fragLight.y);
+
 		out_extra_0 = vec4(
 			frx_fragRoughness,
 			frx_fragLight.y,
