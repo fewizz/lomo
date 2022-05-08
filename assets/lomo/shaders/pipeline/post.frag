@@ -161,10 +161,10 @@ void main() {
 	} else {
 		float prev_t = texelFetch(u_accum_0, ivec2(0), 0).w;
 		float r = texelFetch(u_extras_0, ivec2(gl_FragCoord.xy), 0).x;
-		ratio = 1.0 - pow(r, 0.1);
+		ratio = 1.0 - pow(r, 0.05);
 		ratio = clamp(
 			ratio,
-			0.1 + distance(current_world, prev_world) / (frx_renderSeconds - prev_t) / 60.0,
+			0.05 + distance(current_world, prev_world) / (frx_renderSeconds - prev_t) / 120.0,
 			1.0
 		);
 	};
@@ -249,13 +249,12 @@ void main() {
 			)
 		);
 
-		if(stp == steps - 1) {
-			++stp;
+		++stp;
+		if(dot(dir_cam, geometric_normal_cam) < 0 || stp == steps) {
 			break;
 		}
 
 		// traverse, check results at next iteration
-		++stp;
 		pos.z -= (0.00001 + roughness * 0.00001) * pow(2, stp);
 
 		result = traverse_fb(
@@ -265,7 +264,7 @@ void main() {
 			u_hi_depths,
 			u_depths,
 			u_win_normals,
-			uint(mix(30, 80, (1.0 - roughness)))
+			uint(mix(40, 80, (1.0 - roughness)))
 		);
 	}
 
@@ -291,8 +290,11 @@ void main() {
 		lights[stp] += light;
 	}
 
-	vec3 light = lights[stp];
-	--stp;
+	vec3 light = vec3(0.0);
+	if(stp > 0) {
+		light = lights[stp];
+		--stp;
+	}
 
 	while(stp >= 1) {
 		light = lights[stp] + colors[stp] * light;
