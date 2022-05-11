@@ -57,7 +57,7 @@ void frx_pipelineFragment() {
 		out_extra_0 = vec4(
 			frx_fragRoughness,
 			frx_fragLight.y,
-			frx_fragEmissive * 32.0 + pow(frx_fragLight.x, 4.0) * 0.5,
+			frx_fragEmissive * 16.0 + pow(frx_fragLight.x, 4.0) * 0.5,
 			1.0
 		);
 	}

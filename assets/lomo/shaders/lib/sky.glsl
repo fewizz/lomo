@@ -16,20 +16,6 @@ struct layer {
 };
 
 float ray_layer_intersection(ray r, layer l) {
-	/*plane top_sphere = plane(vec3(0.0, -1.0, 0.0), l.bottom + l.height);
-	plane bot_sphere = plane(vec3(0.0,  1.0, 0.0), l.bottom);
-	
-	ray_plane_intersection_result top = ray_plane_intersection(r, top_sphere);
-	ray_plane_intersection_result bot = ray_plane_intersection(r, bot_sphere);
-
-	if(top.success && top.dist > 0 && r.pos.y <= l.bottom + l.height) {
-		return top.dist * sign(r.dir.y);
-	}
-	//if(bot.success && bot.dist > 0 && r.pos.y >= l.bottom) {
-	return 6000000.0 * 2.0;
-	//}
-	
-	//return 0.0;*/
 	sphere top_sphere = sphere(vec3(0.0, -6000000.0, 0.0), 6000000.0 + l.bottom + l.height);
 	sphere bot_sphere = sphere(vec3(0.0, -6000000.0, 0.0), 6000000.0 + l.bottom);
 	
@@ -42,7 +28,7 @@ float ray_layer_intersection(ray r, layer l) {
 	return 0.0;
 }
 
-const int steps = 5;
+const int steps = 10;
 
 float od_integration(vec3 po, vec3 dir, float dist, layer l) {
 	float stp = dist / float(steps);
@@ -92,8 +78,8 @@ vec3 sky_color(vec3 dir) {
 
 	vec3 color = sky(
 		eye,
-		layer(0.0, 10000.0),
-		0.05 / rgb
+		layer(0.0, 8000.0),
+		0.04 / rgb
 	);
 
 	float sun = 0.0;
@@ -107,6 +93,7 @@ vec3 sky_color(vec3 dir) {
 		sun = (a - (sun_a - h)) / h;
 	}
 
-	color += color * vec3(5.0, 4.0, 1.0) * 8.0 * sun;
+	color /= 2.0;
+	color += color * vec3(4.0, 3.0, 1.0) * 20.0 * sun;
 	return color;
 }

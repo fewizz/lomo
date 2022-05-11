@@ -130,12 +130,10 @@ vec3 fog(vec3 begin, vec3 dir, float dist) {
 	ray eye = ray(eye_pos, mat3(frx_inverseViewMatrix) * dir);
 	vec3 rgb = pow(vec3(7.2, 5.7, 4.2), vec3(4.0));
 	vec3 color = fog(
-		eye,
-		dist,
-		layer(0.0, 10000.0),
-		vec3(mix(0.005, 0.05, frx_smoothedRainGradient)/rgb)
+		eye, dist, layer(0.0, 8000.0),
+		vec3(mix(0.004, 0.05, frx_smoothedRainGradient)/rgb)
 	);
-	return color * 200.0;
+	return color * 150.0;
 }
 
 void main() {
@@ -155,7 +153,6 @@ void main() {
 	float prev_depth = texelFetch(u_accum_prev, ivec2(prev_win.xy), 0).w;
 
 	prev_win.z = prev_depth;
-
 	prev_ndc = win_to_ndc(prev_win);
 
 	vec4 prev_world0 = inverse(frx_lastViewProjectionMatrix) * vec4(prev_ndc, 1.0);
@@ -249,13 +246,7 @@ void main() {
 		}
 		geometric_normal_cam = normalize(geometric_normal_cam);
 		normal_cam = compute_normal(dir_cam, geometric_normal_cam, pos.texel, roughness, sub_stp);
-
-		dir_cam = normalize(
-			reflect(
-				dir_cam,
-				normal_cam
-			)
-		);
+		dir_cam = normalize(reflect(dir_cam, normal_cam));
 
 		++stp;
 		if(dot(dir_cam, geometric_normal_cam) < 0 || stp == steps) {
@@ -267,11 +258,8 @@ void main() {
 
 		result = traverse_fb(
 			pos,
-			cam_dir_to_win(pos_cam, dir_cam),
-			cam_dir_to_ndc(pos_cam, dir_cam),
-			u_hi_depths,
-			u_depths,
-			u_win_normals,
+			cam_dir_to_win(pos_cam, dir_cam), cam_dir_to_ndc(pos_cam, dir_cam),
+			u_hi_depths, u_depths, u_win_normals,
 			uint(mix(40, 80, (1.0 - roughness)))
 		);
 	}
@@ -282,9 +270,12 @@ void main() {
 		d = min(1000.0, d);
 		vec3 light = fog(prev_pos_cam, dir_cam, d);
 
-		light += sky_color(mat3(frx_inverseViewMatrix) * dir_cam) * (1.0 - frx_smoothedRainGradient);
+		light +=
+			sky_color(mat3(frx_inverseViewMatrix) * dir_cam) *
+			(1.0 - frx_smoothedRainGradient);
 
 		if(stp > 0) {
+			light *= 3.0;
 			vec3 sd = sun_dir();
 			d = sun_light_at(pos_cam);
 			float dt = max(dot(sd, mat3(frx_inverseViewMatrix) * mix(normal_cam, geometric_normal_cam, 0.5)), 0.0);
@@ -335,12 +326,6 @@ void main() {
 	);
 
 	resulting_light = resulting_light0 + resulting_color0 * accum;
-
-	//vec3 prev_light = max(texture(u_accum_prev, vec2(prev_ndc.xy * 0.5 + 0.5)).rgb, vec3(0.0));
-	//prev_light = pow(prev_light, vec3(2.2));
-
-	//resulting_light = mix(prev_light, resulting_light, 0.2);
-
 	resulting_light = pow(resulting_light, vec3(1.0 / 2.2));
 	out_color = vec4(resulting_light, 1.0);
 }
