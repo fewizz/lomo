@@ -44,6 +44,12 @@
 		"samplers": [ "u_input" ]
 	},
 	{
+		"name": "copy_array_2",
+		"vertexSource": "lomo:shaders/pipeline/full_frame_depth_1.vert",
+		"fragmentSource": "lomo:shaders/pipeline/copy_array_2.frag",
+		"samplers": [ "u_input" ]
+	},
+	{
 		"name": "copy_with_depth",
 		"vertexSource": "lomo:shaders/pipeline/full_frame_depth_1.vert",
 		"fragmentSource": "lomo:shaders/pipeline/copy_with_depth.frag",
@@ -77,7 +83,7 @@
 			"u_extras_0", "u_extras_1",
 			"u_depths",
 			"u_win_normals", "u_hi_depths",
-			"u_accum_0", "u_shadow_map"
+			"u_accum_prev", "u_shadow_map"
 		]
 	},
 	{
@@ -293,13 +299,13 @@
 		{
 			"name": "copy_accum",
 			"program": "copy",
-			"framebuffer": "accum_0",
-			"samplerImages": [ "accum_1" ]
+			"framebuffer": "accum_prev",
+			"samplerImages": [ "accum_next" ]
 		},
 		{
 			"name": "post",
 			"program": "post",
-			"framebuffer": "accum_1",
+			"framebuffer": "accum_next",
 			"samplerImages": [
 				"colors",
 				"normals",
@@ -308,7 +314,7 @@
 				"depths",
 				"win_normals",
 				"hi_depths",
-				"accum_0",
+				"accum_prev",
 				"shadow_map"
 			]
 		}
@@ -879,7 +885,7 @@
 		]
 	},
 	{
-		"name": "accum_0",
+		"name": "accum_prev",
 		"internalFormat": "RGBA32F",
 		"pixelFormat": "RGBA",
 		"pixelDataType": "FLOAT",
@@ -891,7 +897,7 @@
 		]
 	},
 	{
-		"name": "accum_1",
+		"name": "accum_next",
 		"internalFormat": "RGBA32F",
 		"pixelFormat": "RGBA",
 		"pixelDataType": "FLOAT",
@@ -1129,15 +1135,15 @@
 		"depthAttachment": { "image": "shadow_map", "clearDepth": 1.0 }
 	},
 	{
-		"name": "accum_0",
+		"name": "accum_prev",
 		"colorAttachments": [
-			{ "image": "accum_0" }
+			{ "image": "accum_prev" }
 		]
 	},
 	{
-		"name": "accum_1",
+		"name": "accum_next",
 		"colorAttachments": [
-			{ "image": "accum_1" },
+			{ "image": "accum_next" },
 			{ "image": "solid_c" }
 		]
 	}

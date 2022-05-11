@@ -19,10 +19,10 @@ uniform sampler2D u_extras_1;
 uniform sampler2D u_depths;
 uniform sampler2D u_win_normals;
 uniform sampler2D u_hi_depths;
-uniform sampler2D u_accum_0;
+uniform sampler2D u_accum_prev;
 uniform sampler2DArrayShadow u_shadow_map;
 
-layout(location = 0) out vec4 out_accum;
+layout(location = 0) out vec4 out_indirect_light;
 layout(location = 1) out vec4 out_color;
 
 // from dev pipeline
@@ -101,34 +101,41 @@ float sun_light_at(vec3 pos) {
 	return sun_light_at_world_pos(world.xyz / world.w);
 }
 
-vec3 fog(vec3 begin, vec3 dir, float dist) {
-	//float dist = distance(begin, end);
-	vec3 end = begin + dir*dist;
-
-	vec4 begin_sh0 = frx_shadowViewMatrix * frx_inverseViewMatrix * vec4(begin, 1.0);
-	vec3 begin_sh = begin_sh0.xyz / begin_sh0.w;
-
-	vec4 end_sh0 = frx_shadowViewMatrix * frx_inverseViewMatrix * vec4(end, 1.0);
-	vec3 end_sh = end_sh0.xyz / end_sh0.w;
-
+vec3 fog(ray r, float dist, layer l, vec3 coeffs) {
 	float stp = 0.2;
-
 	vec3 result = vec3(0);
-
-	for(float i = -2; i <= 2; i+=stp) {
+	for(float i = -2; i <= 0; i += stp) {
 		float i0 = i + stp * hash14(uvec4(gl_FragCoord.xy, frx_renderSeconds * 1000.0, i * 1000.0));
+		float t = exp(i0);
+		ray r0 = ray(r.pos + r.dir * dist * t, sun_dir());
+		float dist0 = ray_layer_intersection(r0, l);
+		vec4 sh0 = frx_shadowViewMatrix * vec4(r0.pos - frx_cameraPos, 1.0);
+		vec3 sh = sh0.xyz / sh0.w;
+		result +=
+			exp(
+				-coeffs * (
+					od_integration(r0.pos, sun_dir(), dist0, l)
+					+
+					od_integration(r.pos, r.dir, dist * t, l)
+				)
+			) * dist * (exp(i + stp) - exp(i)) * sun_light_at_shadow_pos(sh);
+	};
+	return result * coeffs;
+}
 
-		float t = exp(i0) / exp(2);
-		vec3 cur_sh = mix(begin_sh, end_sh, t);
-
-		vec3 fc = fog_color(
-			mat3(frx_inverseViewMatrix) * mix(begin, end, t)
-		);
-
-		result += fc * sun_light_at_shadow_pos(cur_sh) * dist * t;
-	}
-
-	return result;
+vec3 fog(vec3 begin, vec3 dir, float dist) {
+	vec4 pos0 = frx_inverseViewMatrix * vec4(begin, 1.0);
+	vec3 pos = pos0.xyz / pos0.w;
+	vec3 eye_pos = (pos + frx_cameraPos);
+	ray eye = ray(eye_pos, mat3(frx_inverseViewMatrix) * dir);
+	vec3 rgb = pow(vec3(7.2, 5.7, 4.2), vec3(4.0));
+	vec3 color = fog(
+		eye,
+		dist,
+		layer(0.0, 10000.0),
+		vec3(mix(0.005, 0.05, frx_smoothedRainGradient)/rgb)
+	);
+	return color * 200.0;
 }
 
 void main() {
@@ -145,7 +152,7 @@ void main() {
 	vec3 prev_ndc = prev_ndc0.xyz  / prev_ndc0.w;
 	vec3 prev_win = ndc_to_win(prev_ndc);
 
-	float prev_depth = texelFetch(u_accum_0, ivec2(prev_win.xy), 0).w;
+	float prev_depth = texelFetch(u_accum_prev, ivec2(prev_win.xy), 0).w;
 
 	prev_win.z = prev_depth;
 
@@ -159,12 +166,12 @@ void main() {
 	if(any(greaterThan(prev_ndc.xyz, vec3(1.0))) || any(lessThan(prev_ndc.xyz, vec3(-1.0)))) {
 		ratio = 1.0;
 	} else {
-		float prev_t = texelFetch(u_accum_0, ivec2(0), 0).w;
+		float prev_t = texelFetch(u_accum_prev, ivec2(0), 0).w;
 		float r = texelFetch(u_extras_0, ivec2(gl_FragCoord.xy), 0).x;
 		ratio = 1.0 - pow(r, 0.05);
 		ratio = clamp(
 			ratio,
-			0.05 + distance(current_world, prev_world) / (frx_renderSeconds - prev_t) / 120.0,
+			0.05,// + distance(current_world, prev_world) / (frx_renderSeconds - prev_t) / 120.0,
 			1.0
 		);
 	};
@@ -193,6 +200,7 @@ void main() {
 	int stp = 0;
 
 	vec3 normal_cam;
+	vec3 geometric_normal_cam;
 	float roughness;
 	float sky_light;
 	fb_pos prev_pos;
@@ -234,7 +242,7 @@ void main() {
 		colors[stp] += pow(texelFetch(u_colors, ivec2(pos.texel), 0).rgb, vec3(2.2));
 		lights[stp] += colors[stp] * block_light;
 
-		vec3 geometric_normal_cam = texelFetch(u_normals, ivec2(pos.texel), 0).xyz;
+		geometric_normal_cam = texelFetch(u_normals, ivec2(pos.texel), 0).xyz;
 		if(dot(geometric_normal_cam, geometric_normal_cam) < 0.4) {
 			normal_cam = vec3(0.0);
 			break;
@@ -274,14 +282,14 @@ void main() {
 		d = min(1000.0, d);
 		vec3 light = fog(prev_pos_cam, dir_cam, d);
 
-		light += sky_color(mat3(frx_inverseViewMatrix) * dir_cam);
+		light += sky_color(mat3(frx_inverseViewMatrix) * dir_cam) * (1.0 - frx_smoothedRainGradient);
 
 		if(stp > 0) {
+			vec3 sd = sun_dir();
 			d = sun_light_at(pos_cam);
-			float dt = max(dot(sun_dir(), normalize(mat3(frx_inverseViewMatrix) * normal_cam)), 0.0);
-			vec3 sun = d * dt * sky_color(sun_dir());
-			sun = mix(sun, vec3(0.6), frx_smoothedRainGradient);
-			light += sun * roughness;
+			float dt = max(dot(sd, mat3(frx_inverseViewMatrix) * mix(normal_cam, geometric_normal_cam, 0.5)), 0.0);
+			vec3 sun = d * dt * sky_color(sd);
+			light += sun * roughness * (1.0 - frx_smoothedRainGradient);
 			light *= pow(sky_light, 8.0);
 			if(result.code == TRAVERSAL_POSSIBLY_UNDER) { // TODO hack
 				light *= (1.0 - roughness);
@@ -311,7 +319,7 @@ void main() {
 	resulting_light0 /= float(sub_steps);
 	resulting_color0 /= float(sub_steps);
 
-	vec3 prev_accum = max(texture(u_accum_0, vec2(prev_ndc.xy * 0.5 + 0.5)).rgb, vec3(0.0));
+	vec3 prev_accum = max(texture(u_accum_prev, vec2(prev_ndc.xy * 0.5 + 0.5)).rgb, vec3(0.0));
 	prev_accum = pow(prev_accum, vec3(2.2));
 
 	vec3 accum =
@@ -321,18 +329,18 @@ void main() {
 			ratio
 		);
 
-	out_accum = vec4(
+	out_indirect_light = vec4(
 		pow(accum, vec3(1.0 / 2.2)),
 		uvec2(gl_FragCoord.xy) == uvec2(0) ? frx_renderSeconds : initial_depth
 	);
 
 	resulting_light = resulting_light0 + resulting_color0 * accum;
 
-	out_color = vec4(
-		pow(
-			resulting_light, vec3(1.0 / 2.2)
-		),
-		1.0
-	);
+	//vec3 prev_light = max(texture(u_accum_prev, vec2(prev_ndc.xy * 0.5 + 0.5)).rgb, vec3(0.0));
+	//prev_light = pow(prev_light, vec3(2.2));
 
+	//resulting_light = mix(prev_light, resulting_light, 0.2);
+
+	resulting_light = pow(resulting_light, vec3(1.0 / 2.2));
+	out_color = vec4(resulting_light, 1.0);
 }
