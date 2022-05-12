@@ -94,6 +94,6 @@ vec3 sky_color(vec3 dir) {
 	}
 
 	color /= 2.0;
-	color += color * vec3(4.0, 3.0, 1.0) * 20.0 * sun;
+	color += color * vec3(6.0, 4.0, 1.0) * 20.0 * sun;
 	return color;
 }

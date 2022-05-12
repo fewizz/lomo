@@ -227,6 +227,12 @@ void main() {
 			break;
 		}
 
+		geometric_normal_cam = texelFetch(u_normals, ivec2(pos.texel), 0).xyz;
+		if(dot(geometric_normal_cam, geometric_normal_cam) < 0.4) {
+			normal_cam = vec3(0.0);
+			break;
+		}
+
 		if(frx_worldHasSkylight == 1) {
 			lights[stp] += fog(prev_pos_cam, dir_cam, min(1000.0, distance(pos_cam, prev_pos_cam)));
 		}
@@ -239,11 +245,6 @@ void main() {
 		colors[stp] += pow(texelFetch(u_colors, ivec2(pos.texel), 0).rgb, vec3(2.2));
 		lights[stp] += colors[stp] * block_light;
 
-		geometric_normal_cam = texelFetch(u_normals, ivec2(pos.texel), 0).xyz;
-		if(dot(geometric_normal_cam, geometric_normal_cam) < 0.4) {
-			normal_cam = vec3(0.0);
-			break;
-		}
 		geometric_normal_cam = normalize(geometric_normal_cam);
 		normal_cam = compute_normal(dir_cam, geometric_normal_cam, pos.texel, roughness, sub_stp);
 		dir_cam = normalize(reflect(dir_cam, normal_cam));
@@ -264,7 +265,7 @@ void main() {
 		);
 	}
 
-	if((!all(equal(normal_cam, vec3(0.0))) || pos.z >= 1.0) && frx_worldHasSkylight == 1) {
+	if((normal_cam != vec3(0.0) || pos.z >= 1.0) && frx_worldHasSkylight == 1) {
 		float d = distance(prev_pos_cam, pos_cam);
 		if(result.code != TRAVERSAL_SUCCESS) d = 1000.0;
 		d = min(1000.0, d);
