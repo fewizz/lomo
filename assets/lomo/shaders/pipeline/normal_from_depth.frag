@@ -20,14 +20,20 @@ void main() {
 	vec3 x = win_to_cam(
 		vec3(
 			gl_FragCoord.xy + vec2(-sign(n.x), 0.),
-			texelFetch(u_depth, ivec2(gl_FragCoord.xy + vec2(-sign(n.x), 0.)), 0).r
+			texelFetch(
+				u_depth,
+				ivec2(gl_FragCoord.xy + vec2(-sign(n.x), 0.)), 0
+			).r
 		)
 	);
 
 	vec3 y = win_to_cam(
 		vec3(
 			gl_FragCoord.xy + vec2(0., -sign(n.y)),
-			texelFetch(u_depth, ivec2(gl_FragCoord.xy + vec2(0., -sign(n.y))), 0).r
+			texelFetch(
+				u_depth,
+				ivec2(gl_FragCoord.xy + vec2(0., -sign(n.y))), 0
+			).r
 		)
 	);
 

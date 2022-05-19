@@ -12,7 +12,7 @@ dvec2 win_to_ndc(dvec2 win_xy) {
 }
 
 float win_z_to_ndc(float win_z) {
-	return win_z * 2.0 - 1.0;//(win_z - (gl_DepthRange.near + gl_DepthRange.far) / 2.0) / (gl_DepthRange.diff / 2.0);
+	return win_z * 2.0 - 1.0;
 }
 
 double win_z_to_ndc(double win_z) {

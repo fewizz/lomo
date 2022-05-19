@@ -26,7 +26,9 @@ void main() {
 		texelFetch(u_cloud_c, coord, 0)
 	);
 
-	uint index_to_type = floatBitsToUint(texelFetch(u_index_to_type, coord, 0).r);
+	uint index_to_type = floatBitsToUint(
+		texelFetch(u_index_to_type, coord, 0).r
+	);
 	uint indices[6];
 
 	for(uint i = 0u; i < 6u; i++) {

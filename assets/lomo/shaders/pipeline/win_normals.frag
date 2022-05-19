@@ -61,7 +61,10 @@ void main() {
 	for(int x = -1; x <= 1; x+=2) {
 		for(int y = -1; y <= 1; y+=2) {
 			ray r = ray(
-				vec3(pos_ndc.xy, -1.0) + vec3(x, y, 0) / 2.0 / vec3(frxu_size.xy / 2.0, 1.0),
+				(
+					vec3(pos_ndc.xy, -1.0) +
+					vec3(x, y, 0) / 2.0 / vec3(frxu_size.xy / 2.0, 1.0)
+				),
 				vec3(0, 0, 1)
 			);
 			ray_plane_intersection_result res = ray_plane_intersection(r, p);
