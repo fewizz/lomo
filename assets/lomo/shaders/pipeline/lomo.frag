@@ -55,13 +55,11 @@ void frx_pipelineFragment() {
 		if(frx_fragRoughness == 1.0) {
 			frx_fragRoughness = 0.6;
 		}
-		//frx_fragRoughness *=
-		//	1.0 - min(1.0, frx_smoothedRainGradient * frx_fragLight.y);
 
 		out_extra_0 = vec4(
-			pow(frx_fragRoughness, 3.0),
+			frx_fragRoughness,
 			frx_fragLight.y,
-			frx_fragEmissive * 16.0 + pow(frx_fragLight.x, 4.0) * 0.5,
+			frx_fragEmissive * 16.0 + pow(frx_fragLight.x, 4.0) * 0.4,
 			1.0
 		);
 	}

@@ -44,10 +44,10 @@
 		"samplers": [ "u_input" ]
 	},
 	{
-		"name": "copy_array_2",
+		"name": "copy_accum_and_color_depth",
 		"vertexSource": "lomo:shaders/pipeline/full_frame_depth_1.vert",
-		"fragmentSource": "lomo:shaders/pipeline/copy_array_2.frag",
-		"samplers": [ "u_input" ]
+		"fragmentSource": "lomo:shaders/pipeline/copy_accum_and_color_depth.frag",
+		"samplers": [ "u_accum_next", "u_color_depth_next" ]
 	},
 	{
 		"name": "copy_with_depth",
@@ -83,7 +83,7 @@
 			"u_extras_0", "u_extras_1",
 			"u_depths",
 			"u_win_normals", "u_hi_depths",
-			"u_accum_prev", "u_shadow_map"
+			"u_accum", "u_color_depth", "u_shadow_map"
 		]
 	},
 	{
@@ -297,15 +297,15 @@
 			"lod": 4
 		},
 		{
-			"name": "copy_accum",
-			"program": "copy",
-			"framebuffer": "accum_prev",
-			"samplerImages": [ "accum_next" ]
+			"name": "copy_accum_and_color_depth",
+			"program": "copy_accum_and_color_depth",
+			"framebuffer": "accum_and_color_depth",
+			"samplerImages": [ "accum_next", "color_depth_next" ]
 		},
 		{
 			"name": "post",
 			"program": "post",
-			"framebuffer": "accum_next",
+			"framebuffer": "accum_next_and_color_depth_next_and_solid",
 			"samplerImages": [
 				"colors",
 				"normals",
@@ -314,7 +314,8 @@
 				"depths",
 				"win_normals",
 				"hi_depths",
-				"accum_prev",
+				"accum",
+				"color_depth",
 				"shadow_map"
 			]
 		}
@@ -885,8 +886,8 @@
 		]
 	},
 	{
-		"name": "accum_prev",
-		"internalFormat": "RGBA32F",
+		"name": "accum",
+		"internalFormat": "RGBA16F",
 		"pixelFormat": "RGBA",
 		"pixelDataType": "FLOAT",
 		"texParams": [
@@ -898,6 +899,30 @@
 	},
 	{
 		"name": "accum_next",
+		"internalFormat": "RGBA16F",
+		"pixelFormat": "RGBA",
+		"pixelDataType": "FLOAT",
+		"texParams": [
+			{ "name": "TEXTURE_MIN_FILTER", "val": "LINEAR" },
+			{ "name": "TEXTURE_MAG_FILTER", "val": "LINEAR" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
+		]
+	},
+	{
+		"name": "color_depth",
+		"internalFormat": "RGBA32F",
+		"pixelFormat": "RGBA",
+		"pixelDataType": "FLOAT",
+		"texParams": [
+			{ "name": "TEXTURE_MIN_FILTER", "val": "LINEAR" },
+			{ "name": "TEXTURE_MAG_FILTER", "val": "LINEAR" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
+		]
+	},
+	{
+		"name": "color_depth_next",
 		"internalFormat": "RGBA32F",
 		"pixelFormat": "RGBA",
 		"pixelDataType": "FLOAT",
@@ -1135,15 +1160,17 @@
 		"depthAttachment": { "image": "shadow_map", "clearDepth": 1.0 }
 	},
 	{
-		"name": "accum_prev",
+		"name": "accum_and_color_depth",
 		"colorAttachments": [
-			{ "image": "accum_prev" }
+			{ "image": "accum" },
+			{ "image": "color_depth" }
 		]
 	},
 	{
-		"name": "accum_next",
+		"name": "accum_next_and_color_depth_next_and_solid",
 		"colorAttachments": [
 			{ "image": "accum_next" },
+			{ "image": "color_depth_next" },
 			{ "image": "solid_c" }
 		]
 	}

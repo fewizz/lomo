@@ -20,19 +20,12 @@ double win_z_to_ndc(double win_z) {
 }
 
 vec3 win_to_ndc(vec3 win) {
-	return vec3(
-		win_to_ndc(win.xy),
-		win_z_to_ndc(win.z)
-	);
+	return vec3(win_to_ndc(win.xy), win_z_to_ndc(win.z));
 }
 
 dvec3 win_to_ndc(dvec3 win) {
-	return dvec3(
-		win_to_ndc(win.xy),
-		win_z_to_ndc(win.z)
-	);
+	return dvec3(win_to_ndc(win.xy), win_z_to_ndc(win.z));
 }
-
 
 // ndc to win
 vec2 ndc_to_win(vec2 ndc_xy) {
@@ -52,68 +45,45 @@ double ndc_z_to_win(double ndc_z) {
 }
 
 vec3 ndc_to_win(vec3 ndc) {
-	return vec3(
-		ndc_to_win(ndc.xy),
-		ndc_z_to_win(ndc.z)
-	);
+	return vec3(ndc_to_win(ndc.xy), ndc_z_to_win(ndc.z));
 }
 
 dvec3 ndc_to_win(dvec3 ndc) {
-	return dvec3(
-		ndc_to_win(ndc.xy),
-		ndc_z_to_win(ndc.z)
-	);
+	return dvec3(ndc_to_win(ndc.xy), ndc_z_to_win(ndc.z));
 }
 
-vec4 cam_to_ndc(vec4 cam, mat4 projMat) {
-	return projMat * cam;
+vec3 transform_pos(vec3 v, mat4 m) {
+	vec4 v0 = m * vec4(v, 1.0);
+	return v0.xyz / v0.w;
 }
 
-vec4 cam_to_ndc(vec4 cam) {
-	return cam_to_ndc(cam, frx_projectionMatrix);
-}
-
-vec3 cam_to_ndc(vec3 cam, mat4 projMat) {
-	vec4 res = cam_to_ndc(vec4(cam, 1.0), projMat);
-	return res.xyz / res.w;
+dvec3 transform_pos(dvec3 v, dmat4 m) {
+	dvec4 v0 = m * dvec4(v, 1.0);
+	return v0.xyz / v0.w;
 }
 
 vec3 cam_to_ndc(vec3 cam) {
-	return cam_to_ndc(cam, frx_projectionMatrix);
-}
-
-vec3 ndc_to_cam(vec3 ndc, mat4 invProj) {
-	vec4 v = invProj * vec4(ndc, 1.0);
-	return v.xyz / v.w;
-}
-
-dvec3 ndc_to_cam(dvec3 ndc, dmat4 invProj) {
-	dvec4 v = invProj * dvec4(ndc, 1.0);
-	return v.xyz / v.w;
+	return transform_pos(cam, frx_projectionMatrix);
 }
 
 vec3 ndc_to_cam(vec3 ndc) {
-	return ndc_to_cam(ndc, frx_inverseProjectionMatrix);
+	return transform_pos(ndc, frx_inverseProjectionMatrix);
 }
 
 dvec3 ndc_to_cam(dvec3 ndc) {
-	return ndc_to_cam(ndc, dmat4(frx_inverseProjectionMatrix));
-}
-
-vec3 win_to_cam(vec3 win, mat4 invProj) {
-	return ndc_to_cam(win_to_ndc(win), invProj);
+	return transform_pos(ndc, dmat4(frx_inverseProjectionMatrix));
 }
 
 vec3 win_to_cam(vec3 win) {
-	return win_to_cam(win, frx_inverseProjectionMatrix);
+	return ndc_to_cam(win_to_ndc(win));
 }
 
-vec3 cam_to_win(vec3 cam, mat4 projMat) {
-	return ndc_to_win(cam_to_ndc(cam, projMat));
+dvec3 win_to_cam(dvec3 win) {
+	return ndc_to_cam(win_to_ndc(win));
 }
 
 vec3 cam_to_win(vec3 cam) {
-	return cam_to_win(cam, frx_projectionMatrix);
+	return ndc_to_win(cam_to_ndc(cam));
 }
 
 vec3 cam_dir_to_win(vec3 pos_cs, vec3 dir_cs, mat4 projMat) {
@@ -213,4 +183,24 @@ vec3 cam_far(vec2 xy) {
 
 vec3 cam_dir_to_z1(vec2 xy) {
 	return normalize(cam_far(xy) - cam_near(xy));
+}
+
+vec3 wrd_to_cam(vec3 wrd) {
+	return transform_pos(wrd, frx_viewMatrix);
+}
+
+vec3 wrd_to_ndc(vec3 wrd) {
+	return transform_pos(wrd, frx_viewProjectionMatrix);
+}
+
+vec3 wrd_to_win(vec3 wrd) {
+	return ndc_to_win(wrd_to_ndc(wrd));
+}
+
+vec3 cam_to_wrd(vec3 cam) {
+	return transform_pos(cam, frx_inverseViewMatrix);
+}
+
+dvec3 cam_to_wrd(dvec3 cam) {
+	return transform_pos(cam, dmat4(frx_inverseViewMatrix));
 }
