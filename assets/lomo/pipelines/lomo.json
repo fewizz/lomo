@@ -297,12 +297,6 @@
 			"lod": 4
 		},
 		{
-			"name": "copy_accum_and_color_depth",
-			"program": "copy_accum_and_color_depth",
-			"framebuffer": "accum_and_color_depth",
-			"samplerImages": [ "accum_next", "color_depth_next" ]
-		},
-		{
 			"name": "post",
 			"program": "post",
 			"framebuffer": "accum_next_and_color_depth_next_and_solid",
@@ -318,6 +312,12 @@
 				"color_depth",
 				"shadow_map"
 			]
+		},
+		{
+			"name": "copy_accum_and_color_depth",
+			"program": "copy_accum_and_color_depth",
+			"framebuffer": "accum_and_color_depth",
+			"samplerImages": [ "accum_next", "color_depth_next" ]
 		}
 	]
 },

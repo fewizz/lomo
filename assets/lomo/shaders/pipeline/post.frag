@@ -33,11 +33,6 @@ struct light_info {
 	vec3 light;
 	vec3 color;
 	vec3 pos_cam;
-	vec3 prev_pos_cam;
-	//vec2 win_pos;
-	//vec3 dir_cam;
-	//float dist;
-	//float depth;
 	float roughness;
 };
 
@@ -53,8 +48,6 @@ void main() {
 		fb_pos(uvec2(gl_FragCoord.xy), vec2(0.5), initial_depth)
 	);
 
-	int stp = 0;
-
 	vec3 normal_cam;
 	vec3 geometric_normal_cam;
 	float roughness;
@@ -66,29 +59,23 @@ void main() {
 
 	for(int i = 0; i < steps + 1; ++i) {
 		lights[i] = light_info(
-			vec3(0.0), vec3(0.0), vec3(0.0), vec3(0.0), 0.0
+			vec3(0.0), vec3(0.0), vec3(0.0), 0.0
 		);
 	}
 
+	int stp = 0;
+
 	for(;true;) {
-		bool success   = result.code == TRAVERSAL_SUCCESS;
-		bool under     = result.code == TRAVERSAL_POSSIBLY_UNDER;
-		bool out_of_fb = result.code == TRAVERSAL_OUT_OF_FB;
+		lights[stp].pos_cam = pos_cam;
 
 		prev_pos = pos;
 		pos = result.pos;
-		lights[stp].prev_pos_cam = pos_cam;
-		pos_cam = win_to_cam(vec3(ivec2(pos.texel) + pos.inner, pos.z));
 
-		//lights[stp].depth = pos.z;
-		lights[stp].pos_cam = pos_cam;
-		//lights[stp].dir_cam = dir_cam;
-		//lights[stp].dist = distance(pos_cam, prev_pos_cam);
-		//lights[stp].win_pos = vec2(ivec2(pos.texel) + pos.inner);
-
-		if(!success) {
+		if(result.code != TRAVERSAL_SUCCESS) {
 			break;
 		}
+
+		pos_cam = win_to_cam(vec3(ivec2(pos.texel) + pos.inner, pos.z));
 
 		geometric_normal_cam = texelFetch(u_normals, ivec2(pos.texel), 0).xyz;
 		if(dot(geometric_normal_cam, geometric_normal_cam) < 0.4) {
@@ -107,40 +94,49 @@ void main() {
 		lights[stp].roughness = roughness;
 		lights[stp].light = color * block_light;
 
+		++stp;
+
+		lights[stp].pos_cam = pos_cam;
+		if(stp == steps) {
+			break;
+		}
+
 		geometric_normal_cam = normalize(geometric_normal_cam);
 		normal_cam = compute_normal(
 			dir_cam, geometric_normal_cam, pos.texel, roughness
 		);
 		dir_cam = normalize(reflect(dir_cam, normal_cam));
 
-		++stp;
-
-		if(dot(dir_cam, geometric_normal_cam) < 0 || stp == steps) {
+		if(dot(dir_cam, geometric_normal_cam) <= 0.0) {
 			break;
 		}
 
 		// traverse, check results at next iteration
-		pos.z -= (0.00001 + roughness * 0.00001) * pow(2, stp);
+		pos.z -= 0.00001;
 
-		result = traverse_fb(
-			pos,
-			cam_dir_to_win(pos_cam, dir_cam), cam_dir_to_ndc(pos_cam, dir_cam),
-			u_hi_depths, u_depths, u_win_normals,
-			uint(mix(40, 80, (1.0 - roughness)))
-		);
+		if(true) {
+			result = traverse_fb(
+				pos, cam_dir_to_win(pos_cam, dir_cam),
+				cam_dir_to_ndc(pos_cam, dir_cam),
+				u_hi_depths, u_depths, u_win_normals,
+				uint(mix(40, 80, (1.0 - roughness)))
+			);
+		} else {
+			result = traverse_cam(
+				pos, pos_cam, dir_cam,
+				cam_dir_to_win(pos_cam, dir_cam), roughness, u_depths
+			);
+		}
 	}
 
-	int sky_stp = stp;
+	vec3 light = vec3(0.0);
 
 	if(
-		(normal_cam != vec3(0.0) || pos.z >= 1.0 || pos.z <= 0.0) &&
+		(normal_cam != vec3(0.0) || result.code == TRAVERSAL_OUT_OF_FB) &&
 		frx_worldHasSkylight == 1
 	) {
 		vec3 s = sky(mat3(frx_inverseViewMatrix) * dir_cam);
 		if(stp > 0) {
-			lights[stp].roughness = roughness;
-			lights[stp].prev_pos_cam = lights[stp - 1].pos_cam;
-			s *= 2.0;
 			vec3 sd = sun_dir();
 			float d = sun_light_at(pos_cam);
 			float dt = dot(
@@ -153,44 +149,33 @@ void main() {
 			s += sun * roughness * (1.0 - frx_smoothedRainGradient);
 			s *= pow(sky_light, 4.0);
 			if(result.code == TRAVERSAL_POSSIBLY_UNDER) { // TODO hack
-				s *= pow((1.0 - roughness), 4.0);
+				//s *= pow((1.0 - roughness), 4.0);
 			}
 		}
 		lights[stp].light = s;
 	}
-
-	vec3 light = vec3(0.0);
 
 	for(;stp > 0;) {
 		light = light * lights[stp].color + lights[stp].light;
 		--stp;
 	}
 
-	dvec3 r_pos_cam = dvec3(lights[1].pos_cam);
-	dvec3 r_prev_pos_cam = dvec3(lights[1].prev_pos_cam);
-	dvec3 r_pos_wrd = cam_to_wrd(r_pos_cam);
+	dvec3 r_prev_pos_cam = dvec3(lights[1].pos_cam);
 	dvec3 r_prev_pos_wrd = cam_to_wrd(r_prev_pos_cam);
-	r_pos_wrd += dvec3(frx_cameraPos) - dvec3(frx_lastCameraPos);
 	r_prev_pos_wrd += dvec3(frx_cameraPos) - dvec3(frx_lastCameraPos);
-	r_pos_cam = transform_pos(
-		r_pos_wrd, dmat4(frx_lastViewMatrix)
-	);
+
 	r_prev_pos_cam = transform_pos(
 		r_prev_pos_wrd, dmat4(frx_lastViewMatrix)
-	);
-	dvec3 r_pos_ndc = transform_pos(
-		r_pos_cam, dmat4(frx_lastProjectionMatrix)
 	);
 	dvec3 r_prev_pos_ndc = transform_pos(
 		r_prev_pos_cam, dmat4(frx_lastProjectionMatrix)
 	);
-	dvec3 r_pos_win = ndc_to_win(r_pos_ndc);
 	dvec3 r_prev_pos_win = ndc_to_win(r_prev_pos_ndc);
 
 	float accum_count_reversed =
 		texelFetch(u_accum, ivec2(r_prev_pos_win.xy), 0).w;
 
-	int accum_count =  int(1.0 / max(accum_count_reversed, 0.00001));
+	int accum_count =  int(1.0 / max(accum_count_reversed, 0.000001));
 
 	accum_count = max(0, accum_count);
 
@@ -208,27 +193,13 @@ void main() {
 		accum_count = 0;
 	}
 	else if(abs(prev_depth - r_prev_pos_win.z) > 0.0004) {
-		accum_count = 2;
+		accum_count = 0;
 	}
 
-	if(sky_stp > 1) {
-		float d = float(dot(
-			normalize(prev_pos_cam - r_prev_pos_cam),
-			normalize(r_pos_cam - r_prev_pos_cam)
-		));
-
-		d -= 1.0;
-		d /= 32.0 * lights[0].roughness;
-
-		accum_count = int(pow(float(accum_count), exp(d)) + 0.5);
-	}
-
-	accum_count = min(accum_count, int(512.0 * lights[0].roughness));
+	accum_count = min(accum_count, int(16.0 * pow(lights[0].roughness, 2.0)));
 	accum_count += 1;
 
-	vec3 prev_accum = texture(
-		u_accum, vec2(r_prev_pos_ndc.xy * 0.5 + 0.5)
-	).rgb;
+	vec3 prev_accum = texture(u_accum, vec2(r_prev_pos_ndc.xy * 0.5 + 0.5)).rgb;
 
 	prev_accum = max(vec3(0.0), prev_accum);
 

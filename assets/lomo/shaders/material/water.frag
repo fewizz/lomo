@@ -5,6 +5,7 @@
 /* lomo:material/water.glsl */
 
 void frx_materialFragment() {
+	#ifdef PBR_ENABLED
 	frx_fragColor = mix(frx_vertexColor, vec4(1, 1, 1, 0.0), 0.8);
 
 	frx_fragNormal = normalize(vec3(
@@ -17,4 +18,5 @@ void frx_materialFragment() {
 		1.0
 	));
 	frx_fragRoughness = 0.0;
+	#endif
 }

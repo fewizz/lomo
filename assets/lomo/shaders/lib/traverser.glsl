@@ -171,9 +171,16 @@ void find_uppest_lod(
 	}
 }
 
+bool is_out_of_fb(vec3 win_pos) {
+	return
+		any(lessThan(win_pos.xy, vec2(0.0))) ||
+		any(greaterThanEqual(win_pos.xy, vec2(frxu_size))) ||
+		win_pos.z < 0.0 || win_pos.z >= 1.0;
+}
+
 bool is_out_of_fb(fb_pos pos) {
 	return
-		any(greaterThanEqual(vec2(pos.texel), uvec2(frxu_size))) ||
+		any(greaterThanEqual(pos.texel, uvec2(frxu_size))) ||
 		pos.z < 0.0 || pos.z >= 1.0;
 }
 
@@ -251,7 +258,9 @@ fb_traversal_result traverse_fb(
 	
 	uint steps = 0;
 	while(steps++ < max_steps) {
-		if(is_out_of_fb(pos)) return fb_traversal_result(TRAVERSAL_OUT_OF_FB, pos);
+		if(is_out_of_fb(pos)) {
+			return fb_traversal_result(TRAVERSAL_OUT_OF_FB, pos);
+		}
 
 		fb_pos prev = pos;
 		float dist = next_cell_common(pos, dir, level);
@@ -292,10 +301,10 @@ fb_traversal_result traverse_fb(
 			}
 			else {
 				int result = check_if_intersects(prev, dir_ndc, s_depth, s_win_normal);
+				if(is_out_of_fb(prev)) {
+					return fb_traversal_result(TRAVERSAL_OUT_OF_FB, prev);
+				}
 				if(result == SURFACE_INTERSECT) {
-					if(prev.z >= 1.0) {
-						return fb_traversal_result(TRAVERSAL_OUT_OF_FB, prev);
-					}
 					return fb_traversal_result(TRAVERSAL_SUCCESS, prev);
 				}
 				if(result == SURFACE_UNDER) {
@@ -306,7 +315,7 @@ fb_traversal_result traverse_fb(
 
 		/* switching the cell */
 		//if((pos.texel >> cell_size(level + 1u)) != (prev.texel >> cell_size(level + 1u) )) {
-			upper_depth = upper_depth_value(pos, level, s_hi_depth);
+		upper_depth = upper_depth_value(pos, level, s_hi_depth);
 		//}
 		lower_depth = lower_depth_value(pos, level, s_hi_depth);
 		//if(!find_uppest_lod(pos, level, upper_depth, lower_depth, s_hi_depth, backwards))
@@ -318,4 +327,39 @@ fb_traversal_result traverse_fb(
 	}
 
 	return fb_traversal_result(TRAVERSAL_TOO_LONG, fb_pos(uvec2(0), vec2(0), 0.0));
+}
+
+fb_traversal_result traverse_cam(
+	fb_pos pos,
+	vec3 pos_cam,
+	vec3 dir_cam,
+	vec3 dir_win,
+	float roughness,
+	sampler2D s_depth
+) {
+	float stp = 0.01 + 0.05 * roughness;
+
+	while(true) {
+		if(is_out_of_fb(pos)) {
+			return fb_traversal_result(TRAVERSAL_OUT_OF_FB, pos);
+		}
+		pos_cam += dir_cam * stp;
+		vec3 pos_win = cam_to_win(pos_cam);
+		pos.texel = ivec2(pos_win.xy);
+		float depth = texelFetch(s_depth, ivec2(pos.texel), 0).r;
+
+		if(pos.z >= depth) {
+			//vec3 hit_pos_win = pos_win;
+			//hit_pos_win.z = depth;
+			//vec3 hit_pos_cam = win_to_cam(hit_pos_win);
+			//if(1.0/(pos.z - depth) > 100000.0/*distance(pos_cam, hit_pos_cam) > 1.0*/) {
+			//	return fb_traversal_result(TRAVERSAL_POSSIBLY_UNDER, pos);
+			//}
+			pos.z = depth;
+			pos.inner = fract(pos_win.xy);
+			return fb_traversal_result(TRAVERSAL_SUCCESS, pos);
+		}
+		pos.z = pos_win.z;
+		stp *= 1.1 + 0.05 * roughness;// + 10000000.0 * abs(dir_win.z);
+	}
 }
