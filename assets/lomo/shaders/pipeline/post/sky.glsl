@@ -8,7 +8,7 @@
 #include lomo:shaders/lib/ray_plane.glsl
 #include lomo:shaders/lib/hash.glsl
 
-/* lomo:lib/sky.glsl */
+/* lomo:pipeline/post/sky.glsl */
 
 struct layer {
 	float bottom;
@@ -76,11 +76,11 @@ vec3 sky(vec3 dir) {
 	ray eye = ray(eye_pos, dir);
 	float a = dot(dir, sun_dir());
 	vec3 rgb = pow(vec3(7.2, 5.7, 4.2), vec3(4.0));
-	vec3 color = sky(eye, layer(0.0, 12000.0), 0.005 / rgb);
+	vec3 color = sky(eye, layer(0.0, 12000.0), 0.03 / rgb);
 	float sun = 0.0;
 	float sun_a = 0.9999;
 	float h = 0.0003;
 	sun = smoothstep(0.9999, 1.0, a);
-	color += color * vec3(300.0, 120.0, 8.0) * 2.0 * sun;
-	return color * vec3(0.8, 1.2, 3.6);
+	color += color * vec3(30.0, 10.0, 1.5) * sun;
+	return color * vec3(0.7, 1.0, 3.0);
 }

@@ -1,6 +1,8 @@
 #include frex:shaders/lib/math.glsl
 #include frex:shaders/api/world.glsl
 
+/* lomo:pipeline/post/compute_normal.glsl */
+
 vec3 compute_normal(
 	vec3 incidence, vec3 geometric_normal, vec2 pos_win_xy, float roughness
 ) {

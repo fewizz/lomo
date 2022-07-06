@@ -1,6 +1,8 @@
 #include frex:shaders/api/view.glsl
 #include frex:shaders/api/world.glsl
 
+/* lomo:pipeline/post/shadow_glsl.glsl */
+
 uniform sampler2DArrayShadow u_shadow_map;
 
 vec3 shadow_dist(int cascade, vec3 shadow_pos) {
