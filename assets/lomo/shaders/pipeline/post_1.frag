@@ -63,8 +63,6 @@ void main() {
 	);
 	dir_cam = normalize(reflect(dir_cam, normal_cam));
 
-	bool got_it = false;
-
 	if(dot(dir_cam, geometric_normal_cam) > 0.0) {
 		pos.z -= 0.00001;
 
@@ -76,11 +74,8 @@ void main() {
 		);
 
 		vec3 geometric_normal_cam0 = texelFetch(u_normal, ivec2(result.pos.texel), 0).xyz;
-		if(result.code == TRAVERSAL_SUCCESS && dot(geometric_normal_cam0, geometric_normal_cam0) > 0.9) {
-			got_it = true;
-		}
 
-		if(got_it && result.code == TRAVERSAL_SUCCESS) {
+		if(dot(geometric_normal_cam0, geometric_normal_cam0) > 0.9 && result.code == TRAVERSAL_SUCCESS) {
 			pos = result.pos;
 			vec4 extra_0_1 = texelFetch(u_extra_0, ivec2(pos.texel), 0);
 
@@ -109,7 +104,7 @@ void main() {
 		float dt = dot(
 			sd,
 			mat3(frx_inverseViewMatrix) *
-			mix(normal_cam, geometric_normal_cam, 1.0) // still can't decide
+			mix(normal_cam, geometric_normal_cam, 0.0) // still can't decide
 		);
 		dt = max(dt, 0.0);
 		vec3 sun = d * dt * sky(sd) * float(sd.y > 0.0);
@@ -141,15 +136,13 @@ void main() {
 
 	if(
 		any(greaterThan(vec3(r_prev_pos_ndc), vec3( 1.0))) ||
-		any(lessThan   (vec3(r_prev_pos_ndc), vec3(-1.0)))
+		any(lessThan   (vec3(r_prev_pos_ndc), vec3(-1.0))) ||
+		abs(prev_depth - r_prev_pos_win.z) > 0.0004
 	) {
 		accum_count = 0;
 	}
-	else if(abs(prev_depth - r_prev_pos_win.z) > 0.0004) {
-		accum_count = 0;
-	}
 
-	accum_count = min(accum_count, int(16.0 * pow(roughness_0, 2.0)));
+	accum_count = min(accum_count, int(32.0 * pow(roughness_0, 2.0)));
 	accum_count += 1;
 
 	vec3 light_1 = color * s + light;
