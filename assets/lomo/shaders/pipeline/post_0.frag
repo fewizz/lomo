@@ -45,7 +45,7 @@ void main() {
 				float weight = 1.0;
 				weight *= max(0.0, pow(max(dot(normal0, normal), 0.0), 4.0));
 				float z_diff = abs(dot(pos - pos0, normal0));
-				weight *= max(0.0, 0.01 - z_diff);
+				weight *= max(0.0, 0.02 - z_diff);
 				weight_total += weight;
 				light_total += light * weight;
 			}

@@ -81,6 +81,6 @@ vec3 sky(vec3 dir) {
 	float sun_a = 0.9999;
 	float h = 0.0003;
 	sun = smoothstep(0.9999, 1.0, a);
-	color += color * vec3(50.0, 16.0, 1.6) * sun;
-	return color * vec3(0.65, 1.0, 3.0);
+	color += color * vec3(50.0, 16.0, 1.6) * 5.0 * sun;
+	return color * vec3(0.65, 1.0, 3.0) * 1.0;
 }

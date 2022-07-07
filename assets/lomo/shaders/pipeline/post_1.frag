@@ -137,7 +137,7 @@ void main() {
 	if(
 		any(greaterThan(vec3(r_prev_pos_ndc), vec3( 1.0))) ||
 		any(lessThan   (vec3(r_prev_pos_ndc), vec3(-1.0))) ||
-		abs(prev_depth - r_prev_pos_win.z) > 0.0004
+		abs(prev_depth - r_prev_pos_win.z) > 0.0005
 	) {
 		accum_count = 0;
 	}
