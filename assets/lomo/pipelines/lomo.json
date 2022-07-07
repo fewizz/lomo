@@ -102,10 +102,34 @@
 		"samplers": [ "u_input" ]
 	},
 	{
+		"name": "post_1",
+		"vertexSource": "lomo:shaders/pipeline/full_frame_depth_1.vert",
+		"fragmentSource": "lomo:shaders/pipeline/post_1.frag",
+		"samplers": [
+			"u_color", "u_normal",
+			"u_extra_0", "u_extra_1",
+			"u_depth",
+			"u_win_normal", "u_hi_depth",
+			"u_prev_light_1_accum", "u_prev_light_1_accum_counter",
+			"u_prev_color_accum", "u_prev_color_accum_counter",
+			"u_prev_depth",
+			"u_shadow_map"
+		]
+	},
+	{
 		"name": "post_0",
 		"vertexSource": "lomo:shaders/pipeline/full_frame_depth_1.vert",
 		"fragmentSource": "lomo:shaders/pipeline/post_0.frag",
-		"samplers": [ "u_light_1", "u_color_depth", "u_normal", "u_color", "u_depth", "u_extra_0" ]
+		"samplers": [
+			"u_light_1_accum",
+			"u_light_1_accum_counter",
+			"u_color_accum",
+			"u_color_accum_counter",
+			"u_normal",
+			"u_color",
+			"u_depth",
+			"u_extra_0"
+		]
 	},
 	{
 		"name": "copy_with_depth",
@@ -137,18 +161,6 @@
 		"vertexSource": "lomo:shaders/pipeline/full_frame_depth_1.vert",
 		"fragmentSource": "lomo:shaders/pipeline/depth_levels.frag",
 		"samplers": [ "u_depths" ]
-	},
-	{
-		"name": "post_1",
-		"vertexSource": "lomo:shaders/pipeline/full_frame_depth_1.vert",
-		"fragmentSource": "lomo:shaders/pipeline/post_1.frag",
-		"samplers": [
-			"u_color", "u_normal",
-			"u_extra_0", "u_extra_1",
-			"u_depth",
-			"u_win_normal", "u_hi_depth",
-			"u_prev_light_1", "u_prev_color_depth", "u_shadow_map"
-		]
 	},
 	{
 		"name": "sort",
@@ -369,7 +381,7 @@
 		{
 			"name": "post_1",
 			"program": "post_1",
-			"framebuffer": "light_1__color_depth",
+			"framebuffer": "light_1_accum__light_1_accum_counter__color_accum__color_accum_counter",
 			"samplerImages": [
 				"colors",
 				"normals",
@@ -378,18 +390,23 @@
 				"depths",
 				"win_normals",
 				"hi_depths",
-				"prev_light_1",
-				"prev_color_depth",
+				"prev_light_1_accum",
+				"prev_light_1_accum_counter",
+				"prev_color_accum",
+				"prev_color_accum_counter",
+				"prev_depth",
 				"shadow_map"
 			]
 		},
 		{
 			"name": "post_0",
 			"program": "post_0",
-			"framebuffer": "prev_light_1__prev_color_depth__solid_c",
+			"framebuffer": "prev_light_1_accum__prev_light_1_accum_counter__prev_color_accum__prev_color_accum_counter__prev_depth__light",
 			"samplerImages": [
-				"light_1",
-				"color_depth",
+				"light_1_accum",
+				"light_1_accum_counter",
+				"color_accum",
+				"color_accum_counter",
 				"normals",
 				"colors",
 				"depths",
@@ -1089,9 +1106,9 @@
 		]
 	},
 	{
-		"name": "color_depth",
-		"internalFormat": "RGBA32F",
-		"pixelFormat": "RGBA",
+		"name": "prev_depth",
+		"internalFormat": "R32F",
+		"pixelFormat": "RED",
 		"pixelDataType": "FLOAT",
 		"texParams": [
 			{ "name": "TEXTURE_MIN_FILTER", "val": "LINEAR" },
@@ -1101,9 +1118,9 @@
 		]
 	},
 	{
-		"name": "prev_color_depth",
-		"internalFormat": "RGBA32F",
-		"pixelFormat": "RGBA",
+		"name": "color_accum",
+		"internalFormat": "RGB16F",
+		"pixelFormat": "RGB",
 		"pixelDataType": "FLOAT",
 		"texParams": [
 			{ "name": "TEXTURE_MIN_FILTER", "val": "LINEAR" },
@@ -1113,9 +1130,9 @@
 		]
 	},
 	{
-		"name": "light_1",
-		"internalFormat": "RGBA16F",
-		"pixelFormat": "RGBA",
+		"name": "prev_color_accum",
+		"internalFormat": "RGB16F",
+		"pixelFormat": "RGB",
 		"pixelDataType": "FLOAT",
 		"texParams": [
 			{ "name": "TEXTURE_MIN_FILTER", "val": "LINEAR" },
@@ -1125,9 +1142,69 @@
 		]
 	},
 	{
-		"name": "prev_light_1",
-		"internalFormat": "RGBA16F",
-		"pixelFormat": "RGBA",
+		"name": "color_accum_counter",
+		"internalFormat": "R32F",
+		"pixelFormat": "RED",
+		"pixelDataType": "FLOAT",
+		"texParams": [
+			{ "name": "TEXTURE_MIN_FILTER", "val": "LINEAR" },
+			{ "name": "TEXTURE_MAG_FILTER", "val": "LINEAR" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
+		]
+	},
+	{
+		"name": "prev_color_accum_counter",
+		"internalFormat": "R32F",
+		"pixelFormat": "RED",
+		"pixelDataType": "FLOAT",
+		"texParams": [
+			{ "name": "TEXTURE_MIN_FILTER", "val": "LINEAR" },
+			{ "name": "TEXTURE_MAG_FILTER", "val": "LINEAR" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
+		]
+	},
+	{
+		"name": "light_1_accum",
+		"internalFormat": "RGB16F",
+		"pixelFormat": "RGB",
+		"pixelDataType": "FLOAT",
+		"texParams": [
+			{ "name": "TEXTURE_MIN_FILTER", "val": "LINEAR" },
+			{ "name": "TEXTURE_MAG_FILTER", "val": "LINEAR" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
+		]
+	},
+	{
+		"name": "prev_light_1_accum",
+		"internalFormat": "RGB16F",
+		"pixelFormat": "RGB",
+		"pixelDataType": "FLOAT",
+		"texParams": [
+			{ "name": "TEXTURE_MIN_FILTER", "val": "LINEAR" },
+			{ "name": "TEXTURE_MAG_FILTER", "val": "LINEAR" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
+		]
+	},
+	{
+		"name": "light_1_accum_counter",
+		"internalFormat": "R32F",
+		"pixelFormat": "RED",
+		"pixelDataType": "FLOAT",
+		"texParams": [
+			{ "name": "TEXTURE_MIN_FILTER", "val": "LINEAR" },
+			{ "name": "TEXTURE_MAG_FILTER", "val": "LINEAR" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
+		]
+	},
+	{
+		"name": "prev_light_1_accum_counter",
+		"internalFormat": "R32F",
+		"pixelFormat": "RED",
 		"pixelDataType": "FLOAT",
 		"texParams": [
 			{ "name": "TEXTURE_MIN_FILTER", "val": "LINEAR" },
@@ -1138,8 +1215,8 @@
 	},
 	{
 		"name": "light",
-		"internalFormat": "RGBA16F",
-		"pixelFormat": "RGBA",
+		"internalFormat": "RGB16F",
+		"pixelFormat": "RGB",
 		"pixelDataType": "FLOAT",
 		"texParams": [
 			{ "name": "TEXTURE_MIN_FILTER", "val": "LINEAR" },
@@ -1150,8 +1227,8 @@
 	},
 	{
 		"name": "emissive",
-		"internalFormat": "RGBA16F",
-		"pixelFormat": "RGBA",
+		"internalFormat": "RGB16F",
+		"pixelFormat": "RGB",
 		"pixelDataType": "FLOAT",
 		"texParams": [
 			{ "name": "TEXTURE_MIN_FILTER", "val": "LINEAR" },
@@ -1162,8 +1239,8 @@
 	},
 	{
 		"name": "bloom_downsample",
-		"internalFormat": "RGBA16F",
-		"pixelFormat": "RGBA",
+		"internalFormat": "RGB16F",
+		"pixelFormat": "RGB",
 		"pixelDataType": "FLOAT",
 		"lod": 6,
 		"texParams": [
@@ -1175,8 +1252,8 @@
 	},
 	{
 		"name": "bloom_upsample",
-		"internalFormat": "RGBA16F",
-		"pixelFormat": "RGBA",
+		"internalFormat": "RGB16F",
+		"pixelFormat": "RGB",
 		"pixelDataType": "FLOAT",
 		"lod": 6,
 		"texParams": [
@@ -1413,23 +1490,22 @@
 		"depthAttachment": { "image": "shadow_map", "clearDepth": 1.0 }
 	},
 	{
-		"name": "light_1",
+		"name": "light_1_accum__light_1_accum_counter__color_accum__color_accum_counter",
 		"colorAttachments": [
-			{ "image": "light_1" }
+			{ "image": "light_1_accum" },
+			{ "image": "color_accum" },
+			{ "image": "light_1_accum_counter" },
+			{ "image": "color_accum_counter" }
 		]
 	},
 	{
-		"name": "light_1__color_depth",
+		"name": "prev_light_1_accum__prev_light_1_accum_counter__prev_color_accum__prev_color_accum_counter__prev_depth__light",
 		"colorAttachments": [
-			{ "image": "light_1" },
-			{ "image": "color_depth" }
-		]
-	},
-	{
-		"name": "prev_light_1__prev_color_depth__solid_c",
-		"colorAttachments": [
-			{ "image": "prev_light_1" },
-			{ "image": "prev_color_depth" },
+			{ "image": "prev_light_1_accum" },
+			{ "image": "prev_color_accum" },
+			{ "image": "prev_light_1_accum_counter" },
+			{ "image": "prev_color_accum_counter" },
+			{ "image": "prev_depth" },
 			{ "image": "light" }
 		]
 	},

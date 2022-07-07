@@ -70,17 +70,19 @@ vec3 sky(ray r, layer l, vec3 coeffs) {
 	return result * coeffs;
 }
 
-vec3 sky(vec3 dir) {
+vec3 sky(vec3 dir, bool with_sun) {
 	vec3 eye_pos = frx_cameraPos;
 	eye_pos.x = 0.0; eye_pos.z = 0.0;
 	ray eye = ray(eye_pos, dir);
 	float a = dot(dir, sun_dir());
 	vec3 rgb = pow(vec3(7.2, 5.7, 4.2), vec3(4.0));
 	vec3 color = sky(eye, layer(0.0, 12000.0), 0.03 / rgb);
-	float sun = 0.0;
-	float sun_a = 0.9999;
-	float h = 0.0003;
-	sun = smoothstep(0.9999, 1.0, a);
-	color += color * vec3(50.0, 16.0, 1.6) * 5.0 * sun;
+	if(with_sun) {
+		float sun = 0.0;
+		float sun_a = 0.9999;
+		float h = 0.0003;
+		sun = smoothstep(0.9999, 1.0, a);
+		color += color * vec3(50.0, 16.0, 1.6) * 50.0 * sun;
+	}
 	return color * vec3(0.65, 1.0, 3.0) * 1.0;
 }
