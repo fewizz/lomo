@@ -161,7 +161,7 @@ void main() {
 			mix(normal_cam, geometric_normal_cam, 0.0) // still can't decide
 		);
 		dt = max(dt, 0.0);
-		vec3 sun = 0.05 * d * dt * roughness * sky(sd, true) * float(sd.y > 0.0);
+		vec3 sun = 0.04 * d * dt * roughness * sky(sd, true) * float(sd.y > 0.0);
 		s = max(s, sun);
 		s *= pow(sky_light, 4.0);
 	}

@@ -65,13 +65,6 @@
 				"max": 1.0,
 				"nameKey": "config.canvas.value.bloom_upsample_scale",
 				"descriptionKey": "config.canvas.help.bloom_upsample_scale"
-			},
-			"bloom_cutoff": {
-				"default": 0.02,
-				"min": 0.005,
-				"max": 0.1,
-				"nameKey": "config.canvas.value.bloom_cutoff",
-				"descriptionKey": "config.canvas.help.bloom_cutoff"
 			}
 		}
 	}
@@ -536,8 +529,7 @@
 			"name": "merge_bloom",
 			"program": "merge_bloom",
 			"framebuffer": "solid_c",
-			"samplerImages": ["bloom_upsample", "light"],
-			"toggleConfig": "bloom_toggle"
+			"samplerImages": ["bloom_upsample", "light"]
 		}
 	]
 },
@@ -968,6 +960,8 @@
 	},
 	{
 		"name": "colors",
+		"internalFormat": "RGB8",
+		"pixelFormat": "RGB",
 		"texParams": [
 			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
 			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
