@@ -37,6 +37,19 @@
 },
 "options": [
 	{
+		"includeToken": "lomo:general",
+		"categoryKey": "config.lomo.category.general",
+		"options": {
+			"reflections": {
+				"choices": [ "all", "shiny", "water", "none" ],
+				"enum": true,
+				"prefix": "reflections_",
+				"nameKey": "config.lomo.value.reflections",
+				"descriptionKey": "config.lomo.help.reflections"
+			}
+		}
+	},
+	{
 		"includeToken": "canvas:bloom_config",
 		"categoryKey": "config.canvas.category.bloom",
 		"options": {

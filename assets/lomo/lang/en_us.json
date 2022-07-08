@@ -1,4 +1,8 @@
 {
 	"pipeline.lomo.name": "Lomo",
-	"pipeline.lomo.desc": ""
+	"pipeline.lomo.desc": "",
+
+	"config.lomo.category.general": "General",
+	"config.lomo.value.reflections": "Reflections",
+	"config.lomo.help.reflections": ""
 }

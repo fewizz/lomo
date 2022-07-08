@@ -13,7 +13,9 @@
 #include lomo:shaders/pipeline/post/compute_normal.glsl
 #include lomo:shaders/pipeline/post/shadow.glsl
 
-/* lomo:pipeline/post_0.frag */
+#include lomo:general
+
+/* lomo:pipeline/post_1.frag */
 
 uniform sampler2D u_color;
 uniform sampler2D u_normal;
@@ -117,7 +119,19 @@ void main() {
 	);
 	dir_cam = normalize(reflect(dir_cam, normal_cam));
 
-	if(dot(dir_cam, geometric_normal_cam) > 0.0) {
+	if(
+		#if REFLECTIONS == REFLECTIONS_ALL
+		true
+		#elif REFLECTIONS == REFLECTIONS_SHINY
+		roughness < 0.5
+		#elif REFLECTIONS == REFLECTIONS_WATER
+		roughness == 0.0
+		#elif REFLECTIONS == REFLECTIONS_NONE
+		false
+		#endif
+		&&
+		dot(dir_cam, geometric_normal_cam) > 0.0
+	) {
 		pos.z -= 0.00001;
 
 		fb_traversal_result result = traverse_fb(
