@@ -62,11 +62,18 @@ void frx_pipelineFragment() {
 			max(frx_fragEmissive * 16.0, pow(frx_fragLight.x, 5.0)),
 			1.0
 		);
+		out_extra_1 = vec4(
+			frx_fragReflectance,
+			0.0,
+			0.0,
+			1.0
+		);
 	}
 	else {
 		out_geometric_normal = vec4(0.0);
 		out_normal = vec4(0);
 		out_extra_0 = vec4(0);
+		out_extra_1 = vec4(0);
 	}
 
 	gl_FragDepth = gl_FragCoord.z;

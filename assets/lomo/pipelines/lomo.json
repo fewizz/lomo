@@ -134,7 +134,9 @@
 			"u_normal",
 			"u_color",
 			"u_depth",
-			"u_extra_0"
+			"u_extra_0",
+			"u_extra_1",
+			"u_light_1_pos"
 		]
 	},
 	{
@@ -387,7 +389,7 @@
 		{
 			"name": "post_1",
 			"program": "post_1",
-			"framebuffer": "light_1_accum__light_1_accum_counter__color_accum__color_accum_counter",
+			"framebuffer": "light_1_accum__light_1_accum_counter__color_accum__color_accum_counter__light_1_pos",
 			"samplerImages": [
 				"colors",
 				"normals",
@@ -416,7 +418,9 @@
 				"normals",
 				"colors",
 				"depths",
-				"extras_0"
+				"extras_0",
+				"extras_1",
+				"light_1_pos"
 			]
 		},
 		{
@@ -1269,6 +1273,18 @@
 			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
 			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
 		]
+	},
+	{
+		"name": "light_1_pos",
+		"internalFormat": "RGB32F",
+		"pixelFormat": "RGB",
+		"pixelDataType": "FLOAT",
+		"texParams": [
+			{ "name": "TEXTURE_MIN_FILTER", "val": "LINEAR" },
+			{ "name": "TEXTURE_MAG_FILTER", "val": "LINEAR" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
+		]
 	}
 ],
 
@@ -1497,12 +1513,13 @@
 		"depthAttachment": { "image": "shadow_map", "clearDepth": 1.0 }
 	},
 	{
-		"name": "light_1_accum__light_1_accum_counter__color_accum__color_accum_counter",
+		"name": "light_1_accum__light_1_accum_counter__color_accum__color_accum_counter__light_1_pos",
 		"colorAttachments": [
 			{ "image": "light_1_accum" },
 			{ "image": "color_accum" },
 			{ "image": "light_1_accum_counter" },
-			{ "image": "color_accum_counter" }
+			{ "image": "color_accum_counter" },
+			{ "image": "light_1_pos" }
 		]
 	},
 	{

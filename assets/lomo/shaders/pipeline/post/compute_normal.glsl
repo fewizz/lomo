@@ -14,7 +14,7 @@ vec3 compute_normal(
 	if(dot(-incidence, geometric_normal) < 0) geometric_normal *= -1;
 	float x = (rand.x * 2.0 - 1.0); // [-1:1]
 	float s = sign(x);
-	x = pow(abs(x), 1.0 / (roughness + 0.000005)) * s;
+	x = pow(abs(x), 1.0 / (2.0 * roughness + 0.000005) + 0.5) * s;
 	x *= r; // [-PI/2 : PI/2]
 	vec3 new_normal = rotation(
 		x, normalize(cross(-incidence, geometric_normal))

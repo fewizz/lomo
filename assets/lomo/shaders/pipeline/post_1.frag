@@ -39,6 +39,8 @@ layout(location = 1) out vec3 out_color_accum;
 layout(location = 2) out float out_light_1_accum_counter;
 layout(location = 3) out float out_color_accum_counter;
 
+layout(location = 4) out vec3 out_light_1_pos;
+
 struct light_info {
 	vec3 light;
 	vec3 color;
@@ -98,6 +100,7 @@ void main() {
 	vec3 geometric_normal_cam = texelFetch(u_normal, ivec2(gl_FragCoord.xy), 0).xyz;
 	if(initial_depth == 1.0 || dot(geometric_normal_cam, geometric_normal_cam) < 0.9) {
 		out_light_1_accum = vec3(0.0);
+		out_light_1_pos = vec3(1000000000000000000.0);
 		out_light_1_accum_counter = uintBitsToFloat(0u);
 		return;
 	}
@@ -108,12 +111,14 @@ void main() {
 	vec3 light = vec3(0.0);
 	
 	vec4 extra_0_0 = texelFetch(u_extra_0, ivec2(pos.texel), 0);
+	float reflectance_0 = texelFetch(u_extra_1, ivec2(pos.texel), 0).r;
 	float roughness = extra_0_0[0];
 	float roughness_0 = roughness;
 	float sky_light = extra_0_0[1];
 
 	geometric_normal_cam = normalize(geometric_normal_cam);
-	vec3 dir_cam = cam_dir_to_z1(gl_FragCoord.xy);
+	vec3 dir_cam0 = cam_dir_to_z1(gl_FragCoord.xy);
+	vec3 dir_cam = dir_cam0;
 	vec3 normal_cam = compute_normal(
 		dir_cam, geometric_normal_cam, pos.texel, roughness
 	);
@@ -155,12 +160,16 @@ void main() {
 			color = pow(color, vec3(2.2));
 			light = color * block_light_1;
 			pos_cam = win_to_cam(vec3(ivec2(pos.texel) + pos.inner, pos.z));
+			out_light_1_pos = pos_cam;
 			geometric_normal_cam = geometric_normal_cam0;
 			geometric_normal_cam = normalize(geometric_normal_cam);
 			normal_cam = compute_normal(
 				dir_cam, geometric_normal_cam, pos.texel, roughness
 			);
 			dir_cam = normalize(reflect(dir_cam, normal_cam));
+		}
+		else {
+			out_light_1_pos = pos_cam + dir_cam * 10000000000.0;
 		}
 	}
 
@@ -175,7 +184,9 @@ void main() {
 			mix(normal_cam, geometric_normal_cam, 0.0) // still can't decide
 		);
 		dt = max(dt, 0.0);
-		vec3 sun = 0.04 * d * dt * roughness * sky(sd, true) * float(sd.y > 0.0);
+		vec3 sun = 0.15 * d * dt * sky(sd, true) * float(sd.y > 0.0);
+		float f = max(0.0, dot(sd, mat3(frx_inverseViewMatrix) * dir_cam));
+		sun *= pow(abs(f) / PI, 1.0 / (2.0 * roughness + 0.000005) + 0.5);
 		s = max(s, sun);
 		s *= pow(sky_light, 4.0);
 	}
@@ -183,7 +194,7 @@ void main() {
 	vec3 light_1 = color * s + light;
 
 	accum_count += 1u;
-	accum_count = min(accum_count, max(1u, uint(32.0 * pow(roughness_0, 2.0))));
+	accum_count = min(accum_count, max(1u, uint(16.0 * pow(roughness_0, 1.5))));
 
 	vec3 prev_light_1 =
 		texture(u_prev_light_1_accum, vec2(r_prev_pos_ndc.xy * 0.5 + 0.5)).rgb;
