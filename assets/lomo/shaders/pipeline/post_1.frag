@@ -196,14 +196,6 @@ void main() {
 		s = max(s, sun);
 		s *= pow(sky_light, mix(4.0, 0.0, d));
 	}
-
-	/*float ao = mix(
-		1.0,
-		1.0 - roughness_0,
-		float(
-			traversal_result_code == TRAVERSAL_SUCCESS
-		)
-	);*/
 	vec3 light_1 = color * s + light;
 
 	accum_count += 1u;

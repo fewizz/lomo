@@ -31,7 +31,7 @@ float ray_layer_intersection(ray r, layer l) {
 	return 0.0;
 }
 
-const int steps = 3;
+const int steps = 4;
 
 float od_integration(vec3 po, vec3 dir, float dist, layer l) {
 	float stp = dist / float(steps);
@@ -48,6 +48,10 @@ float od_integration(vec3 po, vec3 dir, float dist, layer l) {
 vec3 sun_dir() {
 	float t = frx_skyAngleRadians + PI / 2.0;
 	return vec3(cos(t), sin(t), 0);
+}
+
+float henyey_greenstein_phase_function(float g, float cosa) {
+	return 3.0*(1.0-g*g)/(2.0*(2.0+g*g)) * (1.0+cosa*cosa)/pow(1.0+g*g-2.0*g*cosa, 3.0/2.0);
 }
 
 vec3 sky(ray r, layer l, vec3 coeffs) {
@@ -77,12 +81,13 @@ vec3 sky(vec3 dir, bool with_sun) {
 	float a = dot(dir, sun_dir());
 	vec3 rgb = pow(vec3(7.2, 5.7, 4.2), vec3(4.0));
 	vec3 color = sky(eye, layer(0.0, 12000.0), 0.03 / rgb);
+	vec3 s = sky(eye, layer(0.0, 20000.0), 0.05 / rgb) * henyey_greenstein_phase_function(0.6, a) * vec3(1.0, 0.5, 0.25) * 0.2;
 	if(with_sun) {
-		float sun = 0.0;
-		float sun_a = 0.9999;
+		//float sun = 0.0;
+		//float sun_a = 0.9999;
 		float h = 0.0003;
-		sun = smoothstep(0.9999, 1.0, a);
-		color += color * vec3(4.0, 1.5, 1.0) * 600.0 * sun;
+		float sun = smoothstep(0.9999, 1.0, a);
+		s += s * sun * vec3(200.0);
 	}
-	return color * 2.0;// * vec3(0.65, 1.0, 3.0) * 0.8;
+	return (color + s) * 2.0;// * vec3(0.65, 1.0, 3.0) * 0.8;
 }
