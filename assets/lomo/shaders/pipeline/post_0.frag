@@ -44,7 +44,8 @@ void main() {
 		vec3 normal0 = texelFetch(u_normal, ivec2(coord0), 0).rgb;
 
 		vec3 extras_0 = texelFetch(u_extra_0, ivec2(coord0), 0).rgb;
-		float reflectance = texelFetch(u_extra_1, ivec2(coord0), 0).r;
+		vec3 extras_1 = texelFetch(u_extra_0, ivec2(coord0), 0).rgb;
+		float reflectance = extras_1[0];
 		float roughness   = extras_0[0];
 		float block_light = extras_0[2];
 
@@ -55,7 +56,9 @@ void main() {
 			color = vec3(0.0);
 			block_light = 1.0;
 		}
-		resulting_light = light * mix(color, vec3(1.0), pow(reflectance, 2.0)) + block_light * color;
+		resulting_light =
+			light * color +
+			block_light * color;
 	}
 	else if(frx_worldHasSkylight == 1) {
 		resulting_light =

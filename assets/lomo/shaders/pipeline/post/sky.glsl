@@ -82,7 +82,7 @@ vec3 sky(vec3 dir, bool with_sun) {
 		float sun_a = 0.9999;
 		float h = 0.0003;
 		sun = smoothstep(0.9999, 1.0, a);
-		color += color * vec3(2.0, 1.5, 1.0) * 1000.0 * sun;
+		color += color * vec3(4.0, 1.5, 1.0) * 600.0 * sun;
 	}
 	return color * 2.0;// * vec3(0.65, 1.0, 3.0) * 0.8;
 }

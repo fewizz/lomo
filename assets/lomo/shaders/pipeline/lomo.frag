@@ -26,7 +26,7 @@ void frx_pipelineFragment() {
 		}
 	}
 
-	out_color = a;
+	out_color = a * frx_emissiveColor;
 
 	if(
 		frx_renderTargetSolid ||
@@ -38,7 +38,7 @@ void frx_pipelineFragment() {
 		vec3 tangent = normalize(frx_vertexTangent.xyz);
 		mat3 TBN = mat3(
 			tangent,
-			cross(geometric_normal, tangent),
+			cross(tangent, geometric_normal),
 			geometric_normal
 		);
 
@@ -52,14 +52,10 @@ void frx_pipelineFragment() {
 		out_geometric_normal = vec4(geometric_normal, 1.0);
 		out_normal = vec4(normal, 1.0);
 
-		if(frx_fragRoughness == 1.0) {
-			frx_fragRoughness = 0.6;
-		}
-
 		out_extra_0 = vec4(
 			frx_fragRoughness,
 			frx_fragLight.y,
-			max(frx_fragEmissive * 16.0, pow(frx_fragLight.x, 5.0)),
+			max(frx_fragEmissive * 16.0, pow(frx_fragLight.x, 6.0)),
 			1.0
 		);
 		out_extra_1 = vec4(

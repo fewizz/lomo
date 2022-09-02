@@ -111,10 +111,12 @@ void main() {
 	vec3 light = vec3(0.0);
 	
 	vec4 extra_0_0 = texelFetch(u_extra_0, ivec2(pos.texel), 0);
-	float reflectance_0 = texelFetch(u_extra_1, ivec2(pos.texel), 0).r;
-	float roughness = extra_0_0[0];
-	float roughness_0 = roughness;
-	float sky_light = extra_0_0[1];
+	vec4 extra_1_0 = texelFetch(u_extra_1, ivec2(pos.texel), 0);
+	float reflectance   = extra_1_0[0];
+	float reflectance_0 = reflectance;
+	float roughness     = extra_0_0[0];
+	float roughness_0   = roughness;
+	float sky_light     = extra_0_0[1];
 
 	geometric_normal_cam = normalize(geometric_normal_cam);
 	vec3 dir_cam0 = cam_dir_to_z1(gl_FragCoord.xy);
@@ -123,6 +125,7 @@ void main() {
 		dir_cam, geometric_normal_cam, pos.texel, roughness
 	);
 	dir_cam = normalize(reflect(dir_cam, normal_cam));
+	int traversal_result_code = TRAVERSAL_OUT_OF_FB;
 
 	if(
 		#if REFLECTIONS == REFLECTIONS_ALL
@@ -138,22 +141,25 @@ void main() {
 		dot(dir_cam, geometric_normal_cam) > 0.0
 	) {
 		pos.z -= 0.00001;
-
+		uint max_side = uint(max(frxu_size.x, frxu_size.y));
 		fb_traversal_result result = traverse_fb(
 			pos, cam_dir_to_win(pos_cam, dir_cam),
 			cam_dir_to_ndc(pos_cam, dir_cam),
 			u_hi_depth, u_depth, u_win_normal,
-			uint(mix(40, 80, (1.0 - roughness)))
+			uint(mix(max_side / 50, max_side / 25, (1.0 - roughness)))
 		);
+		traversal_result_code = result.code;
 
 		vec3 geometric_normal_cam0 = texelFetch(u_normal, ivec2(result.pos.texel), 0).xyz;
 
 		if(dot(geometric_normal_cam0, geometric_normal_cam0) > 0.9 && result.code == TRAVERSAL_SUCCESS) {
 			pos = result.pos;
 			vec4 extra_0_1 = texelFetch(u_extra_0, ivec2(pos.texel), 0);
+			vec4 extra_1_1 = texelFetch(u_extra_1, ivec2(pos.texel), 0);
 
-			roughness = extra_0_1[0];
-			sky_light = extra_0_1[1];
+			roughness   = extra_0_1[0];
+			reflectance = extra_1_1[0];
+			sky_light   = extra_0_1[1];
 			float block_light_1 = extra_0_1[2];
 
 			color = texelFetch(u_color, ivec2(pos.texel), 0).rgb;
@@ -188,13 +194,20 @@ void main() {
 		float f = max(0.0, dot(sd, mat3(frx_inverseViewMatrix) * dir_cam));
 		sun *= pow(abs(f) / PI, 1.0 / (2.0 * roughness + 0.000005) + 0.5);
 		s = max(s, sun);
-		s *= pow(sky_light, 4.0);
+		s *= pow(sky_light, mix(4.0, 0.0, d));
 	}
 
+	/*float ao = mix(
+		1.0,
+		1.0 - roughness_0,
+		float(
+			traversal_result_code == TRAVERSAL_SUCCESS
+		)
+	);*/
 	vec3 light_1 = color * s + light;
 
 	accum_count += 1u;
-	accum_count = min(accum_count, max(1u, uint(16.0 * pow(roughness_0, 1.5))));
+	accum_count = min(accum_count, max(1u, uint(32.0 * pow(roughness_0, 1.5))));
 
 	vec3 prev_light_1 =
 		texture(u_prev_light_1_accum, vec2(r_prev_pos_ndc.xy * 0.5 + 0.5)).rgb;

@@ -6,7 +6,7 @@
 vec3 compute_normal(
 	vec3 incidence, vec3 geometric_normal, vec2 pos, float roughness
 ) {
-	float r = PI / 2.0;
+	float r = PI;
 	vec2 rand = hash23(uvec3(
 		pos, frx_renderSeconds * 1000.0
 		//abs(dvec3(frx_cameraPos + (frx_inverseViewMatrix * vec4(pos_cam, 1.0)).xyz) * 2048.0)
@@ -14,8 +14,11 @@ vec3 compute_normal(
 	if(dot(-incidence, geometric_normal) < 0) geometric_normal *= -1;
 	float x = (rand.x * 2.0 - 1.0); // [-1:1]
 	float s = sign(x);
-	x = pow(abs(x), 1.0 / (2.0 * roughness + 0.000005) + 0.5) * s;
-	x *= r; // [-PI/2 : PI/2]
+	x *= pow(
+			abs(x),
+			1.0 / (pow(roughness * 2, 4.0)) + 1.0 - 1.0 / 16.0
+		) * 2048 * s;
+	x *= r;
 	vec3 new_normal = rotation(
 		x, normalize(cross(-incidence, geometric_normal))
 	) * geometric_normal;
