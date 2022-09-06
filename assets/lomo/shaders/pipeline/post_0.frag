@@ -72,6 +72,6 @@ void main() {
 	out_prev_light_1_accum = light;//texelFetch(u_light_1_accum, coord0, 0).rgb;
 	out_prev_light_1_accum_counter = texelFetch(u_light_1_accum_counter, coord0, 0).r;
 
-	out_prev_color_accum = texelFetch(u_color_accum, coord0, 0).rgb;
-	out_prev_color_accum_counter = texelFetch(u_color_accum_counter, coord0, 0).r;
+	//out_prev_color_accum = texelFetch(u_color_accum, coord0, 0).rgb;
+	//out_prev_color_accum_counter = texelFetch(u_color_accum_counter, coord0, 0).r;
 }

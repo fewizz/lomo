@@ -100,7 +100,7 @@ void main() {
 	vec3 geometric_normal_cam = texelFetch(u_normal, ivec2(gl_FragCoord.xy), 0).xyz;
 	if(initial_depth == 1.0 || dot(geometric_normal_cam, geometric_normal_cam) < 0.9) {
 		out_light_1_accum = vec3(0.0);
-		out_light_1_pos = vec3(1000000000000000000.0);
+		//out_light_1_pos = vec3(1000000000000000000.0);
 		out_light_1_accum_counter = uintBitsToFloat(0u);
 		return;
 	}
@@ -116,7 +116,7 @@ void main() {
 	float reflectance_0 = reflectance;
 	float roughness     = extra_0_0[0];
 	float roughness_0   = roughness;
-	float sky_light     = extra_0_0[1];
+	float sky_light     = clamp(extra_0_0[1], 0.0, 1.0);
 
 	geometric_normal_cam = normalize(geometric_normal_cam);
 	vec3 dir_cam0 = cam_dir_to_z1(gl_FragCoord.xy);
@@ -159,14 +159,14 @@ void main() {
 
 			roughness   = extra_0_1[0];
 			reflectance = extra_1_1[0];
-			sky_light   = extra_0_1[1];
+			sky_light   = clamp(extra_0_1[1], 0.0, 1.0);
 			float block_light_1 = extra_0_1[2];
 
-			color = texelFetch(u_color, ivec2(pos.texel), 0).rgb;
+			color = max(vec3(0.0), texelFetch(u_color, ivec2(pos.texel), 0).rgb);
 			color = pow(color, vec3(2.2));
 			light = color * block_light_1;
 			pos_cam = win_to_cam(vec3(ivec2(pos.texel) + pos.inner, pos.z));
-			out_light_1_pos = pos_cam;
+			//out_light_1_pos = pos_cam;
 			geometric_normal_cam = geometric_normal_cam0;
 			geometric_normal_cam = normalize(geometric_normal_cam);
 			normal_cam = compute_normal(
@@ -175,7 +175,7 @@ void main() {
 			dir_cam = normalize(reflect(dir_cam, normal_cam));
 		}
 		else {
-			out_light_1_pos = pos_cam + dir_cam * 10000000000.0;
+			//out_light_1_pos = pos_cam + dir_cam * 10000000000.0;
 		}
 	}
 

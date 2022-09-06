@@ -1,3 +1,5 @@
+#define DIFFUSE_SHADING_MODE 1
+
 #include canvas:shaders/pipeline/diffuse.glsl
 #include canvas:shaders/pipeline/glint.glsl
 
@@ -25,8 +27,24 @@ void frx_pipelineFragment() {
 			a *= vec4(df, df, df, 1.0);
 		}
 	}
+	else if (frx_isHand) {
+		a *= mix(texture(frxs_lightmap, frx_fragLight.xy), frx_emissiveColor, frx_fragEmissive);
 
-	out_color = a * frx_emissiveColor;
+		if (frx_fragEnableDiffuse) {
+			float df = pv_diffuse + (1.0 - pv_diffuse) * frx_fragEmissive * 0.5f;
+			a *= vec4(df, df, df, 1.0);
+		}
+	}
+
+	if (frx_matFlash == 1) {
+		a = a * 0.25 + 0.75;
+	} else if (frx_matHurt == 1) {
+		a = vec4(0.25 + a.r * 0.75, a.g * 0.75, a.b * 0.75, a.a);
+	}
+
+	//glintify(a, float(frx_matGlint));
+
+	out_color = a;
 
 	if(
 		frx_renderTargetSolid ||
@@ -55,7 +73,7 @@ void frx_pipelineFragment() {
 		out_extra_0 = vec4(
 			frx_fragRoughness,
 			frx_fragLight.y,
-			max(frx_fragEmissive * 16.0, pow(frx_fragLight.x, 6.0)),
+			mix(pow(frx_fragLight.x, 6.0), length(a) * 8.0, frx_fragEmissive),
 			1.0
 		);
 		out_extra_1 = vec4(
@@ -67,9 +85,9 @@ void frx_pipelineFragment() {
 	}
 	else {
 		out_geometric_normal = vec4(0.0);
-		out_normal = vec4(0);
-		out_extra_0 = vec4(0);
-		out_extra_1 = vec4(0);
+		out_normal = vec4(0.0);
+		out_extra_0 = vec4(0.0);
+		out_extra_1 = vec4(0.0);
 	}
 
 	gl_FragDepth = gl_FragCoord.z;

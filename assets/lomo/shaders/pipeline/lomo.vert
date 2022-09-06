@@ -1,3 +1,5 @@
+#define DIFFUSE_SHADING_MODE 1
+
 #include canvas:shaders/pipeline/diffuse.glsl
 #include frex:shaders/api/context.glsl
 #include frex:shaders/api/sampler.glsl
@@ -26,4 +28,5 @@ void frx_pipelineVertex() {
 		win.xy /= vec2(frx_viewWidth, frx_viewHeight);
 		gl_Position = vec4(win * 2.0 - 1.0, 1.0) * ndc0.w;*/
 	}
+	pv_diffuse = p_diffuse(frx_vertexNormal);
 }
