@@ -603,7 +603,7 @@
 	},
 	{
 		"name": "solid_e_0",
-		"internalFormat": "RGB32F",
+		"internalFormat": "RGB16F",
 		"pixelFormat": "RGB",
 		"pixelDataType": "FLOAT",
 		"texParams": [
