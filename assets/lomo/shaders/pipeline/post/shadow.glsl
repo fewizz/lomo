@@ -1,6 +1,8 @@
 #include frex:shaders/api/view.glsl
 #include frex:shaders/api/world.glsl
 
+#include lomo:shaders/pipeline/post/sun_dir.glsl
+
 /* lomo:pipeline/post/shadow_glsl.glsl */
 
 uniform sampler2DArrayShadow u_shadow_map;
@@ -35,5 +37,5 @@ float sun_light_at_world_pos(vec3 pos) {
 
 float sun_light_at(vec3 pos) {
 	vec4 world = frx_inverseViewMatrix * vec4(pos, 1.0);
-	return sun_light_at_world_pos(world.xyz / world.w);
+	return sun_light_at_world_pos(world.xyz / world.w) * float(sun_dir().y > 0);
 }

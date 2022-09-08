@@ -12,6 +12,7 @@
 #include lomo:shaders/pipeline/post/sky.glsl
 #include lomo:shaders/pipeline/post/compute_normal.glsl
 #include lomo:shaders/pipeline/post/shadow.glsl
+#include lomo:shaders/pipeline/post/emitting_light.glsl
 
 #include lomo:general
 
@@ -112,11 +113,17 @@ void main() {
 	
 	vec4 extra_0_0 = texelFetch(u_extra_0, ivec2(pos.texel), 0);
 	vec4 extra_1_0 = texelFetch(u_extra_1, ivec2(pos.texel), 0);
-	float reflectance   = extra_1_0[0];
-	float reflectance_0 = reflectance;
-	float roughness     = extra_0_0[0];
-	float roughness_0   = roughness;
-	float sky_light     = clamp(extra_0_0[1], 0.0, 1.0);
+	float roughness_0   =       extra_0_0[0];
+	float sky_light_0   = clamp(extra_0_0[1], 0.0, 1.0);
+	float block_light_0 = clamp(extra_0_0[2], 0.0, 1.0);
+	float reflectance_0 =       extra_1_0[0];
+	float emissive_0    =       extra_1_0[1];
+
+	float roughness   = roughness_0;
+	float sky_light   = sky_light_0;
+	float block_light = block_light_0;
+	float reflectance = reflectance_0;
+	float emissive    = emissive_0;
 
 	geometric_normal_cam = normalize(geometric_normal_cam);
 	vec3 dir_cam0 = cam_dir_to_z1(gl_FragCoord.xy);
@@ -157,14 +164,15 @@ void main() {
 			vec4 extra_0_1 = texelFetch(u_extra_0, ivec2(pos.texel), 0);
 			vec4 extra_1_1 = texelFetch(u_extra_1, ivec2(pos.texel), 0);
 
-			roughness   = extra_0_1[0];
-			reflectance = extra_1_1[0];
+			roughness   =       extra_0_1[0];
 			sky_light   = clamp(extra_0_1[1], 0.0, 1.0);
-			float block_light_1 = extra_0_1[2];
+			block_light = clamp(extra_0_1[2], 0.0, 1.0);
+			reflectance =       extra_1_1[0];
+			emissive    =       extra_1_1[1];
 
 			color = max(vec3(0.0), texelFetch(u_color, ivec2(pos.texel), 0).rgb);
 			color = pow(color, vec3(2.2));
-			light = color * block_light_1;
+			light = emitting_light(color, block_light, emissive);
 			pos_cam = win_to_cam(vec3(ivec2(pos.texel) + pos.inner, pos.z));
 			//out_light_1_pos = pos_cam;
 			geometric_normal_cam = geometric_normal_cam0;
@@ -181,7 +189,7 @@ void main() {
 
 	vec3 s = vec3(0.0);
 	if(frx_worldHasSkylight == 1) {
-		s = sky(mat3(frx_inverseViewMatrix) * dir_cam, roughness < 0.1);
+		s = sky(mat3(frx_inverseViewMatrix) * dir_cam, roughness < 0.3);
 		vec3 sd = sun_dir();
 		float d = sun_light_at(pos_cam);
 		float dt = dot(

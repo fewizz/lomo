@@ -4,6 +4,7 @@
 #include lomo:shaders/lib/transform.glsl
 
 #include lomo:shaders/pipeline/post/sky.glsl
+#include lomo:shaders/pipeline/post/emitting_light.glsl
 
 /* lomo:pipeline/post_0.frag */
 
@@ -44,21 +45,22 @@ void main() {
 		vec3 normal0 = texelFetch(u_normal, ivec2(coord0), 0).rgb;
 
 		vec3 extras_0 = texelFetch(u_extra_0, ivec2(coord0), 0).rgb;
-		vec3 extras_1 = texelFetch(u_extra_0, ivec2(coord0), 0).rgb;
-		float reflectance = extras_1[0];
+		vec3 extras_1 = texelFetch(u_extra_1, ivec2(coord0), 0).rgb;
 		float roughness   = extras_0[0];
+		float sky_light   = extras_0[1];
 		float block_light = extras_0[2];
+		float reflectance = extras_1[0];
+		float emissive    = extras_1[1];
 
 		light = texelFetch(u_light_1_accum, coord0, 0).rgb;
 
 		vec3 color = texelFetch(u_color_accum, ivec2(coord0), 0).rgb;
+		vec3 e = emitting_light(color, block_light, emissive);
 		if(depth0 == 1.0) {
 			color = vec3(0.0);
-			block_light = 1.0;
+			e = vec3(1.0);
 		}
-		resulting_light =
-			light * color +
-			block_light * color;
+		resulting_light = light * color + e;
 	}
 	else if(frx_worldHasSkylight == 1) {
 		resulting_light =

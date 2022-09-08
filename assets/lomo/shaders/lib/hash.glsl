@@ -42,6 +42,12 @@ float hash13(uvec3 x) {
 	return hash23(x).x;
 }
 
+float hash13(vec3 p3) {
+	p3  = fract(p3 * .1031);
+	p3 += dot(p3, p3.zyx + 31.32);
+	return fract((p3.x + p3.y) * p3.z);
+}
+
 float hash14(uvec4 x) {
 	return hash24(x).x;
 }
