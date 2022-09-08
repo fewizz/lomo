@@ -94,33 +94,36 @@ vec3 sky(vec3 dir, bool with_sun) {
 		float h = 0.0003;
 		float sun = smoothstep(0.9999, 1.0, a);
 		s += s * sun * vec3(1000.0);
-		vec3 space_dir = rotation(frx_skyAngleRadians, vec3(0.0, 0.0, -1.0)) * dir;
-		float hsh = hash13(vec3(ivec3(space_dir * 256.0)));
+	}
 
-		float t = frx_renderSeconds / 36000.0;
-		vec3 moon_pos = rotation(5.0 / 180.0 * PI, vec3(1.0, 0.0, 0.0)) * vec3(sin(t), cos(t), 0.0);
-		sphere moon = sphere(
-			vec3(0.0, -earth_radius, 0.0) + 384000000.0 * moon_pos, 17374000.0
+	float t = frx_renderSeconds / (20.0 * 60.0 * 27.0);
+	t += -frx_renderSeconds / (20.0 * 60.0);
+	t *= 2.0 * PI;
+	vec3 moon_pos = rotation(5.0 / 180.0 * PI, vec3(1.0, 0.0, 0.0)) * vec3(sin(t), cos(t), 0.0);
+	sphere moon = sphere(
+		vec3(0.0, -earth_radius, 0.0) + 384000000.0 * moon_pos, 17374000.0
+	);
+
+	ray_sphere_intersection_result eye_moon = ray_sphere_intersection(eye, moon);
+	if(eye_moon.success && eye_moon.close > 0.0) {
+		sphere earth = sphere(
+			vec3(0.0, -earth_radius, 0.0), earth_radius
 		);
-
-		ray_sphere_intersection_result eye_moon = ray_sphere_intersection(eye, moon);
-		if(eye_moon.success && eye_moon.close > 0.0) {
-			sphere earth = sphere(
-				vec3(0.0, -earth_radius, 0.0), earth_radius
-			);
-			vec3 pos = eye.pos + dir * eye_moon.close;
-			ray moon_to_sun = ray(pos, sun_dir());
-			ray_sphere_intersection_result moon_earth = ray_sphere_intersection(moon_to_sun, earth);
-			if(ray_sphere_intersection(ray(eye.pos, sun_dir()), moon).success) {
-				s = vec3(0.0);
-			}
-			if(!moon_earth.success) {
-				s += max(dot(normalize(pos - moon.pos), sun_dir()), 0.0) * 20.0;
-			}
+		vec3 pos = eye.pos + dir * eye_moon.close;
+		ray moon_to_sun = ray(pos, sun_dir());
+		ray_sphere_intersection_result moon_earth = ray_sphere_intersection(moon_to_sun, earth);
+		if(ray_sphere_intersection(ray(eye.pos, sun_dir()), moon).success) {
+			s = vec3(0.0);
 		}
-		else {
-			s += pow(hsh, 2048.0) * 3.0;//hsh * pow(max(hsh.x, max(hsh.y, hsh.z)), 2048) * 2.0;
+		if(!moon_earth.success) {
+			s += max(dot(normalize(pos - moon.pos), sun_dir()), 0.0) * 20.0;
 		}
 	}
+	else {
+		vec3 space_dir = rotation(frx_skyAngleRadians, vec3(0.0, 0.0, -1.0)) * dir;
+		float hsh = hash13(vec3(ivec3(space_dir * 256.0)));
+		s += pow(hsh, 2048.0) * 3.0;//hsh * pow(max(hsh.x, max(hsh.y, hsh.z)), 2048) * 2.0;
+	}
+
 	return (color + s) * 1.0;// * vec3(0.65, 1.0, 3.0) * 0.8;
 }

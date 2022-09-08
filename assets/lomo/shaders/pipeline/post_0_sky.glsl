@@ -1,0 +1,127 @@
+#include frex:shaders/api/header.glsl
+#include frex:shaders/api/view.glsl
+#include frex:shaders/api/world.glsl
+#include frex:shaders/api/fog.glsl
+#include frex:shaders/lib/math.glsl
+
+#include lomo:shaders/lib/transform.glsl
+#include lomo:shaders/lib/ray_plane.glsl
+#include lomo:shaders/lib/hash.glsl
+#include lomo:shaders/lib/traverser.glsl
+
+#include lomo:shaders/pipeline/post/sky.glsl
+#include lomo:shaders/pipeline/post/compute_normal.glsl
+#include lomo:shaders/pipeline/post/shadow.glsl
+#include lomo:shaders/pipeline/post/emitting_light.glsl
+
+#include lomo:general
+
+/* lomo:pipeline/post_1.frag */
+
+uniform sampler2D u_color;
+uniform sampler2D u_normal;
+uniform sampler2D u_extra_0;
+uniform sampler2D u_extra_1;
+uniform sampler2D u_depth;
+uniform sampler2D u_win_normal;
+uniform sampler2D u_hi_depth;
+
+uniform sampler2D u_prev_light_1_accum;
+uniform sampler2D u_prev_light_1_accum_counter;
+
+uniform sampler2D u_prev_color_accum;
+uniform sampler2D u_prev_color_accum_counter;
+
+uniform sampler2D u_prev_depth;
+
+layout(location = 0) out vec3 out_light_0_sky;
+layout(location = 1) out vec4 out_reflection_position;
+
+void main() {
+	float initial_depth = texelFetch(u_depth, ivec2(gl_FragCoord.xy), 0).r;
+	fb_pos pos = fb_pos(uvec2(gl_FragCoord.xy), vec2(0.5), initial_depth);
+	vec3 pos_cam = win_to_cam(vec3(gl_FragCoord.xy, initial_depth));
+
+	vec3 geometric_normal_cam = texelFetch(u_normal, ivec2(gl_FragCoord.xy), 0).xyz;
+
+	vec3 color = vec3(1.0);
+	vec3 light = vec3(0.0);
+	
+	vec4 extra_0_0 = texelFetch(u_extra_0, ivec2(pos.texel), 0);
+	vec4 extra_1_0 = texelFetch(u_extra_1, ivec2(pos.texel), 0);
+	float roughness_0   =       extra_0_0[0];
+	float sky_light_0   = clamp(extra_0_0[1], 0.0, 1.0);
+	float block_light_0 = clamp(extra_0_0[2], 0.0, 1.0);
+	float reflectance_0 =       extra_1_0[0];
+	float emissive_0    =       extra_1_0[1];
+
+	float roughness   = roughness_0;
+	float sky_light   = sky_light_0;
+	float block_light = block_light_0;
+	float reflectance = reflectance_0;
+	float emissive    = emissive_0;
+
+	geometric_normal_cam = normalize(geometric_normal_cam);
+	vec3 dir_cam0 = cam_dir_to_z1(gl_FragCoord.xy);
+	vec3 dir_cam = dir_cam0;
+	vec3 normal_cam = compute_normal(
+		dir_cam, geometric_normal_cam, pos.texel, roughness
+	);
+	dir_cam = normalize(reflect(dir_cam, normal_cam));
+	int traversal_result_code = TRAVERSAL_OUT_OF_FB;
+
+	if(
+		#if REFLECTIONS == REFLECTIONS_ALL
+		true
+		#elif REFLECTIONS == REFLECTIONS_SHINY
+		roughness < 0.5
+		#elif REFLECTIONS == REFLECTIONS_WATER
+		roughness == 0.0
+		#elif REFLECTIONS == REFLECTIONS_NONE
+		false
+		#endif
+		&&
+		dot(dir_cam, geometric_normal_cam) > 0.0
+	) {
+		pos.z -= 0.00001;
+		uint max_side = uint(max(frxu_size.x, frxu_size.y));
+		fb_traversal_result result = traverse_fb(
+			pos, cam_dir_to_win(pos_cam, dir_cam),
+			cam_dir_to_ndc(pos_cam, dir_cam),
+			u_hi_depth, u_depth, u_win_normal,
+			uint(mix(max_side / 50, max_side / 25, (1.0 - roughness)))
+		);
+		traversal_result_code = result.code;
+
+		vec3 geometric_normal_cam0 = texelFetch(u_normal, ivec2(result.pos.texel), 0).xyz;
+
+		if(dot(geometric_normal_cam0, geometric_normal_cam0) > 0.9 && result.code == TRAVERSAL_SUCCESS) {
+			pos = result.pos;
+
+			vec3 pos_cam = win_to_cam(vec3(ivec2(pos.texel) + pos.inner, pos.z));
+			out_reflection_position = vec4(pos_cam, 1.0);
+			out_light_0_sky = vec3(0.0);
+			return;
+		}
+	}
+
+	vec3 s = vec3(0.0);
+	if(frx_worldHasSkylight == 1) {
+		s = sky(mat3(frx_inverseViewMatrix) * dir_cam, roughness < 0.3);
+		vec3 sd = sun_dir();
+		float d = sun_light_at(pos_cam);
+		float dt = dot(
+			sd,
+			mat3(frx_inverseViewMatrix) *
+			mix(normal_cam, geometric_normal_cam, 0.0) // still can't decide
+		);
+		dt = max(dt, 0.0);
+		vec3 sun = 0.15 * d * dt * sky(sd, true) * float(sd.y > 0.0);
+		float f = max(0.0, dot(sd, mat3(frx_inverseViewMatrix) * dir_cam));
+		sun *= pow(abs(f) / PI, 1.0 / (2.0 * roughness + 0.000005) + 0.5);
+		s = max(s, sun);
+		s *= pow(sky_light, mix(4.0, 0.0, d));
+	}
+	out_reflection_position = vec4(0.0);
+	out_light_0_sky = vec3(s);
+}

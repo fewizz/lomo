@@ -161,6 +161,7 @@ void main() {
 
 		if(dot(geometric_normal_cam0, geometric_normal_cam0) > 0.9 && result.code == TRAVERSAL_SUCCESS) {
 			pos = result.pos;
+			pos_cam = win_to_cam(vec3(ivec2(pos.texel) + pos.inner, pos.z));
 			vec4 extra_0_1 = texelFetch(u_extra_0, ivec2(pos.texel), 0);
 			vec4 extra_1_1 = texelFetch(u_extra_1, ivec2(pos.texel), 0);
 
@@ -173,7 +174,6 @@ void main() {
 			color = max(vec3(0.0), texelFetch(u_color, ivec2(pos.texel), 0).rgb);
 			color = pow(color, vec3(2.2));
 			light = emitting_light(color, block_light, emissive);
-			pos_cam = win_to_cam(vec3(ivec2(pos.texel) + pos.inner, pos.z));
 			//out_light_1_pos = pos_cam;
 			geometric_normal_cam = geometric_normal_cam0;
 			geometric_normal_cam = normalize(geometric_normal_cam);

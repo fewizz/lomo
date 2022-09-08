@@ -211,8 +211,8 @@ int check_if_intersects(inout fb_pos pos, vec3 dir_ndc, sampler2D s_depth, sampl
 	vec3 intersection_pos = r.pos + r.dir * res.dist;
 
 	if(
-		(dot(normal_ndc, dir_ndc) > 0 && res.dist == 0) ||
-		res.dist < 0. ||
+		(dot(normal_ndc, dir_ndc) > 0.0 && res.dist == 0.0) ||
+		res.dist < 0.0 ||
 		any(lessThan(intersection_pos.xy, vec2(0.0))) ||
 		any(greaterThan(intersection_pos.xy, vec2(1.0) / vec2(frxu_size.xy / 2.0)))
 	) {
