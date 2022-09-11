@@ -35,7 +35,7 @@ uniform sampler2D u_prev_color_accum_counter;
 uniform sampler2D u_prev_depth;
 
 layout(location = 0) out vec3 out_light_1_accum;
-layout(location = 1) out vec3 out_color_accum;
+layout(location = 1) out vec4 out_color_accum;
 
 layout(location = 2) out float out_light_1_accum_counter;
 layout(location = 3) out float out_color_accum_counter;
@@ -95,7 +95,11 @@ void main() {
 	vec3 prev_color = // TODO TAA
 		texture(u_prev_color_accum, vec2(r_prev_pos_ndc.xy * 0.5 + 0.5)).rgb;
 	prev_color = max(vec3(0.0), prev_color);
-	out_color_accum = mix(prev_color, color_0, 1.0 / float(color_accum_count));
+	float shadow0 = sun_light_at(pos_cam0);
+	out_color_accum = vec4(
+		mix(prev_color, color_0, 1.0 / float(color_accum_count)),
+		shadow0
+	);
 	out_color_accum_counter = uintBitsToFloat(color_accum_count);
 
 	vec3 geometric_normal_cam = texelFetch(u_normal, ivec2(gl_FragCoord.xy), 0).xyz;
@@ -182,9 +186,6 @@ void main() {
 			);
 			dir_cam = normalize(reflect(dir_cam, normal_cam));
 		}
-		else {
-			//out_light_1_pos = pos_cam + dir_cam * 10000000000.0;
-		}
 	}
 
 	vec3 s = vec3(0.0);
@@ -205,6 +206,17 @@ void main() {
 		s *= pow(sky_light, mix(4.0, 0.0, d));
 	}
 	vec3 light_1 = color * s + light;
+
+	float shadow_diff = abs(
+		shadow0 -
+		texelFetch(u_prev_color_accum, ivec2(r_prev_pos_win.xy), 0).w
+	);
+
+	//if(shadow_diff != 0.0) {
+	//	accum_count = 0u;
+	//}
+
+	accum_count = uint(float(accum_count) * exp(-shadow_diff * 4.0));
 
 	accum_count += 1u;
 	accum_count = min(accum_count, max(1u, uint(32.0 * pow(roughness_0, 1.5))));

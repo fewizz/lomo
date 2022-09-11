@@ -23,7 +23,7 @@ uniform sampler2D u_extra_1;
 uniform sampler2D u_light_1_pos;
 
 layout(location = 0) out vec3 out_prev_light_1_accum;
-layout(location = 1) out vec3 out_prev_color_accum;
+layout(location = 1) out vec4 out_prev_color_accum;
 
 layout(location = 2) out float out_prev_light_1_accum_counter;
 layout(location = 3) out float out_prev_color_accum_counter;
@@ -74,6 +74,6 @@ void main() {
 	out_prev_light_1_accum = light;//texelFetch(u_light_1_accum, coord0, 0).rgb;
 	out_prev_light_1_accum_counter = texelFetch(u_light_1_accum_counter, coord0, 0).r;
 
-	//out_prev_color_accum = texelFetch(u_color_accum, coord0, 0).rgb;
+	out_prev_color_accum = texelFetch(u_color_accum, coord0, 0);
 	//out_prev_color_accum_counter = texelFetch(u_color_accum_counter, coord0, 0).r;
 }

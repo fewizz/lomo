@@ -116,7 +116,7 @@ vec3 sky(vec3 dir, bool with_sun) {
 			s = vec3(0.0);
 		}
 		if(!moon_earth.success) {
-			s += max(dot(normalize(pos - moon.pos), sun_dir()), 0.0) * 20.0;
+			s += max(dot(normalize(pos - moon.pos), sun_dir()), 0.0) * 16.0;
 		}
 	}
 	else {
