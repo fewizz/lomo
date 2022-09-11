@@ -69,8 +69,7 @@ void main() {
 	uint accum_count =
 		floatBitsToUint(texelFetch(u_prev_light_1_accum_counter, ivec2(r_prev_pos_win.xy), 0).r);
 
-	uint color_accum_count =
-		floatBitsToUint(texelFetch(u_prev_color_accum_counter, ivec2(r_prev_pos_win.xy), 0).r);
+	float prev_shadow = texelFetch(u_prev_color_accum_counter, ivec2(r_prev_pos_win.xy), 0).r;
 
 	float prev_depth = texelFetch(u_prev_depth, ivec2(r_prev_pos_win.xy), 0).r;
 
@@ -79,15 +78,17 @@ void main() {
 		any(lessThan   (vec3(r_prev_pos_ndc), vec3(-1.0)))
 	) {
 		accum_count = 0u;
-		color_accum_count = 0u;
 	}
 
-	if(abs(prev_depth - r_prev_pos_win.z) > 0.0004) {
-		accum_count = 0u;
+	{
+		double diff = abs(prev_depth - r_prev_pos_win.z);
+		if(diff > 0.001) {
+			accum_count = 0u;
+		} else
+		if(diff > 0.0003) {
+			accum_count = 1u;
+		}
 	}
-
-	color_accum_count += 1u;
-	color_accum_count = min(color_accum_count, 1u);
 
 	vec3 color_0 = texelFetch(u_color, ivec2(gl_FragCoord.xy), 0).rgb;
 	color_0 = pow(color_0, vec3(2.2));
@@ -96,17 +97,14 @@ void main() {
 		texture(u_prev_color_accum, vec2(r_prev_pos_ndc.xy * 0.5 + 0.5)).rgb;
 	prev_color = max(vec3(0.0), prev_color);
 	float shadow0 = sun_light_at(pos_cam0);
-	out_color_accum = vec4(
-		mix(prev_color, color_0, 1.0 / float(color_accum_count)),
-		shadow0
-	);
-	out_color_accum_counter = uintBitsToFloat(color_accum_count);
+	out_color_accum_counter = shadow0;//uintBitsToFloat(color_accum_count);
 
 	vec3 geometric_normal_cam = texelFetch(u_normal, ivec2(gl_FragCoord.xy), 0).xyz;
 	if(initial_depth == 1.0 || dot(geometric_normal_cam, geometric_normal_cam) < 0.9) {
 		out_light_1_accum = vec3(0.0);
-		//out_light_1_pos = vec3(1000000000000000000.0);
-		out_light_1_accum_counter = uintBitsToFloat(0u);
+		//out_color_accum = vec4(0.0);
+		out_light_1_accum_counter = uintBitsToFloat(1u);
+		out_color_accum_counter = 0.0;
 		return;
 	}
 
@@ -203,23 +201,18 @@ void main() {
 		float f = max(0.0, dot(sd, mat3(frx_inverseViewMatrix) * dir_cam));
 		sun *= pow(abs(f) / PI, 1.0 / (2.0 * roughness + 0.000005) + 0.5);
 		s = max(s, sun);
-		s *= pow(sky_light, mix(4.0, 0.0, d));
+		s *= pow(mix(sky_light, 0.0, clamp(emissive, 0.0, 1.0)), mix(4.0, 0.0, d));
 	}
 	vec3 light_1 = color * s + light;
 
 	float shadow_diff = abs(
 		shadow0 -
-		texelFetch(u_prev_color_accum, ivec2(r_prev_pos_win.xy), 0).w
+		prev_shadow
 	);
 
-	//if(shadow_diff != 0.0) {
-	//	accum_count = 0u;
-	//}
-
 	accum_count = uint(float(accum_count) * exp(-shadow_diff * 4.0));
-
 	accum_count += 1u;
-	accum_count = min(accum_count, max(1u, uint(32.0 * pow(roughness_0, 1.5))));
+	accum_count = min(accum_count, max(1u, uint(16.0 * pow(roughness_0, 1.5))));
 
 	vec3 prev_light_1 =
 		texture(u_prev_light_1_accum, vec2(r_prev_pos_ndc.xy * 0.5 + 0.5)).rgb;

@@ -8,7 +8,7 @@ vec3 compute_normal(
 ) {
 	float r = PI;
 	vec2 rand = hash23(uvec3(
-		pos, frx_renderFrames
+		pos, frx_renderFrames % 4096
 		//abs(dvec3(frx_cameraPos + (frx_inverseViewMatrix * vec4(pos_cam, 1.0)).xyz) * 2048.0)
 	));
 	if(dot(-incidence, geometric_normal) < 0) geometric_normal *= -1;
