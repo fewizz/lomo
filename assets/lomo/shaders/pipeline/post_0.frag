@@ -58,9 +58,9 @@ void main() {
 		float reflectance = extras_1[0];
 		float emissive    = extras_1[1];
 
-		vec3 light_total = vec3(0.0);
+		/*vec3 light_total = vec3(0.0);
 		float weight_total = 0.0;
-		int mx = int(3.0 * pow(roughness, 2.0));
+		int mx = int(0.0 * pow(roughness, 1.5));
 		for(int x = -mx; x <= mx; ++x) {
 			for(int y = -mx; y <= mx; ++y) {
 				ivec2 coord = coord0 + ivec2(x, y);
@@ -69,17 +69,24 @@ void main() {
 				vec3 normal = texelFetch(u_normal, ivec2(coord), 0).rgb;
 				float depth_ws = texelFetch(u_depth, ivec2(coord), 0).r;
 				vec3 pos = win_to_cam(vec3(vec2(coord) + vec2(0.5), depth_ws));
-				float weight = 1.0;
-				weight *= exp(-dot(vec2(x, y), vec2(x, y)) / 3.0);
-				weight *= max(0.0, pow(max(dot(normal0, normal), 0.0), 4.0));
-				weight *= exp(-abs(shadow0 - shadow) * 8.0);
 				float z_diff = abs(dot(pos - pos0, normal0));
-				weight *= max(0.0, 0.02 - z_diff);
+				float weight = 1.0;
+				weight *= exp(
+					-dot(vec2(x, y), vec2(x, y)) / (float((mx + 1) * (mx + 1))) * 3.0
+					-max(0.0, pow(max(dot(normal0, normal), 0.0), 4.0))
+					-abs(shadow0 - shadow) * 8.0
+					-z_diff * 16.0
+				);
+				//weight *= max(0.0, pow(max(dot(normal0, normal), 0.0), 4.0));
+				//weight *= exp(-abs(shadow0 - shadow) * 8.0);
+				//float z_diff = abs(dot(pos - pos0, normal0));
+				//weight *= max(0.0, 0.02 - z_diff);
 				weight_total += weight;
 				light_total += light * weight;
 			}
 		}
-		light = light_total / weight_total;
+		light = light_total / weight_total;*/
+		light = texelFetch(u_light_1_accum, coord0, 0).rgb;
 
 		vec3 color = texelFetch(u_color, ivec2(coord0), 0).rgb;
 		color = pow(color, vec3(2.2));

@@ -4,11 +4,11 @@
 /* lomo:pipeline/post/compute_normal.glsl */
 
 vec3 compute_normal(
-	vec3 incidence, vec3 geometric_normal, vec2 pos, float roughness
+	vec3 incidence, vec3 geometric_normal, vec2 pos, float roughness, uint stp
 ) {
 	float r = PI;
-	vec2 rand = hash23(uvec3(
-		pos, frx_renderFrames % 4096
+	vec2 rand = hash24(uvec4(
+		pos, frx_renderFrames % 4096, stp
 		//abs(dvec3(frx_cameraPos + (frx_inverseViewMatrix * vec4(pos_cam, 1.0)).xyz) * 2048.0)
 	));
 	if(dot(-incidence, geometric_normal) < 0) geometric_normal *= -1;

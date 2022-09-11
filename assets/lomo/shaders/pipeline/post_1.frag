@@ -82,13 +82,19 @@ void main() {
 
 	{
 		double diff = abs(prev_depth - r_prev_pos_win.z);
-		if(diff > 0.001) {
+		if(diff > 0.0004) {
 			accum_count = 0u;
-		} else
-		if(diff > 0.0003) {
-			accum_count = 1u;
 		}
 	}
+
+	float shadow0 = sun_light_at(pos_cam0);
+	out_color_accum_counter = shadow0;//uintBitsToFloat(color_accum_count);
+	float shadow_diff = abs(
+		shadow0 -
+		prev_shadow
+	);
+
+	accum_count = uint(float(accum_count) * exp(-shadow_diff * 3.0));
 
 	vec3 color_0 = texelFetch(u_color, ivec2(gl_FragCoord.xy), 0).rgb;
 	color_0 = pow(color_0, vec3(2.2));
@@ -96,8 +102,6 @@ void main() {
 	vec3 prev_color = // TODO TAA
 		texture(u_prev_color_accum, vec2(r_prev_pos_ndc.xy * 0.5 + 0.5)).rgb;
 	prev_color = max(vec3(0.0), prev_color);
-	float shadow0 = sun_light_at(pos_cam0);
-	out_color_accum_counter = shadow0;//uintBitsToFloat(color_accum_count);
 
 	vec3 geometric_normal_cam = texelFetch(u_normal, ivec2(gl_FragCoord.xy), 0).xyz;
 	if(initial_depth == 1.0 || dot(geometric_normal_cam, geometric_normal_cam) < 0.9) {
@@ -131,7 +135,7 @@ void main() {
 	vec3 dir_cam0 = cam_dir_to_z1(gl_FragCoord.xy);
 	vec3 dir_cam = dir_cam0;
 	vec3 normal_cam = compute_normal(
-		dir_cam, geometric_normal_cam, pos.texel, roughness
+		dir_cam, geometric_normal_cam, pos.texel, roughness, 0u
 	);
 	dir_cam = normalize(reflect(dir_cam, normal_cam));
 	int traversal_result_code = TRAVERSAL_OUT_OF_FB;
@@ -179,38 +183,44 @@ void main() {
 			//out_light_1_pos = pos_cam;
 			geometric_normal_cam = geometric_normal_cam0;
 			geometric_normal_cam = normalize(geometric_normal_cam);
-			normal_cam = compute_normal(
-				dir_cam, geometric_normal_cam, pos.texel, roughness
-			);
-			dir_cam = normalize(reflect(dir_cam, normal_cam));
+			//normal_cam = compute_normal(
+			//	dir_cam, geometric_normal_cam, pos.texel, roughness
+			//);
+			//dir_cam = normalize(reflect(dir_cam, normal_cam));
 		}
 	}
 
 	vec3 s = vec3(0.0);
+
 	if(frx_worldHasSkylight == 1) {
-		s = sky(mat3(frx_inverseViewMatrix) * dir_cam, roughness < 0.3);
 		vec3 sd = sun_dir();
 		float d = sun_light_at(pos_cam);
-		float dt = dot(
-			sd,
-			mat3(frx_inverseViewMatrix) *
-			mix(normal_cam, geometric_normal_cam, 0.0) // still can't decide
-		);
-		dt = max(dt, 0.0);
-		vec3 sun = 0.15 * d * dt * sky(sd, true) * float(sd.y > 0.0);
-		float f = max(0.0, dot(sd, mat3(frx_inverseViewMatrix) * dir_cam));
-		sun *= pow(abs(f) / PI, 1.0 / (2.0 * roughness + 0.000005) + 0.5);
-		s = max(s, sun);
+		vec3 sun = 0.15 * d * sky(sd, true) * float(sd.y > 0.0);
+
+		for(uint i = 0u; i < 8u; ++i) {
+			vec3 s0 = vec3(0.0);
+			normal_cam = compute_normal(
+				dir_cam, geometric_normal_cam, pos.texel, roughness, i + 1
+			);
+			dir_cam = normalize(reflect(dir_cam, normal_cam));
+			s0 = sky(mat3(frx_inverseViewMatrix) * dir_cam, roughness < 0.3);
+			float dt = dot(
+				sd,
+				mat3(frx_inverseViewMatrix) *
+				mix(normal_cam, geometric_normal_cam, 0.0) // still can't decide
+			);
+			dt = max(dt, 0.0);
+			vec3 sun0 = sun * dt;
+			float f = max(0.0, dot(sd, mat3(frx_inverseViewMatrix) * dir_cam));
+			sun0 *= pow(abs(f) / PI, 1.0 / (2.0 * roughness + 0.000005) + 0.5);
+			s0 = max(s0, sun0);
+			s += s0 / 8.0;
+		}
+
 		s *= pow(mix(sky_light, 0.0, clamp(emissive, 0.0, 1.0)), mix(4.0, 0.0, d));
 	}
 	vec3 light_1 = color * s + light;
 
-	float shadow_diff = abs(
-		shadow0 -
-		prev_shadow
-	);
-
-	accum_count = uint(float(accum_count) * exp(-shadow_diff * 4.0));
 	accum_count += 1u;
 	accum_count = min(accum_count, max(1u, uint(16.0 * pow(roughness_0, 1.5))));
 

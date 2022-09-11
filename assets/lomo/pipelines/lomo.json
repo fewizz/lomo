@@ -1100,7 +1100,7 @@
 		]
 	},
 	{
-		"size": 512,
+		"size": 1024,
 		"name": "shadow_map",
 		"internalFormat": "DEPTH_COMPONENT32",
 		"pixelFormat": "DEPTH_COMPONENT",
