@@ -86,11 +86,9 @@ vec3 sky(vec3 dir, bool with_sun) {
 	ray eye = ray(eye_pos, dir);
 	float a = dot(dir, sun_dir());
 	vec3 rgb = pow(vec3(7.2, 5.7, 4.2), vec3(4.0));
-	vec3 color = sky(eye, layer(earth_radius, 8000.0), 0.01 / rgb) * vec3(0.6, 0.6, 2.0);
-	vec3 s = sky(eye, layer(earth_radius, 1200.0), 0.4 / rgb) * henyey_greenstein_phase_function(0.4, a) * vec3(2.5, 1.0, 0.5) * 0.06;
+	vec3 color = sky(eye, layer(earth_radius, 8000.0), 0.01 / rgb) * vec3(0.6, 0.6, 3.5);
+	vec3 s = sky(eye, layer(earth_radius, 1200.0), 0.4 / rgb) * henyey_greenstein_phase_function(0.4, a) * vec3(2.5, 1.5, 0.5) * 0.06;
 	if(with_sun) {
-		//float sun = 0.0;
-		//float sun_a = 0.9999;
 		float h = 0.0003;
 		float sun = smoothstep(0.9999, 1.0, a);
 		s += s * sun * vec3(1000.0);
@@ -125,5 +123,5 @@ vec3 sky(vec3 dir, bool with_sun) {
 		s += pow(hsh, 2048.0) * 3.0;//hsh * pow(max(hsh.x, max(hsh.y, hsh.z)), 2048) * 2.0;
 	}
 
-	return (color + s) * 1.0;// * vec3(0.65, 1.0, 3.0) * 0.8;
+	return (color + s) * 1.0;
 }

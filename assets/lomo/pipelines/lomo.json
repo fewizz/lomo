@@ -20,6 +20,10 @@
 	"translucentParticles": "particle_cnged"
 },
 
+"sky": {
+	"defaultZenithAngle": -20
+},
+
 "fabulousTargets": {
 	"entity": "entity_cnged",
 	"particles": "particle_cnged",

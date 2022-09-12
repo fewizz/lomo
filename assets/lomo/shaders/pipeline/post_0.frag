@@ -58,9 +58,9 @@ void main() {
 		float reflectance = extras_1[0];
 		float emissive    = extras_1[1];
 
-		/*vec3 light_total = vec3(0.0);
+		vec3 light_total = vec3(0.0);
 		float weight_total = 0.0;
-		int mx = int(0.0 * pow(roughness, 1.5));
+		int mx = int(3.0 * pow(roughness, 1.5));
 		for(int x = -mx; x <= mx; ++x) {
 			for(int y = -mx; y <= mx; ++y) {
 				ivec2 coord = coord0 + ivec2(x, y);
@@ -85,8 +85,8 @@ void main() {
 				light_total += light * weight;
 			}
 		}
-		light = light_total / weight_total;*/
-		light = texelFetch(u_light_1_accum, coord0, 0).rgb;
+		light = light_total / weight_total;
+		//light = texelFetch(u_light_1_accum, coord0, 0).rgb;
 
 		vec3 color = texelFetch(u_color, ivec2(coord0), 0).rgb;
 		color = pow(color, vec3(2.2));
