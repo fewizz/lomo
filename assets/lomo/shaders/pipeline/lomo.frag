@@ -8,6 +8,7 @@
 #include frex:shaders/api/material.glsl
 
 #include lomo:shaders/lib/transform.glsl
+#include lomo:shaders/pipeline/header.glsl
 
 /* lomo:pipeline/lomo.frag */
 
@@ -56,7 +57,7 @@ void frx_pipelineFragment() {
 		vec3 tangent = normalize(frx_vertexTangent.xyz);
 		mat3 TBN = mat3(
 			tangent,
-			cross(tangent, geometric_normal),
+			cross(geometric_normal, tangent),
 			geometric_normal
 		);
 
@@ -79,7 +80,7 @@ void frx_pipelineFragment() {
 		out_extra_1 = vec4(
 			frx_fragReflectance,
 			frx_fragEmissive,
-			0.0,
+			lomo_is_water,
 			1.0
 		);
 	}

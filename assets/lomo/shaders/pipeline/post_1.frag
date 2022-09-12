@@ -219,7 +219,7 @@ void main() {
 
 		s *= pow(mix(sky_light, 0.0, clamp(emissive, 0.0, 1.0)), mix(4.0, 0.0, d));
 	}
-	vec3 light_1 = color * s + light;
+	vec3 light_1 = light + color * s;
 
 	accum_count += 1u;
 	accum_count = min(accum_count, max(1u, uint(16.0 * pow(roughness_0, 1.5))));

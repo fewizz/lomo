@@ -57,6 +57,7 @@ void main() {
 		float block_light = clamp(extras_0[2], 0.0, 1.0);
 		float reflectance = extras_1[0];
 		float emissive    = extras_1[1];
+		float is_water    = extras_1[2];
 
 		vec3 light_total = vec3(0.0);
 		float weight_total = 0.0;
@@ -95,7 +96,14 @@ void main() {
 			color = vec3(0.0);
 			e = vec3(1.0);
 		}
-		resulting_light = light * color + e;
+		resulting_light = e;
+		if(is_water == 1.0) {
+			vec3 dir_cam = cam_dir_to_z1(gl_FragCoord.xy);
+			resulting_light += mix(light, color * light, clamp(-dot(dir_cam, normal0), 0.0, 1.0));
+		}
+		else {
+			resulting_light += light * color + e;
+		}
 	}
 	else if(frx_worldHasSkylight == 1) {
 		resulting_light =

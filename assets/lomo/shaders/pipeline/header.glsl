@@ -1,0 +1,1 @@
+float lomo_is_water = 0.0;
