@@ -140,7 +140,8 @@
 			"u_depth",
 			"u_extra_0",
 			"u_extra_1",
-			"u_light_1_pos"
+			"u_light_1_pos",
+			"u_shadow_map"
 		]
 	},
 	{
@@ -424,7 +425,8 @@
 				"depths",
 				"extras_0",
 				"extras_1",
-				"light_1_pos"
+				"light_1_pos",
+				"shadow_map"
 			]
 		},
 		{

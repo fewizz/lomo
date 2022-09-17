@@ -11,7 +11,8 @@ void main() {
 
 	#ifdef BLOOM_TOGGLE
 	vec3 bloom = texelFetch(u_bloom, ivec2(gl_FragCoord.xy), 0).rgb;
-	light = min(vec3(0.6), light) + bloom;
+	light *= (1.0 - pow(BLOOM_INTENSITY, 0.5) * 0.02);//min(vec3(0.6), light) + bloom;
+	light += bloom;
 	#endif
 
 	light = pow(light, vec3(1.0 / 2.2));

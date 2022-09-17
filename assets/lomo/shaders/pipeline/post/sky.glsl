@@ -40,7 +40,7 @@ float ray_layer_intersection(ray r, layer l) {
 	return 0.0;
 }
 
-const int steps = 3;
+const int steps = 2;
 
 float od(vec3 po, vec3 dir, float dist, layer l) {
 	float stp = dist / float(steps);
@@ -87,11 +87,11 @@ vec3 sky(vec3 dir, bool with_sun) {
 	float a = dot(dir, sun_dir());
 	vec3 rgb = pow(vec3(7.2, 5.7, 4.2), vec3(4.0));
 	vec3 color = sky(eye, layer(earth_radius, 8000.0), 0.01 / rgb) * vec3(0.6, 0.6, 3.5);
-	vec3 s = sky(eye, layer(earth_radius, 1200.0), 0.4 / rgb) * henyey_greenstein_phase_function(0.4, a) * vec3(2.5, 1.5, 0.5) * 0.06;
+	vec3 s = sky(eye, layer(earth_radius, 1200.0), 0.4 / rgb) * henyey_greenstein_phase_function(0.4, a) * vec3(3.5, 1.7, 0.5) * 0.06;
 	if(with_sun) {
 		float h = 0.0003;
 		float sun = smoothstep(0.9999, 1.0, a);
-		s += s * sun * vec3(1000.0);
+		s += s * sun * vec3(800.0);
 	}
 
 	float t = frx_renderSeconds / (20.0 * 60.0 * 27.0);

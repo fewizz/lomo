@@ -13,6 +13,7 @@
 #include lomo:shaders/pipeline/post/compute_normal.glsl
 #include lomo:shaders/pipeline/post/shadow.glsl
 #include lomo:shaders/pipeline/post/emitting_light.glsl
+#include lomo:shaders/pipeline/post/medium.glsl
 
 #include lomo:general
 
@@ -66,6 +67,16 @@ void main() {
 
 	float prev_depth = texelFetch(u_prev_depth, ivec2(r_prev_pos_win.xy), 0).r;
 
+	float shadow0 = sun_light_at(pos_cam0);
+	out_color_accum_counter = shadow0;//uintBitsToFloat(color_accum_count);
+
+	float shadow_diff = abs(
+		shadow0 -
+		prev_shadow
+	);
+
+	accum_count = uint(float(accum_count) * exp(-shadow_diff * 3.0));
+
 	if(
 		any(greaterThan(vec3(r_prev_pos_ndc), vec3( 1.0))) ||
 		any(lessThan   (vec3(r_prev_pos_ndc), vec3(-1.0)))
@@ -79,15 +90,6 @@ void main() {
 			accum_count = 0u;
 		}
 	}
-
-	float shadow0 = sun_light_at(pos_cam0);
-	out_color_accum_counter = shadow0;//uintBitsToFloat(color_accum_count);
-	float shadow_diff = abs(
-		shadow0 -
-		prev_shadow
-	);
-
-	accum_count = uint(float(accum_count) * exp(-shadow_diff * 3.5));
 
 	vec3 color_0 = texelFetch(u_color, ivec2(gl_FragCoord.xy), 0).rgb;
 	color_0 = pow(color_0, vec3(2.2));
@@ -193,7 +195,13 @@ void main() {
 		vec3 sun = 0.15 * d * sky(sd, true) * float(sd.y > 0.0);
 		vec3 dir_inc_cam_orig = dir_inc_cam;
 		bool straigth = dot(geometric_normal_cam0, geometric_normal_cam0) < 0.9;
-		uint steps = straigth ? 1u : 8u;
+		uint steps = straigth ? 1u : 8u;//min(16u, 16u * uint(exp(-accum_count)));
+
+		vec3 dir_cam = dir_inc_cam_orig;
+		normal_cam = compute_normal(
+			dir_cam, geometric_normal_cam, pos.texel, roughness, 0
+		);
+		dir_cam = normalize(reflect(dir_cam, normal_cam));
 
 		for(uint i = 0u; i < steps; ++i) {
 			vec3 dir_cam = dir_inc_cam_orig;
@@ -218,15 +226,16 @@ void main() {
 		}
 
 		s *= pow(mix(sky_light, 0.0, clamp(emissive, 0.0, 1.0)), mix(4.0, 0.0, d));
+		s = medium(s, pos_cam, pos_cam + dir_cam * 1000.0);
 	}
-	vec3 light_1 = light + color * s;
+	vec3 light_1 = light + s * color;//mix(light + s * color, light, reflectance * max(0.0, dot(-dir_inc_cam, geometric_normal_cam)));
 
 	accum_count += 1u;
 	accum_count = min(accum_count, max(1u, uint(16.0 * pow(roughness_0, 1.5))));
 
 	vec3 prev_light_1 =
-		texture(u_prev_light_1_accum, vec2(r_prev_pos_ndc.xy * 0.5 + 0.5)).rgb;
+		pow(texture(u_prev_light_1_accum, vec2(r_prev_pos_ndc.xy * 0.5 + 0.5)).rgb, vec3(2.2));
 	prev_light_1 = max(vec3(0.0), prev_light_1);
-	out_light_1_accum = mix(prev_light_1, light_1, 1.0 / float(accum_count));
+	out_light_1_accum = pow(mix(prev_light_1, light_1, 1.0 / float(accum_count)), vec3(1.0 / 2.2));
 	out_light_1_accum_counter = uintBitsToFloat(accum_count);
 }

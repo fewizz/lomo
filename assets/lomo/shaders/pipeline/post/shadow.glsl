@@ -27,7 +27,7 @@ float sun_light_at_shadow_pos(vec3 pos) {
 	vec4 shadow_pos_proj = frx_shadowProjectionMatrix(cascade) * vec4(pos, 1.0);
 	shadow_pos_proj.xyz /= shadow_pos_proj.w;
 	vec3 shadow_tex = shadow_pos_proj.xyz * 0.5 + 0.5;
-	return texture(u_shadow_map, vec4(shadow_tex.xy, cascade, shadow_tex.z));
+	return texture(u_shadow_map, vec4(shadow_tex.xy, cascade, shadow_tex.z)) * float(sun_dir().y > 0);
 }
 
 float sun_light_at_world_pos(vec3 pos) {
@@ -37,5 +37,5 @@ float sun_light_at_world_pos(vec3 pos) {
 
 float sun_light_at(vec3 pos) {
 	vec4 world = frx_inverseViewMatrix * vec4(pos, 1.0);
-	return sun_light_at_world_pos(world.xyz / world.w) * float(sun_dir().y > 0);
+	return sun_light_at_world_pos(world.xyz / world.w);
 }
