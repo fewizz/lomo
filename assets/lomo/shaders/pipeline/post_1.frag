@@ -195,7 +195,7 @@ void main() {
 		vec3 sun = 0.05 * d * sky(sd, true) * float(sd.y > 0.0);
 		vec3 dir_inc_cam_orig = dir_inc_cam;
 		bool straigth = dot(geometric_normal_cam0, geometric_normal_cam0) < 0.9;
-		uint steps = straigth ? 1u : 4u;//min(16u, 16u * uint(exp(-accum_count)));
+		uint steps = straigth ? 1u : 8u;//min(16u, 16u * uint(exp(-accum_count)));
 
 		vec3 dir_cam = dir_inc_cam_orig;
 		normal_cam = compute_normal(
@@ -226,7 +226,7 @@ void main() {
 		}
 
 		s *= pow(mix(sky_light, 0.0, clamp(emissive, 0.0, 1.0)), mix(4.0, 0.0, d));
-		s = medium(s, pos_cam, pos_cam + dir_cam * 1000.0, sky_light);
+		s = medium(s, pos_cam, pos_cam + dir_cam * 2000.0, sky_light);
 	}
 
 	vec3 light_1 = light + s * color;

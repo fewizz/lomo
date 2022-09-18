@@ -7,6 +7,7 @@
 #include lomo:shaders/pipeline/post/emitting_light.glsl
 #include lomo:shaders/pipeline/post/medium.glsl
 #include lomo:shaders/pipeline/post/compute_normal.glsl
+#include lomo:shaders/pipeline/post/shadow.glsl
 
 /* lomo:pipeline/post_0.frag */
 
@@ -136,7 +137,10 @@ void main() {
 			sky(wrld_dir, true);
 	}
 
-	resulting_light = medium(resulting_light, cam_near(gl_FragCoord.xy), pos0, 1.0);
+	vec3 begin = cam_near(gl_FragCoord.xy);
+	vec3 end = depth0 == 1.0 ? begin + (pos0 - begin) * 10.0 : pos0;
+
+	resulting_light = medium(resulting_light, begin, end, 1.0);
 
 	out_prev_depth = texelFetch(u_depth, coord0, 0).r;
 
