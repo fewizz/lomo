@@ -6,6 +6,7 @@
 #include lomo:shaders/pipeline/post/sky.glsl
 #include lomo:shaders/pipeline/post/emitting_light.glsl
 #include lomo:shaders/pipeline/post/medium.glsl
+#include lomo:shaders/pipeline/post/compute_normal.glsl
 
 /* lomo:pipeline/post_0.frag */
 
@@ -33,6 +34,23 @@ layout(location = 4) out float out_prev_depth;
 
 layout(location = 5) out vec3 out_light;
 
+float DistributionGGX(vec3 N, vec3 H, float a) {
+	float a2     = a*a;
+	float NdotH  = max(dot(N, H), 0.0);
+	float NdotH2 = NdotH*NdotH;
+	
+	float nom    = a2;
+	float denom  = (NdotH2 * (a2 - 1.0) + 1.0);
+	denom        = PI * denom * denom;
+	return nom / denom;
+}
+
+float GeometrySchlickGGX(float NdotV, float k) {
+	float nom   = NdotV;
+	float denom = NdotV * (1.0 - k) + k;
+	return nom / denom;
+}
+
 void main() {
 	ivec2 coord0 = ivec2(gl_FragCoord.xy);
 
@@ -43,7 +61,7 @@ void main() {
 	float shadow0 = texelFetch(u_color_accum_counter, coord0, 0).r;
 
 	float depth0 = texelFetch(u_depth, ivec2(coord0), 0).r;
-	vec3 normal0 = texelFetch(u_normal, ivec2(coord0), 0).rgb;
+	vec3 normal0 = texelFetch(u_normal, ivec2(coord0), 0).xyz;
 	vec3 pos0 = win_to_cam(vec3(gl_FragCoord.xy, depth0));
 
 	if(dot(normal0, normal0) < 0.9 && depth0 != 1.0) {
@@ -52,16 +70,15 @@ void main() {
 	else if(depth0 != 1.0) {
 		vec3 extras_0 = texelFetch(u_extra_0, ivec2(coord0), 0).rgb;
 		vec3 extras_1 = texelFetch(u_extra_1, ivec2(coord0), 0).rgb;
-		float roughness   = extras_0[0];
+		float roughness   = clamp(extras_0[0], 0.0, 1.0);
 		float sky_light   = clamp(extras_0[1], 0.0, 1.0);
 		float block_light = clamp(extras_0[2], 0.0, 1.0);
-		float reflectance = extras_1[0];
+		float reflectance = clamp(extras_1[0], 0.0, 1.0);
 		float emissive    = extras_1[1];
-		float is_water    = extras_1[2];
 
 		vec3 light_total = vec3(0.0);
 		float weight_total = 0.0;
-		int mx = int(3.0 * pow(roughness, 1.5));
+		int mx = int(3.0 * pow(roughness, 1.0));
 		for(int x = -mx; x <= mx; ++x) {
 			for(int y = -mx; y <= mx; ++y) {
 				ivec2 coord = coord0 + ivec2(x, y);
@@ -97,45 +114,29 @@ void main() {
 			color = vec3(0.0);
 			e = vec3(1.0);
 		}
-		resulting_light = e;
-		if(is_water == 1.0) {
-			vec3 dir_cam = cam_dir_to_z1(gl_FragCoord.xy);
-			resulting_light +=
-				mix(light, color * light, clamp(-dot(dir_cam, normal0), 0.0, 1.0));
-		}
-		else {
-			resulting_light += light * color + e;
-		}
+
+		vec3 dir_cam = cam_dir_to_z1(gl_FragCoord.xy);
+		float cs = max(0.0001, dot(-dir_cam, normal0));
+
+		/*******/ // From https://learnopengl.com/PBR/Theory
+		float F0 = reflectance;
+		float kS = F0 + (1.0 - F0) * pow(1.0 - cs, 5.0);
+		kS = clamp(kS, 0.0, 1.0);
+		/*******/
+		kS = mix(kS, 0.0, roughness);
+		float kD = 1.0 - kS;
+
+		resulting_light =
+			e + (kD * color + kS * (1.0 - roughness * roughness)) * light;
+			//e + color * light;
 	}
 	else if(frx_worldHasSkylight == 1) {
 		vec3 wrld_dir = mat3(frx_inverseViewMatrix) * cam_dir_to_z1(gl_FragCoord.xy);
-		//wrld_dir = normalize(wrld_dir);
 		resulting_light =
 			sky(wrld_dir, true);
-
-		/*vec4 o0 = frx_inverseViewMatrix * vec4(win_to_cam(vec3(gl_FragCoord.xy, 0.0)), 1.0);
-		vec3 o = o0.xyz / o0.w;
-		o += frx_cameraPos;
-		if(o.y < 120.0) {
-			o += wrld_dir * (120.0 - o.y) / wrld_dir.y;
-		}
-		float v = 0.0;
-		for(int i = 0; i < 16; ++i) {
-			vec3 c = o + vec3(frx_renderSeconds, 0, 0) * 8.0 + vec3(10000000.0);
-			c /= 8.0;
-			float v0 =
-				max(linear_noise3(c / 16.0) - 0.5, 0.0) * 64.0 *
-				linear_noise3(c / 8.0) * 8.0 *
-				linear_noise3(c / 4.0) * 4.0;
-			v0 *= float(o.y > 120.0 && o.y < 1000.0);
-			v += v0 / 1000.0;
-			o += wrld_dir * 32.0;
-		}
-
-		resulting_light += vec3(v);*/
 	}
 
-	resulting_light = medium(resulting_light, cam_near(gl_FragCoord.xy), pos0);
+	resulting_light = medium(resulting_light, cam_near(gl_FragCoord.xy), pos0, 1.0);
 
 	out_prev_depth = texelFetch(u_depth, coord0, 0).r;
 

@@ -3,6 +3,10 @@
 	"pipeline.lomo.desc": "",
 
 	"config.lomo.category.general": "General",
+
 	"config.lomo.value.reflections": "Reflections",
-	"config.lomo.help.reflections": ""
+	"config.lomo.help.reflections": "",
+
+	"config.lomo.value.tonemapping": "Tonemapping",
+	"config.lomo.help.tonemapping": ""
 }

@@ -17,28 +17,29 @@ layout(location = 0) out vec4 out_colors;
 void main() {
 	ivec2 coord = ivec2(gl_FragCoord.xy);
 
-	vec4 values[6] = vec4[] (
+	const uint layers = 5u;
+	vec4 values[layers] = vec4[] (
 		texelFetch(u_solid_c, coord, 0),
 		texelFetch(u_translucent_c, coord, 0),
 		texelFetch(u_entity_c, coord, 0),
 		texelFetch(u_particle_c, coord, 0),
-		texelFetch(u_weather_c, coord, 0),
-		texelFetch(u_cloud_c, coord, 0)
+		texelFetch(u_weather_c, coord, 0)//,
+		//texelFetch(u_cloud_c, coord, 0)
 	);
 
 	uint index_to_type = floatBitsToUint(
 		texelFetch(u_index_to_type, coord, 0).r
 	);
-	uint indices[6];
+	uint indices[layers];
 
-	for(uint i = 0u; i < 6u; i++) {
+	for(uint i = 0u; i < layers; i++) {
 		indices[i] = (index_to_type >> (4u*i)) & 0xFu;
 	}
 
 	// with translucent
-	vec3 color = values[indices[5]].rgb;
+	vec3 color = values[indices[int(layers) - 1]].rgb;
 
-	for(int i = 4; i >= 0; --i) {
+	for(int i = int(layers) - 2; i >= 0; --i) {
 		color = blend(color, values[indices[i]]);
 	}
 

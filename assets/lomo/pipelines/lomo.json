@@ -50,6 +50,13 @@
 				"prefix": "reflections_",
 				"nameKey": "config.lomo.value.reflections",
 				"descriptionKey": "config.lomo.help.reflections"
+			},
+			"tonemapping": {
+				"choices": [ "exposure_1", "aces", "none" ],
+				"enum": true,
+				"prefix": "tonemapping_",
+				"nameKey": "config.lomo.value.tonemapping",
+				"descriptionKey": "config.lomo.help.tonemapping"
 			}
 		}
 	},

@@ -80,7 +80,7 @@ void frx_pipelineFragment() {
 		out_extra_1 = vec4(
 			frx_fragReflectance,
 			frx_fragEmissive,
-			lomo_is_water,
+			0.0,
 			1.0
 		);
 	}

@@ -14,12 +14,15 @@ vec3 compute_normal(
 
 	vec3 reflected = reflect(incidence, geometric_normal);
 	vec3 reflected0 = reflected;
-	vec3 cr = normalize(cross(incidence, geometric_normal));
+	vec3 cr = cross(incidence, geometric_normal);
+	if(cr == vec3(0.0)) {
+		cr = cross(incidence, vec3(1.0, 0.0, 0.0));
+	}
+	cr = normalize(cr);
 	//roughness = pow(roughness, 1.0);
 	float s = sign(rand.x);
 	reflected = rotation(
-		pow(
-			abs(rand.x),
+		pow(abs(rand.x),
 			1.0 / (pow((roughness, 2.0) * 2, 4.0)) + 1.0 - 1.0 / 16.0
 		) * pow(roughness, 3.0) * s * PI,
 		cr
@@ -27,6 +30,10 @@ vec3 compute_normal(
 	reflected = rotation(rand.y * PI, reflected0) * reflected;
 
 	normal = normalize(-incidence + reflected);
+	if(normal == vec3(0.0)) {
+		normal = reflected;
+	}
+
 	if(dot(reflected, geometric_normal) > 0.0) {
 		break;
 	}

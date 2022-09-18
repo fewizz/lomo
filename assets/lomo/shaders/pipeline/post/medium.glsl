@@ -30,12 +30,13 @@ float linear_noise3(vec3 pos) {
 }
 
 float clouds_noise(vec3 c) {
-	return max(linear_noise3(c / 16.0) - 0.5, 0.0) * 64.0 *
-		linear_noise3(c / 8.0) * 16.0 *
-		linear_noise3(c / 4.0) * 4.0;
+	return
+	max(linear_noise3(c / 16.0) - 0.5, 0.0) * (1.0 / (1.0 - 0.5)) *
+	    linear_noise3(c / 8.0) *
+	    linear_noise3(c / 4.0);
 }
 
-vec3 medium(vec3 light, vec3 from, vec3 to) {
+vec3 medium(vec3 light, vec3 from, vec3 to, float sky_light) {
 	vec4 fw0 = frx_inverseViewMatrix * vec4(from, 1.0);
 	vec3 fw = fw0.xyz / fw0.w;
 	vec3 f = fw + frx_cameraPos;
@@ -47,38 +48,40 @@ vec3 medium(vec3 light, vec3 from, vec3 to) {
 	float dist = distance(tw, fw);
 	vec3 dir = (tw - fw) / dist;
 
-	const float height = 200.0;
-	if(f.y >= height || (f.y < height && dir.y > 0)) {
+	const float height = 128.0;
+	//if(f.y >= height || (f.y < height && dir.y > 0)) {
 		vec3 sd = sun_dir();
 		vec3 sun = 0.15 * sky(sd, true);
 		vec3 v = vec3(0.0);
-		float depth = 0.0;
 		vec3 o = f;
 
-		if(o.y < height && dir.y > 0) {
-			o += dir * (height - o.y) / dir.y;
-			dist -= (height - o.y) / dir.y;
-		}
+		float cloud_dist = dist;
+		float dist_to_begin = height - o.y / dir.y;
+		dist_to_begin *= sign(dir.y);
+		dist_to_begin = max(0.0, dist_to_begin);
+		o += dir * dist_to_begin;
+		cloud_dist -= dist_to_begin;
 
-		const int steps = 8;
-		dist = min(dist, 128.0 * steps);
-		float stp = dist / float(steps);
+		const int steps = 6;
+		const float max_distance = 1024.0;
+		cloud_dist = min(cloud_dist, max_distance);
+		float stp = cloud_dist / float(steps);
 
 		for(int i = 0; i < steps; ++i) {
-			vec3 c = o + vec3(frx_renderSeconds, 0, 0) * 64.0 + vec3(10000.0);
-			c /= 16.0;
-			float v0 = clouds_noise(c);
+			vec3 c = o + vec3(10000.0) + vec3(frx_renderSeconds, 0, 0) * 8.0;
+			c /= 12.0;
+			float v0 = pow(clouds_noise(c), 0.5);
 			v0 *= smoothstep(height, height + 64.0, o.y);
-			v0 *= sun_light_at_world_pos(o);
-			depth += v0;
-
-			v += v0 * sun / 20000.0;
+			v += v0 * stp / (max_distance / float(steps));
 			o += dir * stp;
 		}
-		//light *= exp(-depth / 100.0);
-		//light += v * vec3(0.3, 0.5, 1.0);
-		//light += sun * s * v / 10.0;
-	}
+		v *= max(0.0, sky_light - 0.05);
+		vec3 light0 = light;
+		light *= exp(-pow(v, vec3(4.0)));
+		light += (light0 + sun / 1000.0) * v;
+	//}
+	//light *= exp(-dist / 1000.0);
+	//light += (1.0 - exp(-dist / 1000.0)) * sun / 1000.0;
 
 	return light;
 }

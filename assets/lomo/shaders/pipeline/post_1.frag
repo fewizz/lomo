@@ -75,7 +75,7 @@ void main() {
 		prev_shadow
 	);
 
-	accum_count = uint(float(accum_count) * exp(-shadow_diff * 3.0));
+	accum_count = uint(float(accum_count) * exp(-shadow_diff * 3.5));
 
 	if(
 		any(greaterThan(vec3(r_prev_pos_ndc), vec3( 1.0))) ||
@@ -192,10 +192,10 @@ void main() {
 	if(frx_worldHasSkylight == 1) {
 		vec3 sd = sun_dir();
 		float d = sun_light_at(pos_cam);
-		vec3 sun = 0.15 * d * sky(sd, true) * float(sd.y > 0.0);
+		vec3 sun = 0.05 * d * sky(sd, true) * float(sd.y > 0.0);
 		vec3 dir_inc_cam_orig = dir_inc_cam;
 		bool straigth = dot(geometric_normal_cam0, geometric_normal_cam0) < 0.9;
-		uint steps = straigth ? 1u : 8u;//min(16u, 16u * uint(exp(-accum_count)));
+		uint steps = straigth ? 1u : 4u;//min(16u, 16u * uint(exp(-accum_count)));
 
 		vec3 dir_cam = dir_inc_cam_orig;
 		normal_cam = compute_normal(
@@ -220,15 +220,16 @@ void main() {
 			dt = max(dt, 0.0);
 			vec3 sun0 = sun * dt;
 			float f = max(0.0, dot(sd, mat3(frx_inverseViewMatrix) * dir_cam));
-			sun0 *= pow(abs(f) / PI, 1.0 / (2.0 * roughness + 0.000005) + 0.5);
+			sun0 *= pow(f / PI, 1.0 / (2.0 * roughness + 0.00005) + 0.5);
 			s0 = max(s0, sun0);
 			s += s0 / float(steps);
 		}
 
 		s *= pow(mix(sky_light, 0.0, clamp(emissive, 0.0, 1.0)), mix(4.0, 0.0, d));
-		s = medium(s, pos_cam, pos_cam + dir_cam * 1000.0);
+		s = medium(s, pos_cam, pos_cam + dir_cam * 1000.0, sky_light);
 	}
-	vec3 light_1 = light + s * color;//mix(light + s * color, light, reflectance * max(0.0, dot(-dir_inc_cam, geometric_normal_cam)));
+
+	vec3 light_1 = light + s * color;
 
 	accum_count += 1u;
 	accum_count = min(accum_count, max(1u, uint(16.0 * pow(roughness_0, 1.5))));

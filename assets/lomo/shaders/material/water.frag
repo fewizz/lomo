@@ -3,13 +3,11 @@
 #include frex:shaders/lib/noise/noise4d.glsl
 #include frex:shaders/lib/noise/noise3d.glsl
 
-#include lomo:shaders/pipeline/header.glsl
-
 /* lomo:material/water.glsl */
 
 void frx_materialFragment() {
 	#ifdef PBR_ENABLED
-	frx_fragColor = mix(frx_vertexColor, vec4(1, 1, 1, 0.0), 0.8);
+	frx_fragColor = vec4(vec3(1.0), 0.0);//mix(frx_vertexColor, vec4(1, 1, 1, 0.0), 0.8);
 
 	frx_fragNormal = normalize(vec3(
 		snoise(
@@ -21,6 +19,7 @@ void frx_materialFragment() {
 		1.0
 	));
 	frx_fragRoughness = 0.0;
-	lomo_is_water = 1.0;
+	frx_fragReflectance = 0.02;
+
 	#endif
 }
