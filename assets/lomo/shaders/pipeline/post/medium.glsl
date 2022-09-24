@@ -32,14 +32,14 @@ float linear_noise3(vec3 pos) {
 float clouds_noise(vec3 c) {
 	return
 	max(linear_noise3(c / 16.0) - 0.5, 0.0) * (1.0 / (1.0 - 0.5)) *
-	    linear_noise3(c / 8.0) *
-	    linear_noise3(c / 4.0);
+	    linear_noise3(c / 8.0);// *
+	   // linear_noise3(c / 4.0);
 }
 
 vec3 clouds(vec3 light, vec3 o, vec3 dir, float dist, float sky_light) {
 	const float height = 128.0;
 	vec3 sd = sun_dir();
-	vec3 sun = 0.15 * sky(sd, true);
+	vec3 sun = 0.1 * sky(sd, true);
 	vec3 v = vec3(0.0);
 
 	float dist_to_begin = height - o.y / dir.y;
@@ -48,23 +48,24 @@ vec3 clouds(vec3 light, vec3 o, vec3 dir, float dist, float sky_light) {
 	o += dir * dist_to_begin;
 	dist -= dist_to_begin;
 
-	const int steps = 8;
-	const float max_distance = 512.0;
+	const int steps = 6;
+	const float max_distance = 256.0;
 	dist = min(dist, max_distance);
 	float stp = dist / float(steps);
-
 	for(int i = 0; i < steps; ++i) {
 		vec3 c = o + vec3(10000.0) + vec3(frx_renderSeconds, 0, 0) * 8.0;
-		c /= 8.0;
+		c /= 6.0;
 		float v0 = pow(clouds_noise(c), 0.5);
 		v0 *= smoothstep(height, height + 64.0, o.y);
-		v += v0 * stp / 30.0;
+
+		float v1 = pow(clouds_noise(c + sd * max_distance / float(steps)), 0.5);
+		v1 *= smoothstep(height, height + 64.0, o.y);
+
+		v += (v0 + v1 * 10.0) * stp;
 		o += dir * stp;
 	}
 	v *= max(0.0, sky_light - 0.05);
-	vec3 light0 = light;
-	light *= exp(-pow(v, vec3(8.0)));
-	light += (light0 + sun / 1000.0) * v * mix(2.0, 0.0, frx_smoothedRainGradient);
+	light += vec3(v / 500.0);
 	return light;
 }
 
@@ -113,8 +114,8 @@ vec3 medium(vec3 light, vec3 from, vec3 to, float sky_light) {
 	vec3 dir = (tw - fw) / dist;
 
 	if(frx_worldHasSkylight == 1) {
-		light = clouds(light, f, dir, dist, sky_light);
-		light = fog(light, f, dir, dist, sky_light);
+		//light = clouds(light, f, dir, dist, sky_light);
+		//light = fog(light, f, dir, dist, sky_light);
 	}
 
 	//float fog_dist = dist;

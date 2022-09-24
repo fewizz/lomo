@@ -25,18 +25,9 @@ float ray_layer_intersection(ray r, layer l) {
 		vec3(0.0, -l.height, 0.0), l.height
 	);
 	ray_sphere_intersection_result top = ray_sphere_intersection(r, top_sphere);
-	//ray_sphere_intersection_result bot = ray_sphere_intersection(r, bot_sphere);
-	//top.success = top.success && top.far > 0.0;
-	//bot.success = bot.success && bot.far > 0.0;
 	if(top.success) {
 		return max(0.0, top.far) - max(0.0, top.close);
 	}
-	//if(!top.success && bot.success) {
-	//	return bot.far;
-	//}
-	//if(top.success && bot.success) {
-	//	return abs(bot.far - top.far);
-	//}
 	return 0.0;
 }
 
@@ -80,19 +71,15 @@ vec3 sky(ray r, layer l, vec3 coeffs) {
 
 const float earth_radius = 6000000.0;
 
-vec3 sky(vec3 dir, bool with_sun) {
+vec3 sky(vec3 dir, float sun_mul) {
 	vec3 eye_pos = frx_cameraPos;
 	eye_pos.x = 0.0; eye_pos.z = 0.0;
 	ray eye = ray(eye_pos, dir);
 	float a = dot(dir, sun_dir());
 	vec3 rgb = pow(vec3(7.2, 5.7, 4.2), vec3(4.0));
-	vec3 color = sky(eye, layer(earth_radius, 8000.0), 0.005 / rgb) * vec3(0.5, 0.7, 2.0) * 1.0;
-	vec3 s = sky(eye, layer(earth_radius, 1200.0), 0.6 / rgb) * henyey_greenstein_phase_function(0.4, a) * vec3(1.7, 0.8, 0.4) * 0.04;
-	if(with_sun) {
-		float h = 0.0003;
-		float sun = smoothstep(0.9999, 1.0, a);
-		s += s * sun * vec3(2000.0);
-	}
+	vec3 color = sky(eye, layer(earth_radius, 8000.0), 0.005 / rgb) * vec3(0.5, 0.7, 1.2) * 2.0;
+	vec3 s = sky(eye, layer(earth_radius, 1200.0), 0.4 / rgb) * henyey_greenstein_phase_function(0.5, a) * vec3(1.7, 0.8, 0.4) * 1.0;
+	s *= sun_mul;
 
 	float t = frx_renderSeconds / (20.0 * 60.0 * 27.0);
 	t += -frx_renderSeconds / (20.0 * 60.0);
