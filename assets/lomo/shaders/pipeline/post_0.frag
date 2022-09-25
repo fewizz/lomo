@@ -60,7 +60,7 @@ void main() {
 		taa_ratio = 0.0;
 	}
 	else {
-		taa_ratio *= exp(float(-distance(r_prev_pos_win.xy, gl_FragCoord.xy) * 0.3));
+		taa_ratio *= exp(float(-distance(r_prev_pos_win.xy, gl_FragCoord.xy) * 0.5));
 	}
 
 	// sky needs special handling..
@@ -89,7 +89,7 @@ void main() {
 
 		vec3 light_total = vec3(0.0);
 		float weight_total = 0.0;
-		int mx = int(3.0 * pow(roughness, 1.0));
+		int mx = int(4.0 * pow(roughness, 1.0));
 		for(int x = -mx; x <= mx; ++x) {
 			for(int y = -mx; y <= mx; ++y) {
 				ivec2 coord = coord0 + ivec2(x, y);

@@ -77,7 +77,7 @@ vec3 sky(vec3 dir, float sun_mul) {
 	ray eye = ray(eye_pos, dir);
 	float a = dot(dir, sun_dir());
 	vec3 rgb = pow(vec3(7.2, 5.7, 4.2), vec3(4.0));
-	vec3 color = sky(eye, layer(earth_radius, 8000.0), 0.005 / rgb) * vec3(0.5, 0.7, 1.2) * 2.0;
+	vec3 color = sky(eye, layer(earth_radius, 8000.0), 0.005 / rgb) * vec3(0.4, 0.7, 1.5) * 1.0;
 	vec3 s = sky(eye, layer(earth_radius, 1200.0), 0.4 / rgb) * henyey_greenstein_phase_function(0.5, a) * vec3(1.7, 0.8, 0.4) * 1.0;
 	s *= sun_mul;
 

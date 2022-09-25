@@ -124,6 +124,7 @@ void main() {
 
 	bool reflected = false;
 	bool under = false;
+	bool success = false;
 
 	if(
 		#if REFLECTIONS == REFLECTIONS_ALL
@@ -149,6 +150,7 @@ void main() {
 
 		vec3 geometric_normal_cam0_1 = texelFetch(u_normal, ivec2(result.pos.texel), 0).xyz;
 		under = result.code == TRAVERSAL_POSSIBLY_UNDER;
+		success = result.code == TRAVERSAL_SUCCESS;
 
 		if(
 			dot(geometric_normal_cam0_1, geometric_normal_cam0_1) > 0.9 &&
@@ -183,7 +185,7 @@ void main() {
 
 	if(frx_worldHasSkylight == 1) {
 		float d = sun_light_at(pos_cam);
-		bool straigth = under || dot(geometric_normal_cam0, geometric_normal_cam0) < 0.9;
+		bool straigth = true;//(!success  || dot(geometric_normal_cam0, geometric_normal_cam0) < 0.9) && pos.z < 1.0;
 		if(straigth) {
 			s = sky(mat3(frx_inverseViewMatrix) * dir_cam, d);
 		}
@@ -214,7 +216,7 @@ void main() {
 	light_1 = mix(light_1, prev_light_1, accum_ratio);
 	light_1 = pow(light_1, vec3(1.0 / 2.2));
 
-	accum_ratio = increase_ratio(accum_ratio, 12.0 * pow(roughness_0, 1.5));
+	accum_ratio = increase_ratio(accum_ratio, 8.0 * pow(roughness_0, 1.5));
 
 	out_light_1_accum = vec4(light_1, accum_ratio);
 }

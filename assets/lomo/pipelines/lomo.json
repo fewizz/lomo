@@ -37,7 +37,9 @@
 "skyShadows": {
 	"framebuffer": "shadow_map",
 	"vertexSource": "canvas:shaders/pipeline/shadow.vert",
-	"fragmentSource": "canvas:shaders/pipeline/shadow.frag"
+	"fragmentSource": "canvas:shaders/pipeline/shadow.frag",
+	"offsetBiasUnits": 4.0,
+	"offsetSlopeFactor": 2.0
 },
 "options": [
 	{
