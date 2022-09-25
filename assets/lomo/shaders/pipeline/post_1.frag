@@ -13,6 +13,7 @@
 #include lomo:shaders/pipeline/post/compute_normal.glsl
 #include lomo:shaders/pipeline/post/shadow.glsl
 #include lomo:shaders/pipeline/post/emitting_light.glsl
+#include lomo:shaders/pipeline/post/ratio.glsl
 //#include lomo:shaders/pipeline/post/medium.glsl
 
 #include lomo:general
@@ -28,17 +29,16 @@ uniform sampler2D u_win_normal;
 uniform sampler2D u_hi_depth;
 
 uniform sampler2D u_prev_light_1_accum;
-
-uniform sampler2D u_prev_color_accum;
-//uniform sampler2D u_prev_color_accum_counter;
+uniform sampler2D u_taa;
 
 uniform sampler2D u_prev_depth;
 
 layout(location = 0) out vec4 out_light_1_accum;
-//layout(location = 1) out vec4 out_color_accum;
-//layout(location = 2) out float out_color_accum_counter;
+layout(location = 1) out vec4 out_prev_taa;
 
 void main() {
+	out_prev_taa = texelFetch(u_taa, ivec2(gl_FragCoord.xy), 0);
+
 	float initial_depth = texelFetch(u_depth, ivec2(gl_FragCoord.xy), 0).r;
 	fb_pos pos = fb_pos(uvec2(gl_FragCoord.xy), vec2(0.5), initial_depth);
 	vec3 pos_cam0 = win_to_cam(vec3(gl_FragCoord.xy, initial_depth));
@@ -85,9 +85,9 @@ void main() {
 	vec3 color_0 = texelFetch(u_color, ivec2(gl_FragCoord.xy), 0).rgb;
 	color_0 = pow(color_0, vec3(2.2));
 
-	vec3 prev_color = // TODO TAA
-		texture(u_prev_color_accum, vec2(r_prev_pos_ndc.xy * 0.5 + 0.5)).rgb;
-	prev_color = max(vec3(0.0), prev_color);
+	//vec3 prev_color = // TODO TAA
+	//	texture(u_prev_color_accum, vec2(r_prev_pos_ndc.xy * 0.5 + 0.5)).rgb;
+	//prev_color = max(vec3(0.0), prev_color);
 
 	vec3 geometric_normal_cam0 = texelFetch(u_normal, ivec2(gl_FragCoord.xy), 0).xyz;
 	if(initial_depth == 1.0 || dot(geometric_normal_cam0, geometric_normal_cam0) < 0.9) {
@@ -214,10 +214,7 @@ void main() {
 	light_1 = mix(light_1, prev_light_1, accum_ratio);
 	light_1 = pow(light_1, vec3(1.0 / 2.2));
 
-	float accum_ratio_reverted = 1.0 / (1.0 - accum_ratio);
-	accum_ratio_reverted += 1.0;
-	accum_ratio_reverted = min(accum_ratio_reverted, uint(16.0 * pow(roughness_0, 1.5)));
-	accum_ratio = accum_ratio_reverted / (1.0 + accum_ratio_reverted);
+	accum_ratio = increase_ratio(accum_ratio, 12.0 * pow(roughness_0, 1.5));
 
 	out_light_1_accum = vec4(light_1, accum_ratio);
 }
