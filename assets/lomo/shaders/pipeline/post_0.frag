@@ -6,7 +6,7 @@
 #include lomo:shaders/pipeline/post/sky.glsl
 #include lomo:shaders/pipeline/post/emitting_light.glsl
 #include lomo:shaders/pipeline/post/ratio.glsl
-//#include lomo:shaders/pipeline/post/medium.glsl
+#include lomo:shaders/pipeline/post/medium.glsl
 #include lomo:shaders/pipeline/post/compute_normal.glsl
 #include lomo:shaders/pipeline/post/shadow.glsl
 
@@ -89,7 +89,7 @@ void main() {
 
 		vec3 light_total = vec3(0.0);
 		float weight_total = 0.0;
-		int mx = int(4.0 * pow(roughness, 1.0));
+		int mx = int(3.0 * pow(roughness, 1.0));
 		for(int x = -mx; x <= mx; ++x) {
 			for(int y = -mx; y <= mx; ++y) {
 				ivec2 coord = coord0 + ivec2(x, y);
@@ -143,7 +143,7 @@ void main() {
 	vec3 begin = cam_near(gl_FragCoord.xy);
 	vec3 end = depth0 == 1.0 ? begin + (pos0 - begin) * 10.0 : pos0;
 
-	//resulting_light = medium(resulting_light, begin, end, 1.0);
+	resulting_light = medium(resulting_light, begin, end, 1.0);
 
 	out_prev_depth = texelFetch(u_depth, coord0, 0).r;
 

@@ -14,7 +14,7 @@
 #include lomo:shaders/pipeline/post/shadow.glsl
 #include lomo:shaders/pipeline/post/emitting_light.glsl
 #include lomo:shaders/pipeline/post/ratio.glsl
-//#include lomo:shaders/pipeline/post/medium.glsl
+#include lomo:shaders/pipeline/post/medium.glsl
 
 #include lomo:general
 
@@ -92,7 +92,6 @@ void main() {
 	vec3 geometric_normal_cam0 = texelFetch(u_normal, ivec2(gl_FragCoord.xy), 0).xyz;
 	if(initial_depth == 1.0 || dot(geometric_normal_cam0, geometric_normal_cam0) < 0.9) {
 		out_light_1_accum = vec4(0.0);
-		//out_color_accum = vec4(0.0);
 		return;
 	}
 
@@ -125,6 +124,8 @@ void main() {
 	bool reflected = false;
 	bool under = false;
 	bool success = false;
+	bool out_of_fb = false;
+	fb_pos traversal_pos = pos;
 
 	if(
 		#if REFLECTIONS == REFLECTIONS_ALL
@@ -139,7 +140,7 @@ void main() {
 		&&
 		dot(dir_cam, geometric_normal_cam) > 0.0
 	) {
-		pos.z -= 0.00001;
+		pos.z -= pos.z / 10000.0;
 		uint max_side = uint(max(frxu_size.x, frxu_size.y));
 		fb_traversal_result result = traverse_fb(
 			pos, cam_dir_to_win(pos_cam, dir_cam),
@@ -147,10 +148,12 @@ void main() {
 			u_hi_depth, u_depth, u_win_normal,
 			uint(mix(max_side / 20, max_side / 10, (1.0 - roughness)))
 		);
+		traversal_pos = result.pos;
 
 		vec3 geometric_normal_cam0_1 = texelFetch(u_normal, ivec2(result.pos.texel), 0).xyz;
 		under = result.code == TRAVERSAL_POSSIBLY_UNDER;
 		success = result.code == TRAVERSAL_SUCCESS;
+		out_of_fb = result.code == TRAVERSAL_OUT_OF_FB;
 
 		if(
 			dot(geometric_normal_cam0_1, geometric_normal_cam0_1) > 0.9 &&
@@ -185,12 +188,23 @@ void main() {
 
 	if(frx_worldHasSkylight == 1) {
 		float d = sun_light_at(pos_cam);
-		bool straigth = true;//(!success  || dot(geometric_normal_cam0, geometric_normal_cam0) < 0.9) && pos.z < 1.0;
+		bool ok_geom_normal = dot(geometric_normal_cam0, geometric_normal_cam0) > 0.9;
+		bool straigth = traversal_pos.z >= 1.0;//true;//(!success  || dot(geometric_normal_cam0, geometric_normal_cam0) < 0.9) && pos.z < 1.0;
 		if(straigth) {
-			s = sky(mat3(frx_inverseViewMatrix) * dir_cam, d);
+			s = sky(mat3(frx_inverseViewMatrix) * dir_cam, 1.0);
+			/*if(traversal_pos.z < 1.0) {
+				s *= pow(
+				mix(max(sky_light - 0.1, 0.0) * 1.2, 0.0, emissive),
+				mix(8.0, 0.0, d)
+				);
+			}*/
+			//s *= pow(
+			//	mix(max(sky_light - 0.1, 0.0) * 1.2, 0.0, emissive),
+			//	mix(8.0, 0.0, d)
+			//);
 		}
 		else {
-			const uint steps = 1u;
+			const uint steps = 12u;
 
 			for(uint i = 0u; i < steps; ++i) {
 				vec3 s0 = sky(mat3(frx_inverseViewMatrix) * dir_cam, 1.0);
@@ -200,15 +214,16 @@ void main() {
 				dir_cam = reflect(dir_inc_cam, normal_cam);
 				s += s0 / float(steps);
 			}
-		}
 
-		s *= pow(
-			mix(max(sky_light - 0.1, 0.0) * 1.2, 0.0, emissive),
-			mix(8.0, 0.0, d)
-		);
+			s *= pow(
+				mix(max(sky_light - 0.1, 0.0) * 1.2, 0.0, emissive),
+				mix(8.0, 0.0, d)
+			);
+		}
 	}
 
 	vec3 light_1 = light + s * color;
+	//light_1 = medium(light_1, pos_cam, pos_cam * dir_inc_cam, sky_light);
 
 	vec3 prev_light_1 = texture(u_prev_light_1_accum, vec2(r_prev_pos_ndc.xy * 0.5 + 0.5)).rgb;
 	prev_light_1 = max(prev_light_1, vec3(0.0));
@@ -216,7 +231,7 @@ void main() {
 	light_1 = mix(light_1, prev_light_1, accum_ratio);
 	light_1 = pow(light_1, vec3(1.0 / 2.2));
 
-	accum_ratio = increase_ratio(accum_ratio, 8.0 * pow(roughness_0, 1.5));
+	accum_ratio = increase_ratio(accum_ratio, 16.0 * pow(roughness_0, 4.0));
 
 	out_light_1_accum = vec4(light_1, accum_ratio);
 }
