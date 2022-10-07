@@ -7,7 +7,7 @@ vec3 compute_normal(
 	vec3 incidence, vec3 geometric_normal, vec2 pos, float roughness, uint stp
 ) {
 	vec3 normal;
-	for(int i = 0; i < 4; ++i) {
+	for(int i = 0; i < 8; ++i) {
 	vec2 rand = (hash24(uvec4(
 		pos, frx_renderFrames % 4096 + stp * 256 + i, stp * 256 + i
 	)) * 2.0 - 1.0);

@@ -39,7 +39,16 @@ layout(location = 1) out vec4 out_prev_taa;
 void main() {
 	out_prev_taa = texelFetch(u_taa, ivec2(gl_FragCoord.xy), 0);
 
+	vec3 geometric_normal_cam0 = texelFetch(u_normal, ivec2(gl_FragCoord.xy), 0).xyz;
 	float initial_depth = texelFetch(u_depth, ivec2(gl_FragCoord.xy), 0).r;
+	if(initial_depth == 1.0 || dot(geometric_normal_cam0, geometric_normal_cam0) < 0.9) {
+		out_light_1_accum = vec4(0.0);
+		return;
+	}
+
+	vec3 geometric_normal_cam = normalize(geometric_normal_cam0);
+	vec3 dir_inc_cam = cam_dir_to_z1(gl_FragCoord.xy);
+
 	fb_pos pos = fb_pos(uvec2(gl_FragCoord.xy), vec2(0.5), initial_depth);
 	vec3 pos_cam0 = win_to_cam(vec3(gl_FragCoord.xy, initial_depth));
 
@@ -70,16 +79,33 @@ void main() {
 		accum_ratio *= exp(-shadow_diff * 3.0);
 	}*/
 
+	vec4 extra_0_0 = texelFetch(u_extra_0, ivec2(pos.texel), 0);
+	vec4 extra_1_0 = texelFetch(u_extra_1, ivec2(pos.texel), 0);
+	float roughness_0   =       extra_0_0[0];
+	float sky_light_0   = clamp(extra_0_0[1], 0.0, 1.0);
+	float block_light_0 = clamp(extra_0_0[2], 0.0, 1.0);
+	float reflectance_0 =       extra_1_0[0];
+	float emissive_0    =       extra_1_0[1];
+
 	if(
 		any(greaterThan(vec3(r_prev_pos_ndc), vec3( 1.0))) ||
 		any(lessThan   (vec3(r_prev_pos_ndc), vec3(-1.0)))
 	) {
 		accum_ratio = 0.0;
 	}
-
-	{
+	else {
 		double diff = abs(prev_depth - r_prev_pos_win.z);
 		accum_ratio *= exp(-float(diff * 1024.0));
+
+		vec3 prev_dir_inc_cam = cam_dir_to_z1(vec2(r_prev_pos_win.xy));
+		prev_dir_inc_cam = mat3(frx_viewMatrix) * (inverse(mat3(frx_lastViewMatrix)) * prev_dir_inc_cam);
+
+		accum_ratio *= exp(-(
+			pow(
+				length(cross(dir_inc_cam, prev_dir_inc_cam)),
+				pow(roughness_0, 1.0) * 2.0
+			) * mix(32.0, 0.0, roughness_0)
+		));
 	}
 
 	vec3 color_0 = texelFetch(u_color, ivec2(gl_FragCoord.xy), 0).rgb;
@@ -89,24 +115,10 @@ void main() {
 	//	texture(u_prev_color_accum, vec2(r_prev_pos_ndc.xy * 0.5 + 0.5)).rgb;
 	//prev_color = max(vec3(0.0), prev_color);
 
-	vec3 geometric_normal_cam0 = texelFetch(u_normal, ivec2(gl_FragCoord.xy), 0).xyz;
-	if(initial_depth == 1.0 || dot(geometric_normal_cam0, geometric_normal_cam0) < 0.9) {
-		out_light_1_accum = vec4(0.0);
-		return;
-	}
-
 	vec3 pos_cam = pos_cam0;
 
 	vec3 color = vec3(1.0);
 	vec3 light = vec3(0.0);
-	
-	vec4 extra_0_0 = texelFetch(u_extra_0, ivec2(pos.texel), 0);
-	vec4 extra_1_0 = texelFetch(u_extra_1, ivec2(pos.texel), 0);
-	float roughness_0   =       extra_0_0[0];
-	float sky_light_0   = clamp(extra_0_0[1], 0.0, 1.0);
-	float block_light_0 = clamp(extra_0_0[2], 0.0, 1.0);
-	float reflectance_0 =       extra_1_0[0];
-	float emissive_0    =       extra_1_0[1];
 
 	float roughness   = roughness_0;
 	float sky_light   = sky_light_0;
@@ -114,8 +126,6 @@ void main() {
 	float reflectance = reflectance_0;
 	float emissive    = emissive_0;
 
-	vec3 geometric_normal_cam = normalize(geometric_normal_cam0);
-	vec3 dir_inc_cam = cam_dir_to_z1(gl_FragCoord.xy);
 	vec3 normal_cam = compute_normal(
 		dir_inc_cam, geometric_normal_cam, pos.texel, roughness, 0u
 	);
@@ -231,7 +241,7 @@ void main() {
 	light_1 = mix(light_1, prev_light_1, accum_ratio);
 	light_1 = pow(light_1, vec3(1.0 / 2.2));
 
-	accum_ratio = increase_ratio(accum_ratio, 16.0 * pow(roughness_0, 4.0));
+	accum_ratio = increase_ratio(accum_ratio, 1024.0 * roughness_0);
 
 	out_light_1_accum = vec4(light_1, accum_ratio);
 }

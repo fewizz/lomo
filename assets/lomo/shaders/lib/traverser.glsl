@@ -73,13 +73,12 @@ float next_cell_common(inout fb_pos pos, vec2 dir, uint level) {
 		}
 
 		float y = pos.inner.y + dir.y * x;
+		pos.inner.y = fract(y);
 		if(y > 0.0) {
 			pos.texel.y += uint(y);
-			pos.inner.y = fract(y);
 		}
 		else {
 			pos.texel.y -= uint(-y) + 1u;
-			pos.inner.y = 1.0 - fract(-y);
 		}
 		return x;
 	} else
@@ -95,13 +94,12 @@ float next_cell_common(inout fb_pos pos, vec2 dir, uint level) {
 		}
 
 		float x = pos.inner.x + dir.x * y;
+		pos.inner.x = fract(x);
 		if(x > 0.0) {
 			pos.texel.x += uint(x);
-			pos.inner.x = fract(x);
 		}
 		else {
 			pos.texel.x -= uint(-x) + 1u;
-			pos.inner.x = 1.0 - fract(-x);
 		}
 		return y;
 	} else {
@@ -233,8 +231,6 @@ fb_traversal_result traverse_fb(
 	sampler2D s_win_normal,
 	uint max_steps
 ) {
-	vec2 dir_xy = normalize(dir_ws.xy);
-	vec2 dir = dir_xy;
 	bool backwards = dir_ws.z < 0.0;
 
 	if(dir_ws.xy == vec2(0.0) || abs(dir_ws.z) > 0.5) {
@@ -251,20 +247,23 @@ fb_traversal_result traverse_fb(
 		return fb_traversal_result(TRAVERSAL_OUT_OF_FB, pos);
 	}
 
+	float dir_ws_length = length(dir_ws.xy);
+	vec2 dir_xy = dir_ws.xy / dir_ws_length;
+	vec2 dir = dir_xy;
+
 	uint level = 0u;
 	float lower_depth = lower_depth_value(pos, level, s_hi_depth);
 	float upper_depth = upper_depth_value(pos, level, s_hi_depth);
-	find_uppest_lod(pos, level, upper_depth, lower_depth, s_hi_depth, backwards);
+	//find_uppest_lod(pos, level, upper_depth, lower_depth, s_hi_depth, backwards);
 	
-	uint steps = 0;
-	while(steps++ < max_steps) {
+	while(max_steps-- > 0) {
 		if(is_out_of_fb(pos)) {
 			return fb_traversal_result(TRAVERSAL_OUT_OF_FB, pos);
 		}
 
 		fb_pos prev = pos;
 		float dist = next_cell_common(pos, dir, level);
-		pos.z += dist * (dir_ws.z / length(dir_ws.xy));
+		pos.z += dist * (dir_ws.z / dir_ws_length);
 
 		if(pos.z > lower_depth || (!backwards && pos.z == lower_depth)) {
 			if(level > 0u) {
@@ -275,26 +274,22 @@ fb_traversal_result traverse_fb(
 				float x = diff.x;
 				float y = diff.y;
 
+				prev.inner = fract(diff);
 				if(y > 0.0) {
 					prev.texel.y += uint(y);
-					prev.inner.y = y - uint(y);
 				}
 				else {
 					prev.texel.y -= uint(-y) + 1u;
-					prev.inner.y = uint(-y) + 1u - -y;
 				}
 
 				if(x > 0.0) {
 					prev.texel.x += uint(x);
-					prev.inner.x = x - uint(x);
 				}
 				else {
 					prev.texel.x -= uint(-x) + 1u;
-					prev.inner.x = uint(-x) + 1u - -x;
 				}
 
 				pos = prev;
-
 				pos.z = lower_depth;
 				find_lowest_lod(pos, level, upper_depth, lower_depth, s_hi_depth, backwards);
 				continue;
@@ -314,52 +309,11 @@ fb_traversal_result traverse_fb(
 		}
 
 		/* switching the cell */
-		//if((pos.texel >> cell_size(level + 1u)) != (prev.texel >> cell_size(level + 1u) )) {
 		upper_depth = upper_depth_value(pos, level, s_hi_depth);
-		//}
 		lower_depth = lower_depth_value(pos, level, s_hi_depth);
-		//if(!find_uppest_lod(pos, level, upper_depth, lower_depth, s_hi_depth, backwards))
-		//{
 		find_uppest_lod(pos, level, upper_depth, lower_depth, s_hi_depth, backwards);
-		//lower_depth = lower_depth_value(pos, level, s_hi_depth);
 		find_lowest_lod(pos, level, upper_depth, lower_depth, s_hi_depth, backwards);
-		//}
 	}
 
 	return fb_traversal_result(TRAVERSAL_TOO_LONG, fb_pos(uvec2(0), vec2(0), 0.0));
-}
-
-fb_traversal_result traverse_cam(
-	fb_pos pos,
-	vec3 pos_cam,
-	vec3 dir_cam,
-	vec3 dir_win,
-	float roughness,
-	sampler2D s_depth
-) {
-	float stp = 0.01 + 0.05 * roughness;
-
-	while(true) {
-		if(is_out_of_fb(pos)) {
-			return fb_traversal_result(TRAVERSAL_OUT_OF_FB, pos);
-		}
-		pos_cam += dir_cam * stp;
-		vec3 pos_win = cam_to_win(pos_cam);
-		pos.texel = ivec2(pos_win.xy);
-		float depth = texelFetch(s_depth, ivec2(pos.texel), 0).r;
-
-		if(pos.z >= depth) {
-			//vec3 hit_pos_win = pos_win;
-			//hit_pos_win.z = depth;
-			//vec3 hit_pos_cam = win_to_cam(hit_pos_win);
-			//if(1.0/(pos.z - depth) > 100000.0/*distance(pos_cam, hit_pos_cam) > 1.0*/) {
-			//	return fb_traversal_result(TRAVERSAL_POSSIBLY_UNDER, pos);
-			//}
-			pos.z = depth;
-			pos.inner = fract(pos_win.xy);
-			return fb_traversal_result(TRAVERSAL_SUCCESS, pos);
-		}
-		pos.z = pos_win.z;
-		stp *= 1.1 + 0.05 * roughness;// + 10000000.0 * abs(dir_win.z);
-	}
 }

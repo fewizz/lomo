@@ -95,6 +95,8 @@ void main() {
 				ivec2 coord = coord0 + ivec2(x, y);
 				vec3 light = pow(texelFetch(u_light_1_accum, coord, 0).rgb, vec3(2.2));
 				vec3 normal = texelFetch(u_normal, ivec2(coord), 0).rgb;
+				vec3 extras_0_1 = texelFetch(u_extra_0, ivec2(coord), 0).rgb;
+				float roughness_1   = clamp(extras_0_1[0], 0.0, 1.0);
 				if(dot(normal, normal) < 0.5) continue;
 				float depth_ws = texelFetch(u_depth, ivec2(coord), 0).r;
 				vec3 pos = win_to_cam(vec3(vec2(coord) + vec2(0.5), depth_ws));
@@ -102,7 +104,8 @@ void main() {
 				float weight = 1.0;
 				weight *= exp((
 					-dot(vec2(x, y), vec2(x, y)) / float((mx + 1) * (mx + 1)) * 3.0
-					-(1.0 - abs(dot(normal0, normal))) * 16.0
+					-length(cross(normal0, normal)) * 64.0
+					-abs(roughness - roughness_1) * 32.0
 					//-abs(shadow0 - shadow) * 4.0
 					-z_diff * 16.0
 				));
