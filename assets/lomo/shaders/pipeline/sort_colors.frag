@@ -8,7 +8,6 @@ uniform sampler2D u_translucent_c;
 uniform sampler2D u_entity_c;
 uniform sampler2D u_particle_c;
 uniform sampler2D u_weather_c;
-uniform sampler2D u_cloud_c;
 
 uniform sampler2D u_index_to_type;
 
@@ -23,8 +22,7 @@ void main() {
 		texelFetch(u_translucent_c, coord, 0),
 		texelFetch(u_entity_c, coord, 0),
 		texelFetch(u_particle_c, coord, 0),
-		texelFetch(u_weather_c, coord, 0)//,
-		//texelFetch(u_cloud_c, coord, 0)
+		texelFetch(u_weather_c, coord, 0)
 	);
 
 	uint index_to_type = floatBitsToUint(

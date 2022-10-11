@@ -165,8 +165,7 @@
 			"u_translucent_d",
 			"u_entity_d",
 			"u_particle_d",
-			"u_weather_d",
-			"u_cloud_d"
+			"u_weather_d"
 		]
 	},
 	{
@@ -187,7 +186,7 @@
 		"fragmentSource": "lomo:shaders/pipeline/sort.frag",
 		"samplers": [
 			"u_solid", "u_translucent", "u_entity",
-			"u_particle", "u_weather", "u_cloud",
+			"u_particle", "u_weather",
 			"u_index_to_type"
 		]
 	},
@@ -197,7 +196,7 @@
 		"fragmentSource": "lomo:shaders/pipeline/sort_colors.frag",
 		"samplers": [
 			"u_solid_c", "u_translucent_c", "u_entity_c",
-			"u_particle_c", "u_weather_c", "u_cloud_c",
+			"u_particle_c", "u_weather_c",
 			"u_index_to_type"
 		]
 	},
@@ -304,7 +303,7 @@
 			"framebuffer": "depth_indices",
 			"samplerImages": [
 				"solid_d", "translucent_d",
-				"entity_d", "particle_d", "weather_d", "cloud_d"
+				"entity_d", "particle_d", "weather_d"
 			]
 		},
 		{
@@ -313,7 +312,7 @@
 			"framebuffer": "colors",
 			"samplerImages": [
 				"solid_c", "translucent_c", "entity_c",
-				"particle_c", "weather_c", "cloud_c", "index_to_type"
+				"particle_c", "weather_c", "index_to_type"
 			]
 		},
 		{
@@ -322,7 +321,7 @@
 			"framebuffer": "normals",
 			"samplerImages": [
 				"solid_n", "translucent_n", "entity_n",
-				"particle_n", "weather_n", "cloud_n", "index_to_type"
+				"particle_n", "weather_n", "index_to_type"
 			]
 		},
 		{
@@ -331,7 +330,7 @@
 			"framebuffer": "geometric_normals",
 			"samplerImages": [
 				"solid_g", "translucent_g", "entity_g",
-				"particle_g", "weather_g", "cloud_g", "index_to_type"
+				"particle_g", "weather_g", "index_to_type"
 			]
 		},
 		{
@@ -340,7 +339,7 @@
 			"framebuffer": "extras_0",
 			"samplerImages": [
 				"solid_e_0", "translucent_e_0", "entity_e_0",
-				"particle_e_0", "weather_e_0", "cloud_e_0", "index_to_type"
+				"particle_e_0", "weather_e_0", "index_to_type"
 			]
 		},
 		{
@@ -349,7 +348,7 @@
 			"framebuffer": "extras_1",
 			"samplerImages": [
 				"solid_e_1", "translucent_e_1", "entity_e_1",
-				"particle_e_1", "weather_e_1", "cloud_e_1", "index_to_type"
+				"particle_e_1", "weather_e_1", "index_to_type"
 			]
 		},
 		{
@@ -358,7 +357,7 @@
 			"framebuffer": "depths",
 			"samplerImages": [
 				"solid_d", "translucent_d", "entity_d",
-				"particle_d", "weather_d", "cloud_d", "index_to_type"
+				"particle_d", "weather_d", "index_to_type"
 			]
 		},
 		{

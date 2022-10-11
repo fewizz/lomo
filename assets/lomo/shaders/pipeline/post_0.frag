@@ -65,6 +65,7 @@ void main() {
 
 	// sky needs special handling..
 	bool all_sky = true;
+	vec3 min_prev = vec3(1024.0);
 	for(int x = -1; x <= 1; ++x) {
 		for(int y = -1; y <= 1; ++y) {
 			float depth = texelFetch(u_depth, ivec2(gl_FragCoord.xy) + ivec2(x, y), 0).r;
@@ -89,7 +90,7 @@ void main() {
 
 		vec3 light_total = vec3(0.0);
 		float weight_total = 0.0;
-		int mx = int(3.0 * pow(roughness, 1.0));
+		int mx = int(4.0 * pow(roughness, 1.0));
 		for(int x = -mx; x <= mx; ++x) {
 			for(int y = -mx; y <= mx; ++y) {
 				ivec2 coord = coord0 + ivec2(x, y);
@@ -102,12 +103,15 @@ void main() {
 				vec3 pos = win_to_cam(vec3(vec2(coord) + vec2(0.5), depth_ws));
 				float z_diff = abs(dot(pos - pos0, normal0));
 				float weight = 1.0;
-				weight *= exp((
-					-dot(vec2(x, y), vec2(x, y)) / float((mx + 1) * (mx + 1)) * 3.0
-					-length(cross(normal0, normal)) * 64.0
-					-abs(roughness - roughness_1) * 32.0
+				weight *= exp(-(
+					dot(vec2(x, y), vec2(x, y)) / (mx == 0 ? 1 : float(mx * mx)) * 1.0
+					+
+					length(cross(normal0, normal)) * 16.0
+					+
+					abs(roughness - roughness_1) * 32.0
+					+
 					//-abs(shadow0 - shadow) * 4.0
-					-z_diff * 16.0
+					z_diff * 16.0
 				));
 				weight_total += weight;
 				light_total += light * weight;

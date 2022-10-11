@@ -8,7 +8,6 @@ uniform sampler2D u_translucent_d;
 uniform sampler2D u_entity_d;
 uniform sampler2D u_particle_d;
 uniform sampler2D u_weather_d;
-uniform sampler2D u_cloud_d;
 
 layout(location = 0) out float out_index_to_type;
 layout(location = 1) out float out_type_to_index;
@@ -18,32 +17,31 @@ void main() {
 
 	const uint layers = 5u;
 
-	float depths[layers] = float[](
+	float type_to_depth[layers] = float[](
 		texelFetch(u_solid_d, coord, 0).r,
 		texelFetch(u_translucent_d, coord, 0).r,
 		texelFetch(u_entity_d, coord, 0).r,
 		texelFetch(u_particle_d, coord, 0).r,
-		texelFetch(u_weather_d, coord, 0).r//,
-		//texelFetch(u_cloud_d, coord, 0).r
+		texelFetch(u_weather_d, coord, 0).r
 	);
 
-	bool done[layers] = bool[](false, false, false, false, false/*, false*/);
+	bool done[layers] = bool[](false, false, false, false, false);
 	uint type_to_index[layers];
 	uint index_to_type[layers];
 
 	uint begin = 0u;
-	float prev_min = -1;
+	float prev_min = 0.0;
 
 	for(uint i = begin; i < layers; i++) {
-		float current_min = 1.01;
-		for(uint x = 0u; x < layers; x++) {
-			if(done[x]) continue;
+		float current_min = 1.0;
+		for(uint type = 0u; type < layers; type++) {
+			if(done[type]) continue;
 
-			float d = depths[x];
+			float d = type_to_depth[type];
 
 			if(d < current_min && d >= prev_min) {
 				current_min = d;
-				index_to_type[i] = x;
+				index_to_type[i] = type;
 			}
 		}
 
