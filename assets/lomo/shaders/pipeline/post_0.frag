@@ -4,6 +4,7 @@
 #include lomo:shaders/lib/transform.glsl
 
 #include lomo:shaders/pipeline/post/sky.glsl
+#include lomo:shaders/pipeline/post/light_mix.glsl
 #include lomo:shaders/pipeline/post/emitting_light.glsl
 #include lomo:shaders/pipeline/post/ratio.glsl
 #include lomo:shaders/pipeline/post/medium.glsl
@@ -28,6 +29,8 @@ layout(location = 3) out vec4 out_taa;
 
 void main() {
 	ivec2 coord0 = ivec2(gl_FragCoord.xy);
+	vec3 extras_0 = texelFetch(u_extra_0, ivec2(coord0), 0).rgb;
+	float roughness   = clamp(extras_0[0], 0.0, 1.0);
 
 	vec3 resulting_light = vec3(0.0);
 	vec3 light = vec3(0.0);
@@ -51,7 +54,7 @@ void main() {
 	prev_taa = max(vec3(0.0), prev_taa);
 	float taa_ratio = texelFetch(u_prev_taa, ivec2(r_prev_pos_win.xy), 0).w;
 	taa_ratio = max(0.0, taa_ratio);
-	taa_ratio = increase_ratio(taa_ratio, 4.0);
+	taa_ratio = increase_ratio(taa_ratio, mix(1.0, 16.0, roughness));
 
 	if(
 		any(greaterThan(vec3(r_prev_pos_ndc), vec3( 1.0))) ||
@@ -60,7 +63,7 @@ void main() {
 		taa_ratio = 0.0;
 	}
 	else {
-		taa_ratio *= exp(float(-distance(r_prev_pos_win.xy, gl_FragCoord.xy) * 0.5));
+		taa_ratio *= exp(float(-distance(r_prev_pos_win.xy, gl_FragCoord.xy) * 0.1));
 	}
 
 	// sky needs special handling..
@@ -80,17 +83,15 @@ void main() {
 		resulting_light = vec3(0.0);
 	}
 	else if(depth0 != 1.0) {
-		vec3 extras_0 = texelFetch(u_extra_0, ivec2(coord0), 0).rgb;
 		vec3 extras_1 = texelFetch(u_extra_1, ivec2(coord0), 0).rgb;
-		float roughness   = clamp(extras_0[0], 0.0, 1.0);
 		float sky_light   = clamp(extras_0[1], 0.0, 1.0);
 		float block_light = clamp(extras_0[2], 0.0, 1.0);
 		float reflectance = clamp(extras_1[0], 0.0, 1.0);
 		float emissive    = extras_1[1];
 
 		vec3 light_total = vec3(0.0);
-		float weight_total = 0.0;
-		int mx = int(4.0 * pow(roughness, 1.0));
+		/*float weight_total = 0.0;
+		int mx = int(0.0 * pow(roughness, 1.0));
 		for(int x = -mx; x <= mx; ++x) {
 			for(int y = -mx; y <= mx; ++y) {
 				ivec2 coord = coord0 + ivec2(x, y);
@@ -116,8 +117,8 @@ void main() {
 				weight_total += weight;
 				light_total += light * weight;
 			}
-		}
-		light = light_total / weight_total;
+		}*/
+		light = pow(texelFetch(u_light_1_accum, coord0, 0).rgb, vec3(2.2));//light_total / weight_total;
 
 		vec3 color = texelFetch(u_color, ivec2(coord0), 0).rgb;
 		color = pow(color, vec3(2.2));
@@ -127,19 +128,16 @@ void main() {
 			e = vec3(1.0);
 		}
 
-		vec3 dir_cam = cam_dir_to_z1(gl_FragCoord.xy);
-		float cs = max(0.0001, dot(-dir_cam, normal0));
+		vec3 dir_inc_cam = cam_dir_to_z1(gl_FragCoord.xy);
+		vec3 normal_cam_transformed = compute_normal(
+			dir_inc_cam, normal0, uvec2(gl_FragCoord.xy), roughness, 0
+		);
 
-		/*******/ // From https://learnopengl.com/PBR/Theory
-		float F0 = reflectance;
-		float kS = F0 + (1.0 - F0) * pow(1.0 - cs, 5.0);
-		kS = clamp(kS, 0.0, 1.0);
-		/*******/
-		kS = mix(kS, 0.0, roughness);
-		float kD = 1.0 - kS;
-
-		resulting_light =
-			e + (kD * color + kS * (1.0 - roughness)) * light;
+		resulting_light = light_mix(
+			dir_inc_cam, normal_cam_transformed,
+			color, light, e,
+			roughness, reflectance
+		);
 	}
 	else if(frx_worldHasSkylight == 1) {
 		vec3 wrld_dir = mat3(frx_inverseViewMatrix) * cam_dir_to_z1(gl_FragCoord.xy);

@@ -1,5 +1,3 @@
-#include lomo:shaders/pipeline/post/compute_normal.glsl
-
 #define TRAVERSAL_SUCCESS 0
 #define TRAVERSAL_OUT_OF_FB 1
 #define TRAVERSAL_POSSIBLY_UNDER 2
@@ -194,43 +192,20 @@ int check_if_intersects(inout fb_pos pos, vec3 dir_ndc, sampler2D s_depth, sampl
 	return SURFACE_INTERSECT;
 }
 
-#define MAX_TRAVERSAL_RESULTS_COUNT 1
-
-struct fb_traversal_results {
-	fb_traversal_result results[MAX_TRAVERSAL_RESULTS_COUNT];
-	uint results_count;
-};
-
-fb_traversal_results traverse_fb(
-	fb_pos pos0,
-	float roughness,
+fb_traversal_result traverse_fb(
+	vec3 pos_win,
 	vec3 pos_cam,
-	vec3 dir_inc_cam,
-	vec3 geom_normal_cam,
+	vec3 dir_cam,
 	sampler2D s_hi_depth,
 	sampler2D s_depth,
 	sampler2D s_win_normal,
 	uint max_steps
 ) {
-
-	fb_traversal_result[MAX_TRAVERSAL_RESULTS_COUNT] t0;
-	fb_traversal_results result = fb_traversal_results(
-		t0,
-		0u
-	);
-
-	while(result.results_count < MAX_TRAVERSAL_RESULTS_COUNT) {
-
-	fb_pos pos = pos0;
-	
-	vec3 normal_cam = compute_normal(
-		dir_inc_cam, geom_normal_cam, vec2(pos.texel), roughness, result.results_count
-	);
-	vec3 dir_cam = reflect(dir_inc_cam, normal_cam);
 	vec3 dir_ws = cam_dir_to_win(pos_cam, dir_cam);
 	vec3 dir_ndc = cam_dir_to_ndc(pos_cam, dir_cam);
 
 	bool backwards = dir_ws.z < 0.0;
+	fb_pos pos = fb_pos(uvec2(pos_win.xy), vec2(fract(pos_win.xy)), pos_win.z);
 
 	if(dir_ws.xy == vec2(0.0) || abs(dir_ws.z) > 0.5) {
 		float z = pos.z;
@@ -239,16 +214,11 @@ fb_traversal_results traverse_fb(
 
 		if(!backwards && depth < 1.0) {
 			if(z <= depth) {
-				result.results[result.results_count] = fb_traversal_result(TRAVERSAL_SUCCESS, pos);
+				return fb_traversal_result(TRAVERSAL_SUCCESS, pos);
 			}
-			else {
-				result.results[result.results_count] = fb_traversal_result(TRAVERSAL_POSSIBLY_UNDER, pos);
-			}
-		} else {
-			result.results[result.results_count] = fb_traversal_result(TRAVERSAL_OUT_OF_FB, pos);
+			return fb_traversal_result(TRAVERSAL_POSSIBLY_UNDER, pos);
 		}
-		++result.results_count;
-		continue;
+		return fb_traversal_result(TRAVERSAL_OUT_OF_FB, pos);
 	}
 
 	float dir_ws_length = length(dir_ws.xy);
@@ -258,13 +228,11 @@ fb_traversal_results traverse_fb(
 	uint level = 0u;
 	float lower_depth = lower_depth_value(pos, level, s_hi_depth);
 	float upper_depth = upper_depth_value(pos, level, s_hi_depth);
-	
+
 	while(max_steps > 0) {
 		--max_steps;
 		if(is_out_of_fb(pos)) {
-			result.results[result.results_count] = fb_traversal_result(TRAVERSAL_OUT_OF_FB, pos);
-			++result.results_count;
-			break;
+			return fb_traversal_result(TRAVERSAL_OUT_OF_FB, pos);
 		}
 
 		fb_pos prev = pos;
@@ -289,19 +257,13 @@ fb_traversal_results traverse_fb(
 			else {
 				int result_code = check_if_intersects(prev, dir_ndc, s_depth, s_win_normal);
 				if(is_out_of_fb(prev)) {
-					result.results[result.results_count] = fb_traversal_result(TRAVERSAL_OUT_OF_FB, prev);
-					++result.results_count;
-					break;
+					return fb_traversal_result(TRAVERSAL_OUT_OF_FB, prev);
 				}
 				if(result_code == SURFACE_INTERSECT) {
-					result.results[result.results_count] = fb_traversal_result(TRAVERSAL_SUCCESS, prev);
-					++result.results_count;
-					break;
+					return fb_traversal_result(TRAVERSAL_SUCCESS, prev);
 				}
 				if(result_code == SURFACE_UNDER) {
-					result.results[result.results_count] = fb_traversal_result(TRAVERSAL_POSSIBLY_UNDER, prev);
-					++result.results_count;
-					break;
+					return fb_traversal_result(TRAVERSAL_POSSIBLY_UNDER, prev);
 				}
 			}
 		}
@@ -313,9 +275,6 @@ fb_traversal_results traverse_fb(
 		try_go_upper_lod(pos, level, upper_depth, lower_depth, s_hi_depth, backwards);
 		find_lowest_lod(pos, level, upper_depth, lower_depth, s_hi_depth, backwards);
 	}
-	if(max_steps == 0u) break;
 
-	}
-
-	return result;
+	return fb_traversal_result(TRAVERSAL_TOO_LONG, pos);
 }

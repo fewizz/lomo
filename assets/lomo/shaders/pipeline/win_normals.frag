@@ -24,7 +24,7 @@ void main() {
 
 	if(length(normal_cam) < 0.5) {
 		out_normal = vec3(0.0, 0.0, -1.0);
-		out_depth = depth_ws;
+		out_depth = 1.0;
 		return;
 	}
 
