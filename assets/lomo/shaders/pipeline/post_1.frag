@@ -5,11 +5,9 @@
 #include frex:shaders/lib/math.glsl
 
 #include lomo:shaders/lib/transform.glsl
-#include lomo:shaders/lib/ray_plane.glsl
-#include lomo:shaders/lib/hash.glsl
 
-#include lomo:shaders/pipeline/post/traverser.glsl
 #include lomo:shaders/pipeline/post/sky.glsl
+#include lomo:shaders/pipeline/post/traverser.glsl
 #include lomo:shaders/pipeline/post/compute_normal.glsl
 #include lomo:shaders/pipeline/post/shadow.glsl
 #include lomo:shaders/pipeline/post/emitting_light.glsl
@@ -26,8 +24,7 @@ uniform sampler2D u_normal;
 uniform sampler2D u_extra_0;
 uniform sampler2D u_extra_1;
 uniform sampler2D u_depth;
-uniform sampler2D u_win_normal;
-uniform sampler2D u_hi_depth;
+uniform sampler2D u_reflection_position;
 
 uniform sampler2D u_prev_light_1_accum;
 uniform sampler2D u_taa;
@@ -113,24 +110,19 @@ void main() {
 		false
 		#endif
 	) {
-		vec3 normal_cam_transformed = compute_normal(
-			dir_inc_cam_0, normal_cam_0, uvec2(pos_win_0.xy), roughness_0, 0
-		);
+		vec4 reflection_pos0 = texelFetch(u_reflection_position, ivec2(pos_win_0.xy), 0);
+		vec3 reflection_pos = reflection_pos0.xyz;
+		int code = int(reflection_pos0.w);
 
+		vec3 normal_cam_transformed = compute_normal(
+			dir_inc_cam_0, normal_cam_0, uvec2(gl_FragCoord.xy), roughness_0, 0
+		);
 		vec3 dir_out_cam_0 = reflect(dir_inc_cam_0, normal_cam_transformed);
+
 		vec3 dir_out_cam = dir_out_cam_0;
 		vec3 dir_inc_cam = dir_inc_cam_0;
 
-		vec3 dir_inc_cam_1 = dir_out_cam;
-
-		vec3 pos_win_traverse_beginning = pos_win_0;
-		pos_win_traverse_beginning.z -= 1.0 / 10000.0;//pos_win_0.z / 10000.0;
-		uint max_side = uint(max(frxu_size.x, frxu_size.y));
-		fb_traversal_result result = traverse_fb(
-			pos_win_traverse_beginning, pos_cam_0, dir_out_cam,
-			u_hi_depth, u_depth, u_win_normal,
-			uint(max_side / 30)
-		);
+		vec3 dir_inc_cam_1 = dir_out_cam_0;
 
 		float roughness = roughness_0;
 		float sky_light = sky_light_0;
@@ -142,12 +134,12 @@ void main() {
 		vec3 pos_win = pos_win_0;
 		vec3 normal_cam = normal_cam_0;
 
-		vec3 pos_win_1 = vec3(ivec2(result.pos.texel) + result.pos.inner, result.pos.z);
-		vec3 pos_cam_1 = win_to_cam(pos_win_1);
+		vec3 pos_cam_1 = reflection_pos;
+		vec3 pos_win_1 = cam_to_win(pos_cam_1);
 		vec3 normal_cam_raw_1 = texelFetch(u_normal, ivec2(pos_win_1), 0).xyz;
 		float depth_1 = texelFetch(u_depth, ivec2(pos_win_1), 0).r;
 
-		if(result.code == TRAVERSAL_POSSIBLY_UNDER) {
+		if(code == TRAVERSAL_POSSIBLY_UNDER) {
 			float depth_at_result = texelFetch(u_depth, ivec2(pos_win_1.xy), 0).r;
 			vec3 pos_cam_at = win_to_cam(vec3(pos_win_1.xy, depth_at_result));
 			if(
@@ -155,13 +147,13 @@ void main() {
 				//distance(pos_cam_1, pos_cam_at) <= 1.0 / 8.0
 				distance(pos_cam_1, pos_cam_at) <= 0.1 * -pos_cam_at.z
 			) {
-				result.code = TRAVERSAL_SUCCESS;
+				code = TRAVERSAL_SUCCESS;
 			}
 		}
 
 		bool pass =
 			dot(normal_cam_raw_1, normal_cam_raw_1) > 0.9 &&
-			result.code == TRAVERSAL_SUCCESS;
+			code == TRAVERSAL_SUCCESS;
 
 		vec3 normal_cam_transformed_1;
 		float roughness_1;
@@ -175,13 +167,13 @@ void main() {
 			vec4 extra_0_1 = texelFetch(u_extra_0, ivec2(pos_win.xy), 0);
 			vec4 extra_1_1 = texelFetch(u_extra_1, ivec2(pos_win.xy), 0);
 
-			roughness_1   =       extra_0_1[0];
-			roughness = roughness_1;
-			sky_light   =       clamp(extra_0_1[1], 0.0, 1.0);
+			roughness_1       =       extra_0_1[0];
+			roughness         =       roughness_1;
+			sky_light         = clamp(extra_0_1[1], 0.0, 1.0);
 			float block_light = clamp(extra_0_1[2], 0.0, 1.0);
-			reflectance_1 =       extra_1_1[0];
-			reflectance = reflectance_1;
-			emissive    =       clamp(extra_1_1[1], 0.0, 1.0);
+			reflectance_1     =       extra_1_1[0];
+			reflectance       =       reflectance_1;
+			emissive          = clamp(extra_1_1[1], 0.0, 1.0);
 
 			color = max(vec3(0.0), texelFetch(u_color, ivec2(pos_win.xy), 0).rgb);
 			color = pow(color, vec3(2.2));
@@ -202,13 +194,13 @@ void main() {
 
 		if(frx_worldHasSkylight == 1) {
 			float d = sun_light_at(pos_cam);
-			bool straigth = result.pos.z >= 1.0;
+			bool straigth = !pass || pos_win.z >= 1.0;
 
 			if(straigth) {
 				s = sky(mat3(frx_inverseViewMatrix) * dir_out_cam, 1.0);
 			}
 			else {
-				const uint steps = 8u;
+				const uint steps = 12u;
 
 				for(uint i = 0u; i < steps; ++i) {
 					vec3 s0 = sky(mat3(frx_inverseViewMatrix) * dir_out_cam, 1.0);
@@ -218,7 +210,8 @@ void main() {
 					);
 					dir_out_cam = reflect(dir_inc_cam, normal_cam_transformed);
 				}
-
+			}
+			if(pos_win.z < 1.0) {
 				s *= pow(
 					mix(max(sky_light - 0.1, 0.0) * 1.2, 0.0, emissive),
 					mix(8.0, 0.0, d)

@@ -1,6 +1,8 @@
 #include frex:shaders/lib/math.glsl
 #include frex:shaders/api/world.glsl
 
+#include lomo:shaders/lib/hash.glsl
+
 /* lomo:pipeline/post/compute_normal.glsl */
 
 vec3 compute_normal(

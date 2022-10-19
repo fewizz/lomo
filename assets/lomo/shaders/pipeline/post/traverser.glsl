@@ -1,3 +1,5 @@
+#include lomo:shaders/lib/ray_plane.glsl
+
 #define TRAVERSAL_SUCCESS 0
 #define TRAVERSAL_OUT_OF_FB 1
 #define TRAVERSAL_POSSIBLY_UNDER 2
