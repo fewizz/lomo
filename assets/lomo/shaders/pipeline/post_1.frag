@@ -200,7 +200,7 @@ void main() {
 				s = sky(mat3(frx_inverseViewMatrix) * dir_out_cam, 1.0);
 			}
 			else {
-				const uint steps = 12u;
+				const uint steps = 8u;
 
 				for(uint i = 0u; i < steps; ++i) {
 					vec3 s0 = sky(mat3(frx_inverseViewMatrix) * dir_out_cam, 1.0);

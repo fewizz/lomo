@@ -40,7 +40,7 @@ void main() {
 	fb_traversal_result result = traverse_fb(
 		pos_win_traverse_beginning, pos_cam_0, dir_out_cam_0,
 		u_hi_depth, u_depth, u_win_normal,
-		uint(max_side / 40)
+		uint(max_side / 20)
 	);
 
 	vec3 resulting_pos_win = vec3(

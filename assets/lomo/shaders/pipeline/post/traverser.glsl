@@ -100,6 +100,23 @@ float lower_depth_value(fb_pos pos, uint level, sampler2D s_hi_depth) {
 	return depth_value(pos, level, s_hi_depth);
 }
 
+bool try_go_lower_lod(
+	fb_pos pos,
+	inout uint level,
+	inout float upper_depth,
+	inout float lower_depth,
+	sampler2D s_hi_depth,
+	bool backwards
+) {
+	if(level > 0u && (pos.z > lower_depth || (!backwards && pos.z == lower_depth))) {
+		--level;
+		upper_depth = lower_depth;
+		lower_depth = lower_depth_value(pos, level, s_hi_depth);
+		return true;
+	}
+	return false;
+}
+
 void find_lowest_lod(
 	fb_pos pos,
 	inout uint level,
@@ -108,11 +125,7 @@ void find_lowest_lod(
 	sampler2D s_hi_depth,
 	bool backwards
 ) {
-	while(level > 0u && (pos.z > lower_depth || (!backwards && pos.z == lower_depth))) {
-		--level;
-		upper_depth = lower_depth;
-		lower_depth = lower_depth_value(pos, level, s_hi_depth);
-	}
+	while(try_go_lower_lod(pos, level, upper_depth, lower_depth, s_hi_depth, backwards));
 }
 
 bool try_go_upper_lod(
@@ -239,6 +252,9 @@ fb_traversal_result traverse_fb(
 
 		fb_pos prev = pos;
 		float dist = next_cell_common(pos, dir, level);
+		//if(prev.z > lower_depth) {
+			//dist = 0.0;
+		//}
 		pos.z += dist * (dir_ws.z / dir_ws_length);
 
 		int result_code = -1;
@@ -250,17 +266,12 @@ fb_traversal_result traverse_fb(
 
 				vec2 diff = prev.inner + dist * dir_xy;
 
-				prev.inner = fract(diff);
-				prev.texel += uvec2(ivec2(floor(diff)));
-
-				pos = prev;
+				pos.inner = fract(diff);
+				pos.texel = prev.texel + uvec2(ivec2(floor(diff)));
 				pos.z = lower_depth;
 			}
 			else {
 				int result_code = check_if_intersects(prev, dir_ndc, s_depth, s_win_normal);
-				if(is_out_of_fb(prev)) {
-					return fb_traversal_result(TRAVERSAL_OUT_OF_FB, prev);
-				}
 				if(result_code == SURFACE_INTERSECT) {
 					return fb_traversal_result(TRAVERSAL_SUCCESS, prev);
 				}
@@ -275,6 +286,8 @@ fb_traversal_result traverse_fb(
 		lower_depth = lower_depth_value(pos, level, s_hi_depth);
 		//find_uppest_lod(pos, level, upper_depth, lower_depth, s_hi_depth, backwards);
 		try_go_upper_lod(pos, level, upper_depth, lower_depth, s_hi_depth, backwards);
+		//try_go_lower_lod(pos, level, lower_depth, upper_depth, s_hi_depth, backwards);
+		//try_go_lower_lod(pos, level, upper_depth, lower_depth, s_hi_depth, backwards);
 		find_lowest_lod(pos, level, upper_depth, lower_depth, s_hi_depth, backwards);
 	}
 
