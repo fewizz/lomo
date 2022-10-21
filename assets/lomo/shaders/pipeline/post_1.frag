@@ -108,9 +108,7 @@ void main() {
 			}
 		}
 
-		bool pass =
-			dot(normal_cam_raw_1, normal_cam_raw_1) > 0.9 &&
-			code == TRAVERSAL_SUCCESS;
+		bool pass = dot(normal_cam_raw_1, normal_cam_raw_1) > 0.9 && code == TRAVERSAL_SUCCESS;
 
 		vec3 normal_cam_transformed_1;
 		float roughness_1;
@@ -157,7 +155,7 @@ void main() {
 				s = sky(mat3(frx_inverseViewMatrix) * dir_out_cam, 1.0);
 			}
 			else {
-				const uint steps = 4u;
+				const uint steps = 12u;
 
 				for(uint i = 0u; i < steps; ++i) {
 					vec3 s0 = sky(mat3(frx_inverseViewMatrix) * dir_out_cam, 1.0);
@@ -168,7 +166,7 @@ void main() {
 					dir_out_cam = reflect(dir_inc_cam, normal_cam_transformed);
 				}
 			}
-			if(pos_win.z < 1.0) {
+			if(pos_win_1.z < 1.0) {
 				s *= pow(
 					mix(max(sky_light - 0.1, 0.0) * 1.2, 0.0, emissive),
 					mix(8.0, 0.0, d)
@@ -186,14 +184,5 @@ void main() {
 		}
 	}
 
-	//vec3 prev_light_1 = texture(u_prev_light_1_accum, vec2(r_prev_pos_ndc.xy * 0.5 + 0.5)).rgb;
-	//prev_light_1 = max(prev_light_1, vec3(0.0));
-	//prev_light_1 = pow(prev_light_1, vec3(2.2));
-	//light_1 = mix(light_1, prev_light_1, accum_ratio);
-	//light_1 = pow(light_1, vec3(1.0 / 2.2));
-
-	//accum_ratio = increase_ratio(accum_ratio, 1024.0 * roughness_0);
-
-	//light_1 = pow(light_1, vec3(1.0 / 2.2));
 	out_post_1 = vec3(light_1);
 }

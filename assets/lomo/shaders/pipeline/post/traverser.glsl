@@ -272,6 +272,9 @@ fb_traversal_result traverse_fb(
 			}
 			else {
 				int result_code = check_if_intersects(prev, dir_ndc, s_depth, s_win_normal);
+				//if(is_out_of_fb(prev)) {
+				//	return fb_traversal_result(TRAVERSAL_OUT_OF_FB, prev);
+				//}
 				if(result_code == SURFACE_INTERSECT) {
 					return fb_traversal_result(TRAVERSAL_SUCCESS, prev);
 				}
