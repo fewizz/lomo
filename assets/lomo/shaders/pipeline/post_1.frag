@@ -26,21 +26,15 @@ uniform sampler2D u_extra_1;
 uniform sampler2D u_depth;
 uniform sampler2D u_reflection_position;
 
-uniform sampler2D u_prev_light_1_accum;
-uniform sampler2D u_taa;
-
 uniform sampler2D u_prev_depth;
 
-layout(location = 0) out vec4 out_light_1_accum;
-layout(location = 1) out vec4 out_prev_taa;
+layout(location = 0) out vec3 out_post_1;
 
 void main() {
-	out_prev_taa = texelFetch(u_taa, ivec2(gl_FragCoord.xy), 0);
-
 	vec3 normal_cam_raw_0 = texelFetch(u_normal, ivec2(gl_FragCoord.xy), 0).xyz;
 	float depth_0 = texelFetch(u_depth, ivec2(gl_FragCoord.xy), 0).r;
 	if(depth_0 == 1.0 || dot(normal_cam_raw_0, normal_cam_raw_0) < 0.9) {
-		out_light_1_accum = vec4(0.0);
+		out_post_1 = vec3(0.0);
 		return;
 	}
 	vec3 normal_cam_0 = normalize(normal_cam_raw_0);
@@ -49,22 +43,6 @@ void main() {
 
 	vec3 pos_cam_0 = win_to_cam(pos_win_0);
 
-	dvec3 r_prev_pos_cam = dvec3(pos_cam_0);
-	dvec3 r_prev_pos_wrd = cam_to_wrd(r_prev_pos_cam);
-	r_prev_pos_wrd += dvec3(frx_cameraPos) - dvec3(frx_lastCameraPos);
-
-	r_prev_pos_cam = transform_pos(
-		r_prev_pos_wrd, dmat4(frx_lastViewMatrix)
-	);
-	dvec3 r_prev_pos_ndc = transform_pos(
-		r_prev_pos_cam, dmat4(frx_lastProjectionMatrix)
-	);
-	dvec3 r_prev_pos_win = ndc_to_win(r_prev_pos_ndc);
-
-	float accum_ratio = texelFetch(u_prev_light_1_accum, ivec2(r_prev_pos_win.xy), 0).w;
-
-	float prev_depth = texelFetch(u_prev_depth, ivec2(r_prev_pos_win.xy), 0).r;
-
 	vec4 extras_0_0 = texelFetch(u_extra_0, ivec2(pos_win_0.xy), 0);
 	vec4 extras_1_0 = texelFetch(u_extra_1, ivec2(pos_win_0.xy), 0);
 	float roughness_0   =       extras_0_0[0];
@@ -72,27 +50,6 @@ void main() {
 	float block_light_0 = clamp(extras_0_0[2], 0.0, 1.0);
 	float reflectance_0 =       extras_1_0[0];
 	float emissive_0    =       extras_1_0[1];
-
-	if(
-		any(greaterThan(vec3(r_prev_pos_ndc), vec3( 1.0))) ||
-		any(lessThan   (vec3(r_prev_pos_ndc), vec3(-1.0)))
-	) {
-		accum_ratio = 0.0;
-	}
-	else {
-		double diff = abs(prev_depth - r_prev_pos_win.z);
-		accum_ratio *= exp(-float(diff * 1024.0));
-
-		vec3 prev_dir_inc_cam = cam_dir_to_z1(vec2(r_prev_pos_win.xy));
-		prev_dir_inc_cam = mat3(frx_viewMatrix) * (inverse(mat3(frx_lastViewMatrix)) * prev_dir_inc_cam);
-
-		accum_ratio *= exp(-(
-			pow(
-				length(cross(dir_inc_cam_0, prev_dir_inc_cam)),
-				pow(roughness_0, 1.0) * 2.0
-			) * mix(32.0, 0.0, roughness_0)
-		));
-	}
 
 	vec3 color_0 = texelFetch(u_color, ivec2(gl_FragCoord.xy), 0).rgb;
 	color_0 = pow(color_0, vec3(2.2));
@@ -200,7 +157,7 @@ void main() {
 				s = sky(mat3(frx_inverseViewMatrix) * dir_out_cam, 1.0);
 			}
 			else {
-				const uint steps = 8u;
+				const uint steps = 4u;
 
 				for(uint i = 0u; i < steps; ++i) {
 					vec3 s0 = sky(mat3(frx_inverseViewMatrix) * dir_out_cam, 1.0);
@@ -229,13 +186,14 @@ void main() {
 		}
 	}
 
-	vec3 prev_light_1 = texture(u_prev_light_1_accum, vec2(r_prev_pos_ndc.xy * 0.5 + 0.5)).rgb;
-	prev_light_1 = max(prev_light_1, vec3(0.0));
-	prev_light_1 = pow(prev_light_1, vec3(2.2));
-	light_1 = mix(light_1, prev_light_1, accum_ratio);
-	light_1 = pow(light_1, vec3(1.0 / 2.2));
+	//vec3 prev_light_1 = texture(u_prev_light_1_accum, vec2(r_prev_pos_ndc.xy * 0.5 + 0.5)).rgb;
+	//prev_light_1 = max(prev_light_1, vec3(0.0));
+	//prev_light_1 = pow(prev_light_1, vec3(2.2));
+	//light_1 = mix(light_1, prev_light_1, accum_ratio);
+	//light_1 = pow(light_1, vec3(1.0 / 2.2));
 
-	accum_ratio = increase_ratio(accum_ratio, 1024.0 * roughness_0);
+	//accum_ratio = increase_ratio(accum_ratio, 1024.0 * roughness_0);
 
-	out_light_1_accum = vec4(light_1, accum_ratio);
+	//light_1 = pow(light_1, vec3(1.0 / 2.2));
+	out_post_1 = vec3(light_1);
 }

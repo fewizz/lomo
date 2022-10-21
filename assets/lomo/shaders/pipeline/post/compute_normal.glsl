@@ -22,9 +22,10 @@ vec3 compute_normal(
 	}
 	cr = normalize(cr);
 	float s = sign(rand.x);
-	rand.x = abs(rand.x);
+	//rand.x = abs(rand.x);
 	reflected = rotation(
 		pow(abs(rand.x), 1.0 / roughness) * pow(roughness, 2.0) * s * PI,
+		//(1.0 - sqrt(1.0 - pow(rand.x, 2.0))) * pow(roughness, 2.0) * PI,
 		cr
 	) * reflected;
 

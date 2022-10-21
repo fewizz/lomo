@@ -91,35 +91,7 @@ void main() {
 
 		vec3 light_total = vec3(0.0);
 		float weight_total = 0.0;
-		int mx = int(4.0 * pow(roughness, 1.0));
-		for(int x = -mx; x <= mx; ++x) {
-			for(int y = -mx; y <= mx; ++y) {
-				ivec2 coord = coord0 + ivec2(x, y);
-				vec3 light = pow(texelFetch(u_light_1_accum, coord, 0).rgb, vec3(2.2));
-				vec3 normal = texelFetch(u_normal, ivec2(coord), 0).rgb;
-				vec3 extras_0_1 = texelFetch(u_extra_0, ivec2(coord), 0).rgb;
-				float roughness_1   = clamp(extras_0_1[0], 0.0, 1.0);
-				if(dot(normal, normal) < 0.5) continue;
-				float depth_ws = texelFetch(u_depth, ivec2(coord), 0).r;
-				vec3 pos = win_to_cam(vec3(vec2(coord) + vec2(0.5), depth_ws));
-				float z_diff = abs(dot(pos - pos0, normal0));
-				float weight = 1.0;
-				weight *= exp(-(
-					dot(vec2(x, y), vec2(x, y)) / (mx == 0 ? 1 : float(mx * mx)) * 1.0
-					+
-					length(cross(normal0, normal)) * 16.0
-					+
-					abs(roughness - roughness_1) * 32.0
-					+
-					//-abs(shadow0 - shadow) * 4.0
-					z_diff * 16.0
-				));
-				weight_total += weight;
-				light_total += light * weight;
-			}
-		}
-		light = light_total / weight_total;
-
+		light = texelFetch(u_light_1_accum, ivec2(coord0), 0).rgb;
 		vec3 color = texelFetch(u_color, ivec2(coord0), 0).rgb;
 		color = pow(color, vec3(2.2));
 		vec3 e = emitting_light(color, block_light, emissive);
@@ -154,7 +126,7 @@ void main() {
 
 	vec3 taa = mix(resulting_light, prev_taa, taa_ratio);
 
-	out_light = taa;
+	out_light = resulting_light;//taa;
 
 	out_taa = vec4(taa, taa_ratio);
 
