@@ -10,6 +10,7 @@ layout(location = 0) out vec4 out_result;
 
 void main() {
 	vec3 light = texelFetch(u_light, ivec2(gl_FragCoord.xy), 0).rgb;
+	light = pow(light, vec3(2.2));
 
 	#ifdef BLOOM_TOGGLE
 	vec3 bloom = texelFetch(u_bloom, ivec2(gl_FragCoord.xy), 0).rgb;

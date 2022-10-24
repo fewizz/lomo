@@ -45,11 +45,11 @@ void main() {
 
 	vec4 extras_0_0 = texelFetch(u_extra_0, ivec2(pos_win_0.xy), 0);
 	vec4 extras_1_0 = texelFetch(u_extra_1, ivec2(pos_win_0.xy), 0);
-	float roughness_0   =       extras_0_0[0];
-	float sky_light_0   = clamp(extras_0_0[1], 0.0, 1.0);
-	float block_light_0 = clamp(extras_0_0[2], 0.0, 1.0);
-	float reflectance_0 =       extras_1_0[0];
-	float emissive_0    =       extras_1_0[1];
+	float roughness_0   = extras_0_0[0];
+	float sky_light_0   = extras_0_0[1];
+	float block_light_0 = extras_0_0[2];
+	float reflectance_0 = extras_1_0[0];
+	float emissive_0    = extras_1_0[1];
 
 	vec3 color_0 = texelFetch(u_color, ivec2(gl_FragCoord.xy), 0).rgb;
 	color_0 = pow(color_0, vec3(2.2));
@@ -122,13 +122,13 @@ void main() {
 			vec4 extra_0_1 = texelFetch(u_extra_0, ivec2(pos_win.xy), 0);
 			vec4 extra_1_1 = texelFetch(u_extra_1, ivec2(pos_win.xy), 0);
 
-			roughness_1       =       extra_0_1[0];
-			roughness         =       roughness_1;
-			sky_light         = clamp(extra_0_1[1], 0.0, 1.0);
-			float block_light = clamp(extra_0_1[2], 0.0, 1.0);
-			reflectance_1     =       extra_1_1[0];
-			reflectance       =       reflectance_1;
-			emissive          = clamp(extra_1_1[1], 0.0, 1.0);
+			roughness_1       = extra_0_1[0];
+			roughness         = roughness_1;
+			sky_light         = extra_0_1[1];
+			float block_light = extra_0_1[2];
+			reflectance_1     = extra_1_1[0];
+			reflectance       = reflectance_1;
+			emissive          = extra_1_1[1];
 
 			color = max(vec3(0.0), texelFetch(u_color, ivec2(pos_win.xy), 0).rgb);
 			color = pow(color, vec3(2.2));
@@ -149,13 +149,14 @@ void main() {
 
 		if(frx_worldHasSkylight == 1) {
 			float d = sun_light_at(pos_cam);
+			float d_0 = sun_light_at(pos_cam_0);
 			bool straigth = !pass || pos_win.z >= 1.0;
 
 			if(straigth) {
-				s = sky(mat3(frx_inverseViewMatrix) * dir_out_cam, 1.0);
+				s = sky(mat3(frx_inverseViewMatrix) * dir_out_cam, code == TRAVERSAL_POSSIBLY_UNDER ? d : 1.0);
 			}
 			else {
-				const uint steps = 12u;
+				const uint steps = 8u;
 
 				for(uint i = 0u; i < steps; ++i) {
 					vec3 s0 = sky(mat3(frx_inverseViewMatrix) * dir_out_cam, 1.0);
@@ -167,9 +168,15 @@ void main() {
 				}
 			}
 			if(pos_win_1.z < 1.0) {
-				s *= pow(
+				s *= /*light_mix(
+					dir_inc_cam_0, normal_cam_0,
+					color_0, s * d_0, vec3(0.0),
+					roughness_0, reflectance_0
+				);*/
+				//d;
+				pow(
 					mix(max(sky_light - 0.1, 0.0) * 1.2, 0.0, emissive),
-					mix(8.0, 0.0, d)
+					mix(16.0, 0.0, d)
 				);
 			}
 		}
@@ -182,7 +189,14 @@ void main() {
 				roughness_1, reflectance_1
 			);
 		}
+
+		vec3 pos_cam_begin = pos_cam_0;
+		vec3 pos_cam_end = pos_cam_1;
+
+		light_1 = medium(
+			light_1, pos_cam_begin, pos_cam_end, dir_out_cam_0, 1.0
+		);
 	}
 
-	out_post_1 = vec3(light_1);
+	out_post_1 = pow(light_1, vec3(1.0 / 2.2));
 }

@@ -40,17 +40,22 @@ void main() {
 			float z_diff = abs(dot(pos - pos_0, normal_0));
 
 			float weight = exp(-(
-				dot(vec2(x, y), vec2(x, y)) / pow(2 * float(SPREAD), 2.0) / max(pow(roughness_0, 1.5), 0.0001) +
-				length(cross(normal_0, normal)) * 8.0 +
+				dot(vec2(x, y), vec2(x, y)) / pow(2 * float(SPREAD), 2.0) / max(pow(roughness_0, 1.0), 0.0001) +
+				length(cross(normal_0, normal)) * 16.0 +
 				abs(roughness_0 - roughness) * 32.0 +
 				z_diff * 16.0
 			));
 
 			total_weight += weight;
-			light += texelFetch(u_light, coord, 0).rgb * weight;
+			vec3 l = texelFetch(u_light, coord, 0).rgb;
+			l = max(l, vec3(0.0));
+			l = pow(l, vec3(2.2));
+			light += l * weight;
 		}
 	}
-	light /= total_weight;
+	if(total_weight > 0.0) {
+		light /= total_weight;
+	}
 
-	out_post_1_denoised_0 = light;
+	out_post_1_denoised_0 = pow(light, vec3(1.0 / 2.2));
 }

@@ -72,34 +72,37 @@ vec3 clouds(vec3 light, vec3 o, vec3 dir, float dist, float sky_light) {
 }
 
 vec3 fog(vec3 light, vec3 o, vec3 dir, float dist, float sky_light) {
-	const float height = 78.0;
 	vec3 sd = sun_dir();
 	vec3 sk = sky(dir, 1.0);
 	vec3 sn = sky(sd, 1.0);
-	vec3 v = vec3(0.0);
+	float v = 0.0;
 
-	const int steps = 8;
-	float max_distance = frx_viewDistance * 4.0;
-	dist = min(dist, max_distance);
-	float stp = dist / float(steps + 1);
-	o += dir * stp / 2.0;
+	const int steps = 64;
+	dist = min(dist, frx_viewDistance * 1.5);
 
 	for(int i = 0; i < steps; ++i) {
-		float v0 = exp(-((o.y + 100.0) / 80.0));
-		//v0 *= sun_light_at_world_pos(o - frx_cameraPos);
-		v += v0 * stp;
-		o += dir * stp;
-	}
-	vec3 light0 = light;
-	vec3 e = exp(-v / frx_viewDistance * mix(1.0, 30.0, frx_smoothedRainGradient));
-	light *= e;
+		float v0 = exp(-(
+			max(0.0, (o.y - 64.0)) / 32.0
+		));
+		v0 *= sun_light_at_world_pos(o - frx_cameraPos);
 
-	light += sn * vec3(0.2, 0.5, 2.0) * (1.0 - e);
+		float s = dist * (
+			pow(float(i + 1) / float(steps), 1.5) -
+			pow(float(i) / float(steps), 1.5)
+		);
+
+		v += v0 * s;
+		o += dir * s;
+	}
+	v /= frx_viewDistance;
+
+	vec3 light0 = light;
+	light = mix(light, sn / 16.0 * sky_light, vec3(min(pow(v, 1.5), 1.0)));
 
 	return light;
 }
 
-vec3 medium(vec3 light, vec3 from, vec3 to, float sky_light) {
+vec3 medium(vec3 light, vec3 from, vec3 to, vec3 dir, float sky_light) {
 	vec4 fw0 = frx_inverseViewMatrix * vec4(from, 1.0);
 	vec3 fw = fw0.xyz / fw0.w;
 	vec3 f = fw + frx_cameraPos;
@@ -109,11 +112,11 @@ vec3 medium(vec3 light, vec3 from, vec3 to, float sky_light) {
 	vec3 t = tw + frx_cameraPos;
 
 	float dist = distance(from, to);
-	vec3 dir = (tw - fw) / dist;
+	dir = mat3(frx_inverseViewMatrix) * dir;
 
 	if(frx_worldHasSkylight == 1) {
 		//light = clouds(light, f, dir, dist, sky_light);
-		//light = fog(light, f, dir, dist, sky_light);
+		light = fog(light, f, dir, dist, sky_light);
 	}
 
 	//float fog_dist = dist;
