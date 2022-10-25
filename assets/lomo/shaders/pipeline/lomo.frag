@@ -85,7 +85,7 @@ void frx_pipelineFragment() {
 		);
 		out_extra_1 = vec4(
 			clamp(frx_fragReflectance, 0.0, 1.0),
-			  max(frx_fragEmissive, 0.0),
+			clamp(frx_fragEmissive, 0.0, 256.0),
 			0.0,
 			1.0
 		);

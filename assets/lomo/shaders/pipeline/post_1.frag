@@ -176,7 +176,7 @@ void main() {
 				//d;
 				pow(
 					mix(max(sky_light - 0.1, 0.0) * 1.2, 0.0, emissive),
-					mix(16.0, 0.0, d)
+					mix(12.0, 0.0, d)
 				);
 			}
 		}
@@ -190,12 +190,14 @@ void main() {
 			);
 		}
 
-		vec3 pos_cam_begin = pos_cam_0;
-		vec3 pos_cam_end = pos_cam_1;
+		if(pass) {
+			vec3 pos_cam_begin = pos_cam_0;
+			vec3 pos_cam_end = pos_cam_1;
 
-		light_1 = medium(
-			light_1, pos_cam_begin, pos_cam_end, dir_out_cam_0, 1.0
-		);
+			light_1 = medium(
+				light_1, pos_cam_begin, pos_cam_end, dir_out_cam_0, sky_light_0
+			);
+		}
 	}
 
 	out_post_1 = pow(light_1, vec3(1.0 / 2.2));

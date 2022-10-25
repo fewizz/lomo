@@ -78,7 +78,8 @@ vec3 fog(vec3 light, vec3 o, vec3 dir, float dist, float sky_light) {
 	float v = 0.0;
 
 	const int steps = 64;
-	dist = min(dist, frx_viewDistance * 1.5);
+	float wd = frx_viewDistance * mix(1.0, 0.2, frx_smoothedRainGradient);
+	dist = min(dist, wd * 1.5);
 
 	for(int i = 0; i < steps; ++i) {
 		float v0 = exp(-(
@@ -90,14 +91,18 @@ vec3 fog(vec3 light, vec3 o, vec3 dir, float dist, float sky_light) {
 			pow(float(i + 1) / float(steps), 1.5) -
 			pow(float(i) / float(steps), 1.5)
 		);
-
 		v += v0 * s;
 		o += dir * s;
 	}
-	v /= frx_viewDistance;
+	v /= wd;
 
-	vec3 light0 = light;
-	light = mix(light, sn / 16.0 * sky_light, vec3(min(pow(v, 1.5), 1.0)));
+	//sky_light = max(0.0, sky_light - 0.1);
+
+	light = mix(
+		light,
+		(sn ) / 16.0,
+		vec3(min(pow(v, mix(1.5, 1.0, frx_smoothedRainGradient)), 1.0))
+	);
 
 	return light;
 }
