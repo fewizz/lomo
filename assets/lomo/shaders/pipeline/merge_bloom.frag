@@ -27,6 +27,8 @@ void main() {
 	float d = 0.59f;
 	float e = 0.14f;
 	light = ((light*(a*light+b))/(light*(c*light+d)+e));
+	#elif TONEMAPPING == TONEMAPPING_SMOOTHSTEP
+	light = pow(smoothstep(vec3(0.0), vec3(1.0), light), vec3(1.0));
 	#endif
 
 	light = pow(light, vec3(1.0 / 2.2));

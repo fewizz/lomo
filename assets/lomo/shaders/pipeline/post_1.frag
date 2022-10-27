@@ -149,17 +149,23 @@ void main() {
 
 		if(frx_worldHasSkylight == 1) {
 			float d = sun_light_at(pos_cam);
-			float d_0 = sun_light_at(pos_cam_0);
+			//float d_0 = sun_light_at(pos_cam_0);
 			bool straigth = !pass || pos_win.z >= 1.0;
 
 			if(straigth) {
-				s = sky(mat3(frx_inverseViewMatrix) * dir_out_cam, code == TRAVERSAL_POSSIBLY_UNDER ? d : 1.0);
+				s = sky(
+					mat3(frx_inverseViewMatrix) * dir_out_cam,
+					pos_win.z >= 1.0 ? 1.0 : d
+				);
 			}
 			else {
 				const uint steps = 8u;
 
 				for(uint i = 0u; i < steps; ++i) {
-					vec3 s0 = sky(mat3(frx_inverseViewMatrix) * dir_out_cam, 1.0);
+					vec3 s0 = sky(
+						mat3(frx_inverseViewMatrix) * dir_out_cam,
+						d
+					);
 					s += s0 / float(steps);
 					normal_cam_transformed = compute_normal(
 						dir_inc_cam, normal_cam, uvec2(pos_win.xy), roughness, i + 1
@@ -173,11 +179,10 @@ void main() {
 					color_0, s * d_0, vec3(0.0),
 					roughness_0, reflectance_0
 				);*/
-				//d;
-				pow(
-					mix(max(sky_light - 0.1, 0.0) * 1.2, 0.0, emissive),
-					mix(12.0, 0.0, d)
-				);
+					pow(
+						mix(max(sky_light - 0.1, 0.0) * 1.2, 0.0, emissive),
+						mix(12.0, 0.0, d)
+					);
 			}
 		}
 		light_1 += s;

@@ -39,7 +39,9 @@ void main() {
 	post_1 = max(post_1, vec3(0.0));
 	post_1 = pow(post_1, vec3(2.2));
 
-	vec3 prev_post_1 = texture(u_prev_post_1, vec2(r_prev_pos_ndc.xy) * 0.5 + 0.5).rgb;
+	vec3 prev_post_1 =
+		//texelFetch(u_prev_post_1, ivec2(r_prev_pos_win.xy), 0).rgb;
+		texture(u_prev_post_1, vec2(r_prev_pos_ndc.xy) * 0.5 + 0.5).rgb;
 	prev_post_1 = max(prev_post_1, vec3(0.0));
 	prev_post_1 = pow(prev_post_1, vec3(2.2));
 
@@ -54,17 +56,18 @@ void main() {
 	}
 	else {
 		double diff = abs(prev_depth - r_prev_pos_win.z);
-		ratio *= exp(-float(diff * 512.0));
+		ratio *= max(0.0, exp(-float(diff * 512.0)) - 0.01);
 
 		vec3 prev_dir_inc_cam = cam_dir_to_z1(vec2(r_prev_pos_win.xy));
 		prev_dir_inc_cam = mat3(frx_viewMatrix) * (inverse(mat3(frx_lastViewMatrix)) * prev_dir_inc_cam);
 
 		float sn = length(cross(dir_inc_cam_0, prev_dir_inc_cam));
-		ratio *= exp(-sn / pow(roughness_0, 0.5) * 4.0);
+		//float a = asin(sn);
+		ratio *= exp(-sn * mix(64.0, 1.0, pow(roughness_0, 0.1)));
 	}
 
 	float actual_ratio = ratio;
-	ratio = increase_ratio(ratio, 16.0 * roughness_0);
+	ratio = increase_ratio(ratio, 24.0 * pow(roughness_0, 1.0));
 
 	vec3 mixed = mix(post_1, prev_post_1, actual_ratio);
 	mixed = pow(mixed, vec3(1.0 / 2.2));

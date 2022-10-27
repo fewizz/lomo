@@ -54,7 +54,7 @@
 				"descriptionKey": "config.lomo.help.reflections"
 			},
 			"tonemapping": {
-				"choices": [ "exposure_1", "aces", "none" ],
+				"choices": [ "smoothstep", "aces", "exposure_1", "none" ],
 				"enum": true,
 				"prefix": "tonemapping_",
 				"nameKey": "config.lomo.value.tonemapping",
