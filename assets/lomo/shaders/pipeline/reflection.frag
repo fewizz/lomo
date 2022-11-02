@@ -23,6 +23,10 @@ void main() {
 	vec3 pos_cam_0 = win_to_cam(pos_win_0);
 
 	vec3 normal_cam_raw_0 = texelFetch(u_normal, ivec2(gl_FragCoord.xy), 0).xyz;
+	if(dot(normal_cam_raw_0, normal_cam_raw_0) < 0.9) {
+		out_reflection_position = vec4(pos_win_0, TRAVERSAL_OUT_OF_FB);
+		return;
+	}
 	vec3 normal_cam_0 = normalize(normal_cam_raw_0);
 	vec3 dir_inc_cam_0 = cam_dir_to_z1(gl_FragCoord.xy);
 

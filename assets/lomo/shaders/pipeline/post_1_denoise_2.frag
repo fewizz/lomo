@@ -1,3 +1,3 @@
-#define SPREAD 3
+#define POW 2
 
 #include lomo:shaders/pipeline/post/denoise.glsl

@@ -71,32 +71,38 @@ vec3 clouds(vec3 light, vec3 o, vec3 dir, float dist, float sky_light) {
 	return light;
 }
 
-vec3 fog(vec3 light, vec3 o, vec3 dir, float dist, float sky_light) {
+vec3 fog(vec3 light, vec3 o, vec3 dir, float max_dist, float sky_light) {
 	vec3 sd = sun_dir();
-	vec3 sk = sky(dir, 1.0);
+	//vec3 sk = sky(dir, 1.0);
 	vec3 sn = sky(sd, 1.0);
 	float v = 0.0;
 
 	const int steps = 64;
 	float wd = frx_viewDistance * mix(1.0, 0.2, frx_smoothedRainGradient);
-	dist = min(dist, wd * 1.5);
+	max_dist = min(max_dist, wd * 1.5);
+
+	float stp = max_dist / float(steps + 1);
+	float prev_dist = 0.0;
 
 	for(int i = 0; i < steps; ++i) {
-		float v0 = exp(-(
-			max(0.0, (o.y - 64.0)) / 32.0
-		));
-		v0 *= sun_light_at_world_pos(o - frx_cameraPos);
+		float d = (float(i) + 0.5) * stp;
+		float offset = hash13(
+			uvec3(gl_FragCoord.xy, frx_renderFrames + i * 1024)
+		) - 0.5;
+		d += offset * stp;
 
-		float s = dist * (
-			pow(float(i + 1) / float(steps), 1.5) -
-			pow(float(i) / float(steps), 1.5)
-		);
-		v += v0 * s;
-		o += dir * s;
+		vec3 o0 = o + dir * d;
+		float v0 = exp(-(
+			max(0.0, (o0.y - 64.0)) / 32.0
+		));
+
+		v0 *= sun_light_at_world_pos(o0 - frx_cameraPos);
+
+		float delta = d - prev_dist;
+		v += v0 * delta;
+		prev_dist = d;
 	}
 	v /= wd;
-
-	//sky_light = max(0.0, sky_light - 0.1);
 
 	light = mix(
 		light,

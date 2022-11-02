@@ -14,7 +14,7 @@ void main() {
 	vec3 light = vec3(0.0);
 	vec3 normal_0 = texelFetch(u_normal, ivec2(gl_FragCoord.xy), 0).xyz;
 
-	if(dot(normal_0, normal_0) < 0.5) {
+	if(dot(normal_0, normal_0) < 0.8) {
 		out_post_1_denoised_0 = vec3(0.0);
 		return;
 	}
@@ -27,11 +27,14 @@ void main() {
 
 	for(int x = -2; x <= 2; ++x) {
 		for(int y = -2; y <= 2; ++y) {
-			vec2 off = vec2(x, y) * SPREAD;
+			float s = pow(2, POW);
+			vec2 off = vec2(x, y) * s;
 			ivec2 coord = ivec2(gl_FragCoord.xy + off);
+			if(any(greaterThan(coord, frxu_size.xy))) continue;
+			if(any(lessThan(coord, ivec2(0)))) continue;
 			
 			vec3 normal = texelFetch(u_normal, coord, 0).xyz;
-			if(dot(normal, normal) < 0.5) continue;
+			if(dot(normal, normal) < 0.8) continue;
 			vec3 extra_0 = texelFetch(u_extra_0, coord, 0).rgb;
 			float roughness = extra_0[0];
 			float depth = texelFetch(u_depth, coord, 0).r;
@@ -40,17 +43,19 @@ void main() {
 			float z_diff = abs(dot(pos - pos_0, normal_0));
 
 			float weight = exp(-(
-				dot(vec2(x, y), vec2(x, y)) / pow(2 * float(SPREAD), 2.0) / max(pow(roughness_0, 1.0), 0.0001) +
-				length(cross(normal_0, normal)) * 16.0 +
+				dot(vec2(x, y), vec2(x, y)) / 3.0 / max(roughness_0, 0.0001) +
+				//1.0 / max(dot(normal_0, normal), 0.0001) +
+				//acos(dot(normal_0, normal)) +
+				length(cross(normal_0, normal)) * 4.0 +
 				abs(roughness_0 - roughness) * 32.0 +
 				z_diff * 16.0
 			));
 
-			total_weight += weight;
 			vec3 l = texelFetch(u_light, coord, 0).rgb;
 			l = max(l, vec3(0.0));
 			l = pow(l, vec3(2.2));
 			light += l * weight;
+			total_weight += weight;
 		}
 	}
 	if(total_weight > 0.0) {
