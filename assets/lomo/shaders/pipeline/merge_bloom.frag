@@ -18,7 +18,7 @@ void main() {
 	light += bloom;
 	#endif
 
-	#if TONEMAPPING == TONEMAPPING_EXPOSURE_1
+	#if TONEMAPPING == TONEMAPPING_EXP_1
 	light = vec3(1.0) - exp(-light);
 	#elif TONEMAPPING == TONEMAPPING_ACES
 	light = 1.0 - exp(-light / 1.0);
@@ -27,8 +27,8 @@ void main() {
 	float d = 0.59f;
 	float e = 0.14f;
 	light = ((light*(a*light+b))/(light*(c*light+d)+e));
-	#elif TONEMAPPING == TONEMAPPING_SMOOTHSTEP
-	light = pow(smoothstep(vec3(0.0), vec3(1.0), light), vec3(1.0));
+	//#elif TONEMAPPING == TONEMAPPING_SMOOTHSTEP
+	//light = pow(smoothstep(vec3(0.0), vec3(1.0), light / 10.0), vec3(0.2));
 	#endif
 
 	light = pow(light, vec3(1.0 / 2.2));

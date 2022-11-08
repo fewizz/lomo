@@ -88,12 +88,13 @@ void main() {
 	if(code == TRAVERSAL_POSSIBLY_UNDER) {
 		float depth_at_result = texelFetch(u_depth, ivec2(pos_win_1.xy), 0).r;
 		vec3 pos_cam_at = win_to_cam(vec3(pos_win_1.xy, depth_at_result));
+		float delta = distance(pos_cam_1, pos_cam_at);
 		if(
 			//abs(depth_at_result - result.pos.z) < 0.0005
 			//distance(pos_cam_1, pos_cam_at) <= 1.0 / 8.0
-			distance(pos_cam_1, pos_cam_at) <= 0.1 * -pos_cam_at.z
+			delta < -pos_cam_at.z / 16.0
 		) {
-			//code = TRAVERSAL_SUCCESS;
+			code = TRAVERSAL_SUCCESS;
 		}
 	}
 
@@ -152,6 +153,9 @@ void main() {
 				mix(12.0, 0.0, d)
 			);
 		}
+	}
+	else if(frx_worldIsEnd == 1) {
+		s = end_sky(mat3(frx_inverseViewMatrix) * dir_out_cam);
 	}
 	light_1 += s;
 

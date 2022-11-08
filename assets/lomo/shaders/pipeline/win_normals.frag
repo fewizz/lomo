@@ -53,6 +53,8 @@ void main() {
 	vec3 norm = cross(dir_y_ndc, dir_x_ndc);
 	//norm.z /= 2.0;
 	norm = normalize(norm);
+	norm.y = clamp(norm.y, -0.1, 0.1);
+	norm = normalize(norm);
 	out_normal = norm;
 
 	p = plane_from_pos_and_normal(pos_ndc, norm);

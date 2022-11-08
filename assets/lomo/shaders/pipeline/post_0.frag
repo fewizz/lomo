@@ -81,8 +81,12 @@ void main() {
 	}
 	else if(frx_worldHasSkylight == 1) {
 		vec3 wrld_dir = mat3(frx_inverseViewMatrix) * dir_inc_cam;
-		resulting_light =
-			sky(wrld_dir, 1.0);
+		resulting_light = sky(wrld_dir, 1.0);
+		sky_light = 1.0;
+	}
+	else if(frx_worldIsEnd == 1) {
+		vec3 wrld_dir = mat3(frx_inverseViewMatrix) * dir_inc_cam;
+		resulting_light = end_sky(wrld_dir);
 		sky_light = 1.0;
 	}
 

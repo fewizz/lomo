@@ -46,15 +46,12 @@
 		"includeToken": "lomo:general",
 		"categoryKey": "config.lomo.category.general",
 		"options": {
-			"reflections": {
-				"choices": [ "all", "shiny", "water", "none" ],
-				"enum": true,
-				"prefix": "reflections_",
-				"nameKey": "config.lomo.value.reflections",
-				"descriptionKey": "config.lomo.help.reflections"
-			},
 			"tonemapping": {
-				"choices": [ "smoothstep", "aces", "exposure_1", "none" ],
+				"choices": [
+					"aces",
+					"exp_1",
+					"none"
+				],
 				"enum": true,
 				"prefix": "tonemapping_",
 				"nameKey": "config.lomo.value.tonemapping",
