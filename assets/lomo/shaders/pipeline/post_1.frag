@@ -85,17 +85,17 @@ void main() {
 	vec3 normal_cam_raw_1 = texelFetch(u_normal, ivec2(pos_win_1), 0).xyz;
 	float depth_1 = texelFetch(u_depth, ivec2(pos_win_1), 0).r;
 
-	if(code == TRAVERSAL_POSSIBLY_UNDER) {
+	if(code == TRAVERSAL_SUCCESS) {
 		float depth_at_result = texelFetch(u_depth, ivec2(pos_win_1.xy), 0).r;
 		vec3 pos_cam_at = win_to_cam(vec3(pos_win_1.xy, depth_at_result));
 		float delta = distance(pos_cam_1, pos_cam_at);
 		if(
 			//abs(depth_at_result - result.pos.z) < 0.0005
 			//distance(pos_cam_1, pos_cam_at) <= 1.0 / 8.0
-			delta < -pos_cam_at.z / 4.0
+			delta > -pos_cam_at.z / 4.0
 		//	true
 		) {
-			code = TRAVERSAL_SUCCESS;
+			code = TRAVERSAL_POSSIBLY_UNDER;
 		}
 	}
 

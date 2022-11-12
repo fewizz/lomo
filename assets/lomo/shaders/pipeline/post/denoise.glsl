@@ -25,7 +25,7 @@ void main() {
 	float depth_0 = texelFetch(u_depth, ivec2(gl_FragCoord.xy), 0).r;
 
 	vec3 pos_0 = win_to_cam(vec3(gl_FragCoord.xy, depth_0));
-	float shadow_0 = sun_light_at(pos_0);
+	//float shadow_0 = sun_light_at(pos_0);
 
 	for(int x = -2; x <= 2; ++x) {
 		for(int y = -2; y <= 2; ++y) {
@@ -41,7 +41,7 @@ void main() {
 			float roughness = extra_0[0];
 			float depth = texelFetch(u_depth, coord, 0).r;
 			vec3 pos = win_to_cam(vec3(gl_FragCoord.xy + off, depth));
-			float shadow = sun_light_at(pos);
+			//float shadow = sun_light_at(pos);
 
 			float z_diff = abs(dot(pos - pos_0, normal_0));
 
@@ -51,8 +51,8 @@ void main() {
 				//acos(dot(normal_0, normal)) +
 				length(cross(normal_0, normal)) * 4.0 +
 				abs(roughness_0 - roughness) * 32.0 +
-				z_diff * 16.0 +
-				abs(shadow_0 - shadow)
+				z_diff * 16.0// +
+				//abs(shadow_0 - shadow)
 			));
 
 			vec3 l = texelFetch(u_light, coord, 0).rgb;

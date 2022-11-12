@@ -12,7 +12,6 @@ uniform sampler2D u_normal;
 uniform sampler2D u_extra_0;
 uniform sampler2D u_extra_1;
 uniform sampler2D u_depth;
-uniform sampler2D u_win_normal;
 uniform sampler2D u_hi_depth;
 
 layout(location = 0) out vec4 out_reflection_position;
@@ -39,11 +38,15 @@ void main() {
 	vec3 dir_out_cam_0 = reflect(dir_inc_cam_0, normal_cam_transformed_0);
 
 	vec3 pos_win_traverse_beginning = pos_win_0;
-	pos_win_traverse_beginning.z -= 1.0 / 100000.0;
 	uint max_side = uint(max(frxu_size.x, frxu_size.y));
+	vec3 dir_ws = cam_dir_to_win(pos_cam_0, dir_out_cam_0);
+	if(dir_ws.z > 0) {
+		pos_win_traverse_beginning.z -= dir_ws.z;
+	}
+	pos_win_traverse_beginning.z -= 1.0 / 1000000.0;
 	fb_traversal_result result = traverse_fb(
-		pos_win_traverse_beginning, pos_cam_0, dir_out_cam_0,
-		u_hi_depth, u_depth, u_win_normal,
+		pos_win_traverse_beginning, dir_ws,
+		u_hi_depth,
 		uint(max_side / 30)
 	);
 

@@ -160,76 +160,31 @@ bool is_out_of_fb(vec3 win_pos) {
 	return
 		any(lessThan(win_pos.xy, vec2(0.0))) ||
 		any(greaterThanEqual(win_pos.xy, vec2(frxu_size))) ||
-		win_pos.z < 0.0;
+		win_pos.z <= 0.0;
 }
 
 bool is_out_of_fb(fb_pos pos) {
 	return
 		any(greaterThanEqual(pos.texel, uvec2(frxu_size))) ||
-		pos.z < 0.0;
+		pos.z <= 0.0;
 }
 
 #define SURFACE_DONT_INTERSECT 0
 #define SURFACE_INTERSECT 1
 #define SURFACE_UNDER 2
 
-int check_if_intersects(inout fb_pos pos, vec3 dir_ndc, sampler2D s_depth, sampler2D s_win_normal) {
-	float real_depth_win = texelFetch(s_depth, ivec2(pos.texel), 0).r;
-	float real_depth_ndc = win_z_to_ndc(real_depth_win);
-
-	vec3 normal_ndc = texelFetch(s_win_normal, ivec2(pos.texel), 0).xyz;
-
-	plane p = plane_from_pos_and_normal(
-		vec3(vec2(0.5) / vec2(frxu_size.xy / 2.0), real_depth_ndc),
-		normal_ndc
-	);
-
-	vec3 ray_pos = vec3(pos.inner / vec2(frxu_size.xy / 2.0), win_z_to_ndc(pos.z));
-	float depth_at_pos = ray_plane_intersection(ray(ray_pos, vec3(0, 0, 1)), p).dist;
-
-	if(depth_at_pos < 0.0) return SURFACE_UNDER;
-
-	ray r = ray(ray_pos, dir_ndc);
-	ray_plane_intersection_result res = ray_plane_intersection(r, p);
-	vec3 intersection_pos = r.pos + r.dir * res.dist;
-
-	if(
-		res.dist < 0.0 ||
-		any(lessThan(intersection_pos.xy, vec2(0.0))) ||
-		any(greaterThan(intersection_pos.xy, vec2(1.0) / vec2(frxu_size.xy / 2.0)))
-	) {
-		return SURFACE_DONT_INTERSECT;
-	}
-
-	pos.z = ndc_z_to_win(intersection_pos.z);
-	pos.inner = intersection_pos.xy * vec2(frxu_size.xy / 2.0);
-	return SURFACE_INTERSECT;
-}
-
 fb_traversal_result traverse_fb(
 	vec3 pos_win,
-	vec3 pos_cam,
-	vec3 dir_cam,
+	vec3 dir_ws,
 	sampler2D s_hi_depth,
-	sampler2D s_depth,
-	sampler2D s_win_normal,
 	uint max_steps
 ) {
-	vec3 dir_ws = cam_dir_to_win(pos_cam, dir_cam);
-	//for(int i = 0; i < 3; ++i) {
-	//	if(abs(dir_ws[i]) < 0.000001) {
-	//		dir_ws[i] = 0.000001;
-	//	}
-	//}
-	//dir_ws = normalize(dir_ws);
-	vec3 dir_ndc = cam_dir_to_ndc(pos_cam, dir_cam);
-
 	bool backwards = dir_ws.z < 0.0;
 	fb_pos pos = fb_pos(uvec2(pos_win.xy), vec2(fract(pos_win.xy)), pos_win.z);
 
 	if(dir_ws.xy == vec2(0.0) || abs(dir_ws.z) > 0.5) {
 		float z = pos.z;
-		float depth = texelFetch(s_depth, ivec2(pos.texel), 0).r;
+		float depth = texelFetch(s_hi_depth, ivec2(pos.texel), 0).r;
 		pos.z = depth;
 
 		if(!backwards && depth < 1.0) {
@@ -256,9 +211,6 @@ fb_traversal_result traverse_fb(
 
 		fb_pos prev = pos;
 		float dist = next_cell_common(pos, dir_xy, level);
-		//if(prev.z > lower_depth) {
-			//dist = 0.0;
-		//}
 		pos.z += dist * (dir_ws.z / dir_ws_length);
 
 		int result_code = -1;
@@ -275,16 +227,7 @@ fb_traversal_result traverse_fb(
 				pos.z = lower_depth;
 			}
 			else {
-				int result_code = check_if_intersects(prev, dir_ndc, s_depth, s_win_normal);
-				//if(is_out_of_fb(prev)) {
-				//	return fb_traversal_result(TRAVERSAL_OUT_OF_FB, prev);
-				//}
-				if(result_code == SURFACE_INTERSECT) {
-					return fb_traversal_result(TRAVERSAL_SUCCESS, prev);
-				}
-				if(result_code == SURFACE_UNDER) {
-					return fb_traversal_result(TRAVERSAL_POSSIBLY_UNDER, prev);
-				}
+				return fb_traversal_result(TRAVERSAL_SUCCESS, prev);
 			}
 		}
 
