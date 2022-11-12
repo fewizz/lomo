@@ -92,7 +92,8 @@ void main() {
 		if(
 			//abs(depth_at_result - result.pos.z) < 0.0005
 			//distance(pos_cam_1, pos_cam_at) <= 1.0 / 8.0
-			delta < -pos_cam_at.z / 16.0
+			delta < -pos_cam_at.z / 4.0
+		//	true
 		) {
 			code = TRAVERSAL_SUCCESS;
 		}
@@ -139,11 +140,30 @@ void main() {
 
 	if(frx_worldHasSkylight == 1) {
 		float d = sun_light_at(pos_cam);
+		bool straigth = !pass || pos_win.z >= 1.0;
 
-		s = sky(
-			mat3(frx_inverseViewMatrix) * dir_out_cam,
-			pos_win.z >= 1.0 ? 1.0 : d
-		);
+		if(straigth) {
+			s = sky(
+				mat3(frx_inverseViewMatrix) * dir_out_cam,
+				pos_win.z >= 1.0 ? 1.0 : d
+			);
+		}
+		else {
+			const uint steps = 16u;
+			vec3 normal_av = vec3(0.0);
+
+			for(uint i = 0u; i < steps; ++i) {
+				vec3 s0 = sky(mat3(frx_inverseViewMatrix) * dir_out_cam, d);
+				s += s0 / float(steps);
+				normal_cam_transformed = compute_normal(
+					dir_inc_cam, normal_cam, uvec2(pos_win.xy), roughness, i + 1
+				);
+				normal_av += normal_cam_transformed;
+				dir_out_cam = reflect(dir_inc_cam, normal_cam_transformed);
+			}
+			normal_av = normalize(normal_av);
+			dir_out_cam = reflect(dir_inc_cam, normal_av);
+		}
 		s = medium(
 			s, pos_cam, pos_cam + dir_out_cam * 10000.0, dir_out_cam, 1.0
 		);
@@ -168,9 +188,9 @@ void main() {
 
 		vec3 pos_cam_begin = pos_cam_0;
 		vec3 pos_cam_end = pos_cam_1;
-		if(!pass) {
-			pos_cam_end = pos_cam_begin + dir_out_cam_0 * 1000.0;
-		}
+		//if(!pass) {
+		//	pos_cam_end = pos_cam_begin + dir_out_cam_0 * 1000.0;
+		//}
 
 		light_1 = medium(
 			light_1, pos_cam_begin, pos_cam_end, dir_out_cam_0, sky_light_0

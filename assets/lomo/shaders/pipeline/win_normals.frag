@@ -37,7 +37,7 @@ void main() {
 
 	for(int d = 0; d < 2; ++d) {
 		vec2 add = vec2(0);
-		add[d] = 1.0;
+		add[d] = 0.1;
 
 		vec2 pos_win0 = pos_win.xy + add;
 
@@ -51,9 +51,15 @@ void main() {
 	vec3 dir_y_ndc = cam_to_ndc(points[1]) - pos_ndc;
 
 	vec3 norm = cross(dir_y_ndc, dir_x_ndc);
-	//norm.z /= 2.0;
 	norm = normalize(norm);
 	norm.y = clamp(norm.y, -0.1, 0.1);
+	//if(abs(norm.z) < 0.995) {
+		/*out_normal = vec3(0.0, 0.0, -1.0);
+		out_depth = 1.0;
+		return;*/
+		//norm.z = -0.995;
+	//}
+
 	norm = normalize(norm);
 	out_normal = norm;
 

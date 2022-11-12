@@ -145,7 +145,7 @@
 		"vertexSource": "lomo:shaders/pipeline/full_frame_depth_1.vert",
 		"fragmentSource": "lomo:shaders/pipeline/post_1_denoise_0.frag",
 		"samplers": [
-			"u_light", "u_normal", "u_extra_0", "u_depth"
+			"u_light", "u_normal", "u_extra_0", "u_depth", "u_shadow_map"
 		]
 	},
 	{
@@ -153,7 +153,7 @@
 		"vertexSource": "lomo:shaders/pipeline/full_frame_depth_1.vert",
 		"fragmentSource": "lomo:shaders/pipeline/post_1_denoise_1.frag",
 		"samplers": [
-			"u_light", "u_normal", "u_extra_0", "u_depth"
+			"u_light", "u_normal", "u_extra_0", "u_depth", "u_shadow_map"
 		]
 	},
 	{
@@ -161,7 +161,7 @@
 		"vertexSource": "lomo:shaders/pipeline/full_frame_depth_1.vert",
 		"fragmentSource": "lomo:shaders/pipeline/post_1_denoise_2.frag",
 		"samplers": [
-			"u_light", "u_normal", "u_extra_0", "u_depth"
+			"u_light", "u_normal", "u_extra_0", "u_depth", "u_shadow_map"
 		]
 	},
 	{
@@ -169,7 +169,7 @@
 		"vertexSource": "lomo:shaders/pipeline/full_frame_depth_1.vert",
 		"fragmentSource": "lomo:shaders/pipeline/post_1_denoise_3.frag",
 		"samplers": [
-			"u_light", "u_normal", "u_extra_0", "u_depth"
+			"u_light", "u_normal", "u_extra_0", "u_depth", "u_shadow_map"
 		]
 	},
 	{
@@ -177,7 +177,7 @@
 		"vertexSource": "lomo:shaders/pipeline/full_frame_depth_1.vert",
 		"fragmentSource": "lomo:shaders/pipeline/post_1_denoise_4.frag",
 		"samplers": [
-			"u_light", "u_normal", "u_extra_0", "u_depth"
+			"u_light", "u_normal", "u_extra_0", "u_depth", "u_shadow_map"
 		]
 	},
 	{
@@ -466,7 +466,7 @@
 			"program": "post_1_denoise_0",
 			"framebuffer": "post_1_denoised_0",
 			"samplerImages": [
-				"post_1", "normals", "extras_0", "depths"
+				"post_1", "normals", "extras_0", "depths", "shadow_map"
 			]
 		},
 		{
@@ -474,7 +474,7 @@
 			"program": "post_1_denoise_1",
 			"framebuffer": "post_1_denoised_1",
 			"samplerImages": [
-				"post_1_denoised_0", "normals", "extras_0", "depths"
+				"post_1_denoised_0", "normals", "extras_0", "depths", "shadow_map"
 			]
 		},
 		{
@@ -482,7 +482,7 @@
 			"program": "post_1_denoise_2",
 			"framebuffer": "post_1_denoised_2",
 			"samplerImages": [
-				"post_1_denoised_1", "normals", "extras_0", "depths"
+				"post_1_denoised_1", "normals", "extras_0", "depths", "shadow_map"
 			]
 		},
 		{
@@ -490,7 +490,7 @@
 			"program": "post_1_denoise_3",
 			"framebuffer": "post_1_denoised_3",
 			"samplerImages": [
-				"post_1_denoised_2", "normals", "extras_0", "depths"
+				"post_1_denoised_2", "normals", "extras_0", "depths", "shadow_map"
 			]
 		},
 		{
@@ -498,7 +498,7 @@
 			"program": "post_1_denoise_4",
 			"framebuffer": "post_1_denoised_4",
 			"samplerImages": [
-				"post_1_denoised_3", "normals", "extras_0", "depths"
+				"post_1_denoised_3", "normals", "extras_0", "depths", "shadow_map"
 			]
 		},
 		{

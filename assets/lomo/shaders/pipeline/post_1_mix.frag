@@ -56,7 +56,7 @@ void main() {
 	}
 	else {
 		double diff = abs(prev_depth - r_prev_pos_win.z);
-		ratio *= max(0.0, exp(-float(diff * 512.0)) - 0.01);
+		ratio *= max(0.0, exp(-float(diff * 2048.0)) - 0.01);
 		//if(diff > 0.0001) ratio = 0.0;
 
 		vec3 prev_dir_inc_cam = cam_dir_to_z1(vec2(r_prev_pos_win.xy));

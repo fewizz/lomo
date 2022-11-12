@@ -39,7 +39,7 @@ void main() {
 	vec3 dir_out_cam_0 = reflect(dir_inc_cam_0, normal_cam_transformed_0);
 
 	vec3 pos_win_traverse_beginning = pos_win_0;
-	pos_win_traverse_beginning.z -= pos_win_traverse_beginning.z / 10000.0;
+	pos_win_traverse_beginning.z -= 1.0 / 100000.0;
 	uint max_side = uint(max(frxu_size.x, frxu_size.y));
 	fb_traversal_result result = traverse_fb(
 		pos_win_traverse_beginning, pos_cam_0, dir_out_cam_0,
@@ -48,7 +48,7 @@ void main() {
 	);
 
 	vec3 resulting_pos_win = vec3(
-		result.pos.texel + result.pos.inner, result.pos.z
+		result.pos.texel + vec2(0.5), result.pos.z
 	);
 
 	out_reflection_position = vec4(win_to_cam(resulting_pos_win), result.code);
