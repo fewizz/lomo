@@ -135,7 +135,7 @@ vec3 medium(vec3 light, vec3 from, vec3 to, vec3 dir, float sky_light) {
 
 	if(frx_worldHasSkylight == 1) {
 		//light = clouds(light, f, dir, dist, sky_light);
-		light = fog(light, f, dir, dist, sky_light);
+		//light = fog(light, f, dir, dist, sky_light);
 	}
 
 	//float fog_dist = dist;

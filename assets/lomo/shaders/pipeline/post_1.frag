@@ -24,7 +24,7 @@ uniform sampler2D u_normal;
 uniform sampler2D u_extra_0;
 uniform sampler2D u_extra_1;
 uniform sampler2D u_depth;
-uniform sampler2D u_reflection_position;
+uniform sampler2D u_hi_depth;
 
 uniform sampler2D u_prev_depth;
 
@@ -56,14 +56,26 @@ void main() {
 
 	vec3 light_1 = vec3(0.0);
 
-	vec4 reflection_pos0 = texelFetch(u_reflection_position, ivec2(pos_win_0.xy), 0);
-	vec3 reflection_pos = reflection_pos0.xyz;
-	int code = int(reflection_pos0.w);
-
 	vec3 normal_cam_transformed = compute_normal(
 		dir_inc_cam_0, normal_cam_0, uvec2(gl_FragCoord.xy), roughness_0, 0
 	);
 	vec3 dir_out_cam_0 = reflect(dir_inc_cam_0, normal_cam_transformed);
+
+	vec3 pos_win_traverse_beginning = pos_win_0;
+	uint max_side = uint(max(frxu_size.x, frxu_size.y));
+	vec3 dir_ws = cam_dir_to_win(pos_cam_0, dir_out_cam_0);
+	if(dir_ws.z > 0) {
+		pos_win_traverse_beginning.z -= dir_ws.z;
+	}
+	pos_win_traverse_beginning.z -= 1.0 / 1000000.0;
+	fb_traversal_result result =
+		traverse_fb(
+			pos_win_traverse_beginning, dir_ws,
+			u_hi_depth,
+			uint(64)
+		);
+	vec3 reflection_pos = win_to_cam(vec3(result.pos.texel + vec2(0.5), result.pos.z));
+	bool success = result.success;
 
 	vec3 dir_out_cam = dir_out_cam_0;
 	vec3 dir_inc_cam = dir_inc_cam_0;
@@ -85,21 +97,18 @@ void main() {
 	vec3 normal_cam_raw_1 = texelFetch(u_normal, ivec2(pos_win_1), 0).xyz;
 	float depth_1 = texelFetch(u_depth, ivec2(pos_win_1), 0).r;
 
-	if(code == TRAVERSAL_SUCCESS) {
+	bool under = false;
+	if(success) {
 		float depth_at_result = texelFetch(u_depth, ivec2(pos_win_1.xy), 0).r;
 		vec3 pos_cam_at = win_to_cam(vec3(pos_win_1.xy, depth_at_result));
 		float delta = distance(pos_cam_1, pos_cam_at);
-		if(
-			//abs(depth_at_result - result.pos.z) < 0.0005
-			//distance(pos_cam_1, pos_cam_at) <= 1.0 / 8.0
-			delta > -pos_cam_at.z / 4.0
-		//	true
-		) {
-			code = TRAVERSAL_POSSIBLY_UNDER;
+		if(delta > -pos_cam_at.z / 4.0) {
+			under = true;
+			success = false;
 		}
 	}
 
-	bool pass = dot(normal_cam_raw_1, normal_cam_raw_1) > 0.9 && code == TRAVERSAL_SUCCESS;
+	bool pass = dot(normal_cam_raw_1, normal_cam_raw_1) > 0.9 && success;
 
 	vec3 normal_cam_transformed_1;
 	float roughness_1;
@@ -149,7 +158,7 @@ void main() {
 			);
 		}
 		else {
-			const uint steps = 16u;
+			const uint steps = 8u;
 			vec3 normal_av = vec3(0.0);
 
 			for(uint i = 0u; i < steps; ++i) {
@@ -177,12 +186,12 @@ void main() {
 	else if(frx_worldIsEnd == 1) {
 		s = end_sky(mat3(frx_inverseViewMatrix) * dir_out_cam);
 	}
-	light_1 += s;
+	vec3 l = s;
 
 	if(pass) {
-		light_1 = light_mix(
+		l = light_mix(
 			dir_inc_cam_1, normal_cam_transformed_1,
-			color, light_1, light,
+			color, l, light,
 			roughness_1, reflectance_1
 		);
 
@@ -192,10 +201,11 @@ void main() {
 		//	pos_cam_end = pos_cam_begin + dir_out_cam_0 * 1000.0;
 		//}
 
-		light_1 = medium(
-			light_1, pos_cam_begin, pos_cam_end, dir_out_cam_0, sky_light_0
+		l = medium(
+			l, pos_cam_begin, pos_cam_end, dir_out_cam_0, sky_light_0
 		);
 	}
+	light_1 += l;
 
 	out_post_1 = pow(light_1, vec3(1.0 / 2.2));
 }

@@ -25,7 +25,7 @@ vec3 compute_normal(
 	//rand.x = abs(rand.x);
 	reflected = rotation(
 		pow(abs(rand.x), 1.0 / roughness) * pow(roughness, 1.0) * s * PI,
-		//(1.0 - sqrt(1.0 - pow(rand.x, 2.0))) * pow(roughness, 0.1) * PI,
+		//(1.0 - sqrt(1.0 - pow(rand.x, 2.0))) * PI,
 		cr
 	) * reflected;
 

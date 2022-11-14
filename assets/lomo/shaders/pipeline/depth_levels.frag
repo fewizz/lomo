@@ -3,29 +3,31 @@
 
 /* lomo:pipeline/depth_levels.frag */
 
-uniform sampler2D u_depths;
+uniform sampler2DArray u_depths;
 
 layout(location = 0) out float out_depths;
 
-const int power = 2;
-const int mul = 1 << power;
+const int len = 4;
 
 void main() {
-	int lod = frxu_lod;
-	int lod_from = lod - 1;
+	int layer = frxu_layer;
+	int layer_from = layer - 1;
 
-	ivec2 from_size = textureSize(u_depths, lod_from).xy;
+	ivec2 from_size = textureSize(u_depths, 0).xy;
 	ivec2 pos = ivec2(gl_FragCoord.xy);
+	int mul = int(pow(len, layer));
+	int mul_from = int(pow(len, layer - 1));
+	pos -= pos % mul;
 
 	float min_depths = 1.0;
 
-	for(int x = 0; x < mul; x++) {
-		for(int y = 0; y < mul; y++) {
-			ivec2 pos_from = pos * mul + ivec2(x, y);
+	for(int x = 0; x < len; x++) {
+		for(int y = 0; y < len; y++) {
+			ivec2 pos_from = pos + ivec2(x, y) * mul_from;
 
 			if(any(greaterThanEqual(pos_from, from_size))) continue;
 
-			float d = texelFetch(u_depths, pos_from, lod_from).r;
+			float d = texelFetch(u_depths, ivec3(pos_from, layer_from), 0).r;
 			min_depths = min(min_depths, d);
 		}
 	}
