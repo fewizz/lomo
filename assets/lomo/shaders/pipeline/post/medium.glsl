@@ -100,7 +100,7 @@ vec3 fog(vec3 light, vec3 o, vec3 dir, float max_dist, float sky_light) {
 		float delta = d - prev_dist;
 		v0 *= delta;
 
-		vsun += v0 * sun_light_at_world_pos(o0 - frx_cameraPos);
+		vsun += v0 * sun_light_at_world_pos(o0 - frx_cameraPos, 0);
 		//vsky += v0;
 		prev_dist = d;
 	}

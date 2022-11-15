@@ -74,8 +74,10 @@ void main() {
 			u_hi_depth,
 			uint(64)
 		);
-	vec3 reflection_pos = win_to_cam(vec3(result.pos.texel + vec2(0.5), result.pos.z));
-	bool success = result.success;
+	vec3 reflection_pos = win_to_cam(
+		vec3(fb_traversal_result_texel(result) + vec2(0.5), result.z)
+	);
+	bool success = fb_traversal_result_is_success(result);
 
 	vec3 dir_out_cam = dir_out_cam_0;
 	vec3 dir_inc_cam = dir_inc_cam_0;
@@ -97,18 +99,16 @@ void main() {
 	vec3 normal_cam_raw_1 = texelFetch(u_normal, ivec2(pos_win_1), 0).xyz;
 	float depth_1 = texelFetch(u_depth, ivec2(pos_win_1), 0).r;
 
-	bool under = false;
 	if(success) {
 		float depth_at_result = texelFetch(u_depth, ivec2(pos_win_1.xy), 0).r;
 		vec3 pos_cam_at = win_to_cam(vec3(pos_win_1.xy, depth_at_result));
 		float delta = distance(pos_cam_1, pos_cam_at);
 		if(delta > -pos_cam_at.z / 4.0) {
-			under = true;
 			success = false;
 		}
 	}
 
-	bool pass = dot(normal_cam_raw_1, normal_cam_raw_1) > 0.9 && success;
+	bool pass = success && dot(normal_cam_raw_1, normal_cam_raw_1) > 0.9;
 
 	vec3 normal_cam_transformed_1;
 	float roughness_1;
@@ -127,8 +127,9 @@ void main() {
 		sky_light         = extra_0_1[1];
 		float block_light = extra_0_1[2];
 		reflectance_1     = extra_1_1[0];
-		reflectance       = reflectance_1;
 		emissive          = extra_1_1[1];
+
+		reflectance       = reflectance_1;
 
 		color = max(vec3(0.0), texelFetch(u_color, ivec2(pos_win.xy), 0).rgb);
 		color = pow(color, vec3(2.2));
@@ -149,7 +150,7 @@ void main() {
 
 	if(frx_worldHasSkylight == 1) {
 		float d = sun_light_at(pos_cam);
-		bool straigth = !pass || pos_win.z >= 1.0;
+		bool straigth = pass;
 
 		if(straigth) {
 			s = sky(
@@ -176,7 +177,7 @@ void main() {
 		s = medium(
 			s, pos_cam, pos_cam + dir_out_cam * 10000.0, dir_out_cam, 1.0
 		);
-		if(pos_win_1.z < 1.0) {
+		if(!pass || result.z < 1.0) {
 			s *= pow(
 				mix(max(sky_light - 0.1, 0.0) * 1.2, 0.0, emissive),
 				mix(12.0, 0.0, d)

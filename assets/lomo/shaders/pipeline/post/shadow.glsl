@@ -22,12 +22,21 @@ int select_shadow_cascade(vec3 shadow_pos) {
 	return 0;
 }
 
-float sun_light_at_shadow_pos(vec3 pos) {
-	int cascade = select_shadow_cascade(pos);
+float sun_light_at_shadow_pos(vec3 pos, int cascade) {
 	vec4 shadow_pos_proj = frx_shadowProjectionMatrix(cascade) * vec4(pos, 1.0);
 	shadow_pos_proj.xyz /= shadow_pos_proj.w;
 	vec3 shadow_tex = shadow_pos_proj.xyz * 0.5 + 0.5;
 	return texture(u_shadow_map, vec4(shadow_tex.xy, cascade, shadow_tex.z)) * float(sun_dir().y > 0);
+}
+
+float sun_light_at_shadow_pos(vec3 pos) {
+	int cascade = select_shadow_cascade(pos);
+	return sun_light_at_shadow_pos(pos, cascade);
+}
+
+float sun_light_at_world_pos(vec3 pos, int cascade) {
+	vec4 shadow_pos_cam = frx_shadowViewMatrix * vec4(pos, 1.0);
+	return sun_light_at_shadow_pos(shadow_pos_cam.xyz / shadow_pos_cam.w, cascade);
 }
 
 float sun_light_at_world_pos(vec3 pos) {
@@ -38,4 +47,9 @@ float sun_light_at_world_pos(vec3 pos) {
 float sun_light_at(vec3 pos) {
 	vec4 world = frx_inverseViewMatrix * vec4(pos, 1.0);
 	return sun_light_at_world_pos(world.xyz / world.w);
+}
+
+float sun_light_at(vec3 pos, int cascade) {
+	vec4 world = frx_inverseViewMatrix * vec4(pos, 1.0);
+	return sun_light_at_world_pos(world.xyz / world.w, cascade);
 }

@@ -7,7 +7,8 @@ uniform sampler2DArray u_depths;
 
 layout(location = 0) out float out_depths;
 
-const int len = 4;
+const int power = 2;
+const int len = 1 << power;
 
 void main() {
 	int layer = frxu_layer;
@@ -15,8 +16,8 @@ void main() {
 
 	ivec2 from_size = textureSize(u_depths, 0).xy;
 	ivec2 pos = ivec2(gl_FragCoord.xy);
-	int mul = int(pow(len, layer));
-	int mul_from = int(pow(len, layer - 1));
+	int mul = 1 << (layer * power);//int(pow(len, layer));
+	int mul_from = 1 << (layer_from * power);
 	pos -= pos % mul;
 
 	float min_depths = 1.0;

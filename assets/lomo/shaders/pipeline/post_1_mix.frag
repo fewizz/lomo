@@ -62,10 +62,10 @@ void main() {
 		vec3 prev_dir_inc_cam = cam_dir_to_z1(vec2(r_prev_pos_win.xy));
 		prev_dir_inc_cam = mat3(frx_viewMatrix) * (inverse(mat3(frx_lastViewMatrix)) * prev_dir_inc_cam);
 
-		//float sn = length(cross(dir_inc_cam_0, prev_dir_inc_cam));
-		float cs = dot(dir_inc_cam_0, prev_dir_inc_cam);
-		//float a = asin(sn);
-		ratio *= pow(cs, 1.0 / max(roughness_0, 0.001));//exp(-sn * mix(64.0, 1.0, pow(roughness_0, 0.1)));
+		float sn = length(cross(dir_inc_cam_0, prev_dir_inc_cam));
+		//float cs = dot(dir_inc_cam_0, prev_dir_inc_cam);
+		float a = asin(sn);
+		ratio *= pow(roughness_0, pow(a, 0.1));//exp(-sn * mix(64.0, 1.0, pow(roughness_0, 0.1)));
 	}
 
 	float actual_ratio = ratio;
