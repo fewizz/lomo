@@ -73,12 +73,10 @@ vec3 clouds(vec3 light, vec3 o, vec3 dir, float dist, float sky_light) {
 
 vec3 fog(vec3 light, vec3 o, vec3 dir, float max_dist, float sky_light) {
 	vec3 sd = sun_dir();
-	//vec3 sk = sky(dir, 1.0);
 	vec3 sn = sky(sd, 1.0);
 	float vsun = 0.0;
-	//float vsky = 0.0;
 
-	const int steps = 16;
+	int steps = int(frx_viewDistance / 16);
 	float wd = frx_viewDistance * mix(1.0, 0.2, frx_smoothedRainGradient);
 	max_dist = min(max_dist, wd * 1.5);
 
@@ -100,7 +98,7 @@ vec3 fog(vec3 light, vec3 o, vec3 dir, float max_dist, float sky_light) {
 		float delta = d - prev_dist;
 		v0 *= delta;
 
-		vsun += v0 * sun_light_at_world_pos(o0 - frx_cameraPos, 0);
+		vsun += v0 * sun_light_at_world_pos(o0 - frx_cameraPos);
 		//vsky += v0;
 		prev_dist = d;
 	}
@@ -135,7 +133,7 @@ vec3 medium(vec3 light, vec3 from, vec3 to, vec3 dir, float sky_light) {
 
 	if(frx_worldHasSkylight == 1) {
 		//light = clouds(light, f, dir, dist, sky_light);
-		//light = fog(light, f, dir, dist, sky_light);
+		light = fog(light, f, dir, dist, sky_light);
 	}
 
 	//float fog_dist = dist;

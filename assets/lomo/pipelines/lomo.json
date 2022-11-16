@@ -452,8 +452,8 @@
 				"prev_depth",
 				"shadow_map"
 			]
-		},
-		/*{
+		},/*
+		{
 			"name": "post_1_denoise_0",
 			"program": "post_1_denoise_0",
 			"framebuffer": "post_1_denoised_0",
@@ -1149,7 +1149,7 @@
 		]
 	},
 	{
-		"size": 1024,
+		"size": 256,
 		"name": "shadow_map",
 		"internalFormat": "DEPTH_COMPONENT32",
 		"pixelFormat": "DEPTH_COMPONENT",
