@@ -45,10 +45,10 @@ void main() {
 
 	vec4 extras_0_0 = texelFetch(u_extra_0, ivec2(pos_win_0.xy), 0);
 	vec4 extras_1_0 = texelFetch(u_extra_1, ivec2(pos_win_0.xy), 0);
-	float roughness_0   = extras_0_0[0];
-	float sky_light_0   = extras_0_0[1];
-	float block_light_0 = extras_0_0[2];
-	float reflectance_0 = extras_1_0[0];
+	float roughness_0   = clamp(extras_0_0[0], 0.0, 1.0);
+	float sky_light_0   = clamp(extras_0_0[1], 0.0, 1.0);
+	float block_light_0 = clamp(extras_0_0[2], 0.0, 1.0);
+	float reflectance_0 = clamp(extras_1_0[0], 0.0, 1.0);
 	float emissive_0    = extras_1_0[1];
 
 	vec3 color_0 = texelFetch(u_color, ivec2(gl_FragCoord.xy), 0).rgb;
@@ -139,11 +139,11 @@ void main() {
 		vec4 extra_0_1 = texelFetch(u_extra_0, ivec2(pos_win.xy), 0);
 		vec4 extra_1_1 = texelFetch(u_extra_1, ivec2(pos_win.xy), 0);
 
-		roughness_1       = extra_0_1[0];
+		roughness_1       = clamp(extra_0_1[0], 0.0, 1.0);
 		roughness         = roughness_1;
-		sky_light         = extra_0_1[1];
-		float block_light = extra_0_1[2];
-		reflectance_1     = extra_1_1[0];
+		sky_light         = clamp(extra_0_1[1], 0.0, 1.0);
+		float block_light = clamp(extra_0_1[2], 0.0, 1.0);
+		reflectance_1     = clamp(extra_1_1[0], 0.0, 1.0);
 		emissive          = extra_1_1[1];
 
 		reflectance       = reflectance_1;
@@ -167,7 +167,7 @@ void main() {
 
 	if(frx_worldHasSkylight == 1) {
 		float d = sun_light_at(pos_cam);
-		bool straigth = false;//pass && result.z >= 1.0;
+		bool straigth = pass && result.z >= 1.0;
 
 		if(straigth) {
 			s = sky(
@@ -192,7 +192,7 @@ void main() {
 			dir_out_cam = reflect(dir_inc_cam, normal_av);
 		}
 
-		sphere sph = sphere(vec3(0.0, -frx_viewDistance * 0.9, 0.0), frx_viewDistance);
+		sphere sph = sphere(vec3(0.0, 0.0, -frx_viewDistance * 0.9), frx_viewDistance);
 		ray r = ray(pos_cam, dir_out_cam);
 
 		ray_sphere_intersection_result res = ray_sphere_intersection(r, sph);
