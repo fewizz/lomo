@@ -99,20 +99,13 @@ vec3 fog(vec3 light, vec3 o, vec3 dir, float max_dist, float sky_light) {
 		v0 *= delta;
 
 		vsun += v0 * sun_light_at_world_pos(o0 - frx_cameraPos);
-		//vsky += v0;
 		prev_dist = d;
 	}
 	vsun /= wd;
-	//vsky /= wd;
 
-	/*light = mix(
-		light,
-		vec3(0.0, 0.2, 1.0),
-		vec3(min(pow(vsky, mix(1.5, 1.0, frx_smoothedRainGradient)), 1.0))
-	);*/
 	light = mix(
 		light,
-		sn / 256.0 * vec3(1.0, 2.0, 4.0),
+		(sn / 256.0 + vec3(0.5)) * vec3(1.0, 2.0, 4.0),
 		vec3(min(pow(vsun, mix(1.5, 1.0, frx_smoothedRainGradient)), 1.0))
 	);
 
@@ -135,15 +128,6 @@ vec3 medium(vec3 light, vec3 from, vec3 to, vec3 dir, float sky_light) {
 		//light = clouds(light, f, dir, dist, sky_light);
 		light = fog(light, f, dir, dist, sky_light);
 	}
-
-	//float fog_dist = dist;
-	//float fog_dist_to_begin = 128.0 - o.y / -dir.y;
-	//fog_dist_to_begin *= sign(dir.y);
-	//fog_dist_to_begin = max(0.0, fog_dist_to_begin);
-
-	//}
-	//light *= exp(-dist / 1000.0);
-	//light += (1.0 - exp(-dist / 1000.0)) * sun / 1000.0;
 
 	return light;
 }

@@ -62,8 +62,9 @@ void main() {
 		prev_dir_inc_cam = mat3(frx_viewMatrix) * (inverse(mat3(frx_lastViewMatrix)) * prev_dir_inc_cam);
 
 		float sn = length(cross(dir_inc_cam_0, prev_dir_inc_cam));
-		float a = asin(sn);
-		ratio *= pow(roughness_0, sn * 16.0);
+		//float a = asin(sn);
+		//float dt = dot(dir_inc_cam_0, prev_dir_inc_cam);
+		ratio *= pow(roughness_0, sn * 4.0);
 	}
 
 	float actual_ratio = ratio;
@@ -71,6 +72,6 @@ void main() {
 	vec3 mixed = mix(post_1, prev_post_1, actual_ratio);
 	mixed = pow(mixed, vec3(1.0 / 2.2));
 
-	ratio = increase_ratio(ratio, 16.0 * roughness_0);
+	ratio = increase_ratio(ratio, 32.0 * roughness_0);
 	out_post_1_mixed = vec4(mixed, ratio);
 }

@@ -32,8 +32,9 @@ layout(location = 0) out vec3 out_post_1;
 
 void main() {
 	vec3 normal_cam_raw_0 = texelFetch(u_normal, ivec2(gl_FragCoord.xy), 0).xyz;
+	bool valid_normal_0 = dot(normal_cam_raw_0, normal_cam_raw_0) > 0.9;
 	float depth_0 = texelFetch(u_depth, ivec2(gl_FragCoord.xy), 0).r;
-	if(depth_0 == 1.0 || dot(normal_cam_raw_0, normal_cam_raw_0) < 0.9) {
+	if(depth_0 == 1.0 || !valid_normal_0) {
 		out_post_1 = vec3(0.0);
 		return;
 	}
@@ -71,7 +72,7 @@ void main() {
 	fb_traversal_result result = traverse_fb(
 		pos_win_traverse_beginning, dir_ws,
 		u_hi_depth,
-		uint(64)
+		max_side / 30
 	);
 
 	vec3 reflection_pos = win_to_cam(
@@ -109,7 +110,8 @@ void main() {
 		}
 	}
 
-	bool pass = success && dot(normal_cam_raw_1, normal_cam_raw_1) > 0.9;
+	bool valid_normal_1 = dot(normal_cam_raw_1, normal_cam_raw_1) > 0.9;
+	bool pass = success && valid_normal_1;
 
 	vec3 normal_cam_transformed_1;
 	float roughness_1;
@@ -184,7 +186,8 @@ void main() {
 		s = medium(
 			s, pos_cam, pos_cam + dir_out_cam * max(0.0, res.close), dir_out_cam, 1.0
 		);
-		if(!(pass && result.z >= 1.0)) {
+
+		if(!straigth) {
 			s *= pow(
 				mix(max(sky_light - 0.1, 0.0) * 1.2, 0.0, emissive),
 				mix(12.0, 0.0, d)

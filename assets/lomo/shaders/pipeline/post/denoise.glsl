@@ -29,8 +29,8 @@ void main() {
 
 	for(int x = -2; x <= 2; ++x) {
 		for(int y = -2; y <= 2; ++y) {
-			float s = pow(3, POW);
-			vec2 off = vec2(x, y) * s;
+			int s = int(pow(2, POW));
+			ivec2 off = ivec2(x, y) * s;
 			ivec2 coord = ivec2(gl_FragCoord.xy + off);
 			if(any(greaterThan(coord, frxu_size.xy))) continue;
 			if(any(lessThan(coord, ivec2(0)))) continue;

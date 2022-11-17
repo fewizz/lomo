@@ -96,7 +96,7 @@ fb_traversal_result traverse_fb(
 	float z = pos_win.z;
 
 	uint level = 0u;
-	float lower_depth = texelFetch(s_hi_depth, ivec2(texel), 0)[level];
+	float lower_depth = 1.0;//texelFetch(s_hi_depth, ivec2(texel), 0)[level];
 
 	while(true) {
 		if(max_steps == 0) {
@@ -110,15 +110,9 @@ fb_traversal_result traverse_fb(
 		float dist = next_cell_common(texel, inner, dir_xy, level);
 		z += dist * (dir_ws.z / dir_ws_length);
 
-		int result_code = -1;
-
 		if(z > lower_depth || (!backwards && z == lower_depth)) {
-			if(
-				level == 0u &&
-				!is_out_of_fb(prev_texel, z) &&
-				!result.success
-			) {
-				result = fb_traversal_result(prev_texel, prev_z, true);
+			if(level == 0u && !is_out_of_fb(prev_texel, z)) {
+				return fb_traversal_result(prev_texel, prev_z, true);
 			}
 			float mul = (lower_depth - prev_z) / (z - prev_z);
 			dist *= mul;
@@ -150,5 +144,5 @@ fb_traversal_result traverse_fb(
 		}
 	}
 
-	return result;
+	return fb_traversal_result(uvec2(0), 0.99999, false);
 }
