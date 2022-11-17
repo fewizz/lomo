@@ -75,39 +75,18 @@ bool is_out_of_fb(uvec2 texel, float z) {
 }
 
 struct fb_traversal_result {
-	uint raw_texel;
+	uvec2 texel;
 	float z;
+	bool success;
 };
 
-uvec2 fb_traversal_result_texel(fb_traversal_result r) {
-	return uvec2(r.raw_texel & 0xFFFFu, r.raw_texel >> 16);
-}
-
-bool fb_traversal_result_is_success(fb_traversal_result r) {
-	return r.raw_texel != uint(-1);
-}
-
-struct fb_traversal_results {
-	fb_traversal_result result[4];
-};
-
-fb_traversal_results traverse_fb(
+fb_traversal_result traverse_fb(
 	vec3 pos_win,
-	vec3[4] dir_wss,
+	vec3 dir_ws,
 	sampler2D s_hi_depth,
-	uint max_steps,
-	out int try
+	uint max_steps
 ) {
-	fb_traversal_results results = fb_traversal_results(fb_traversal_result[4](
-		fb_traversal_result(uint(-1), 1.0),
-		fb_traversal_result(uint(-1), 1.0),
-		fb_traversal_result(uint(-1), 1.0),
-		fb_traversal_result(uint(-1), 1.0)
-	));
-
-	try = 0;
-
-	vec3 dir_ws = dir_wss[try];
+	fb_traversal_result result = fb_traversal_result(uvec2(-1), 0.0, false);
 	bool backwards = dir_ws.z < 0.0;
 	float dir_ws_length = length(dir_ws.xy);
 	vec2 dir_xy = dir_ws.xy / dir_ws_length;
@@ -121,7 +100,7 @@ fb_traversal_results traverse_fb(
 
 	while(true) {
 		if(max_steps == 0) {
-			return results;
+			break;
 		}
 		--max_steps;
 
@@ -137,28 +116,9 @@ fb_traversal_results traverse_fb(
 			if(
 				level == 0u &&
 				!is_out_of_fb(prev_texel, z) &&
-				!fb_traversal_result_is_success(results.result[try])
+				!result.success
 			) {
-				results.result[try] = fb_traversal_result(
-					uint((prev_texel.x & 0xFFFFu) | (prev_texel.y << 16)),
-					prev_z
-				);
-				
-				++try;
-				if(try == 4) break;
-
-				dir_ws = dir_wss[try];
-				backwards = dir_ws.z < 0.0;
-				dir_ws_length = length(dir_ws.xy);
-				dir_xy = dir_ws.xy / dir_ws_length;
-
-				texel = uvec2(pos_win.xy);
-				inner = vec2(fract(pos_win.xy));
-				z = pos_win.z;
-
-				level = 0u;
-				lower_depth = texelFetch(s_hi_depth, ivec2(texel), 0)[level];
-				continue;
+				result = fb_traversal_result(prev_texel, prev_z, true);
 			}
 			float mul = (lower_depth - prev_z) / (z - prev_z);
 			dist *= mul;
@@ -190,5 +150,5 @@ fb_traversal_results traverse_fb(
 		}
 	}
 
-	return results;
+	return result;
 }

@@ -11,7 +11,7 @@ vec3 compute_normal(
 	vec3 resulting_normal;
 	for(int i = 0; i < 8; ++i) {
 	vec2 rand = (hash24(uvec4(
-		pos, frx_renderFrames % 65536 + stp * 1024 + i, stp * 256 + i
+		pos, frx_renderFrames % 65536 + stp * 1024 + i, stp * 1024 + i
 	)) * 2.0 - 1.0);
 
 	vec3 reflected = reflect(incidence, normal);
@@ -24,7 +24,7 @@ vec3 compute_normal(
 	float s = sign(rand.x);
 	//rand.x = abs(rand.x);
 	reflected = rotation(
-		pow(abs(rand.x), 1.0 / roughness) * pow(roughness, 1.5) * s * PI,
+		pow(abs(rand.x), 1.0 / roughness) * s * PI,
 		//(1.0 - sqrt(1.0 - pow(rand.x, 2.0))) * PI,
 		cr
 	) * reflected;

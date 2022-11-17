@@ -112,7 +112,7 @@ vec3 fog(vec3 light, vec3 o, vec3 dir, float max_dist, float sky_light) {
 	);*/
 	light = mix(
 		light,
-		sn / 16.0,
+		sn / 256.0 * vec3(1.0, 2.0, 4.0),
 		vec3(min(pow(vsun, mix(1.5, 1.0, frx_smoothedRainGradient)), 1.0))
 	);
 

@@ -18,7 +18,7 @@ void main() {
 	vec3 pos_win_0 = vec3(gl_FragCoord.xy, depth_0);
 	vec3 pos_cam_0 = win_to_cam(pos_win_0);
 	vec4 extras_0 = texelFetch(u_extra_0, ivec2(gl_FragCoord.xy), 0);
-	float roughness_0 = extras_0[0];
+	float roughness_0 = clamp(extras_0[0], 0.0, 1.0);
 	vec3 dir_inc_cam_0 = cam_dir_to_z1(pos_win_0.xy);
 
 	dvec3 r_prev_pos_cam = dvec3(pos_cam_0);
@@ -63,7 +63,7 @@ void main() {
 
 		float sn = length(cross(dir_inc_cam_0, prev_dir_inc_cam));
 		float a = asin(sn);
-		ratio *= pow(roughness_0, a);
+		ratio *= pow(roughness_0, sn * 16.0);
 	}
 
 	float actual_ratio = ratio;

@@ -56,45 +56,29 @@ void main() {
 
 	vec3 light_1 = vec3(0.0);
 
-	vec3 dir_wss[4];
-	vec3 dir_out_cams_0[4];
-	vec3 normal_cams_transformed[4];
-	float z_offset = 0.0;
-
-	for(int i = 0; i < 4; ++i) {
-		normal_cams_transformed[i] = compute_normal(
-			dir_inc_cam_0, normal_cam_0, uvec2(gl_FragCoord.xy), roughness_0, i
-		);
-		dir_out_cams_0[i] = reflect(dir_inc_cam_0, normal_cams_transformed[i]);
-
-		dir_wss[i] = cam_dir_to_win(pos_cam_0, dir_out_cams_0[i]);
-		z_offset = max(z_offset, dir_wss[i].z);
-	}
+	vec3 normal_cam_transformed = compute_normal(
+		dir_inc_cam_0, normal_cam_0, uvec2(gl_FragCoord.xy), roughness_0, 0
+	);
+	vec3 dir_out_cam_0 = reflect(dir_inc_cam_0, normal_cam_transformed);
+	vec3 dir_ws = cam_dir_to_win(pos_cam_0, dir_out_cam_0);
+	float z_offset = max(0.0, dir_ws.z);
 
 	vec3 pos_win_traverse_beginning = pos_win_0;
 	pos_win_traverse_beginning.z -= z_offset;
 	pos_win_traverse_beginning.z -= 1.0 / 1000000.0;
-	int tries;
 
 	uint max_side = uint(max(frxu_size.x, frxu_size.y));
-	fb_traversal_results results = traverse_fb(
-		pos_win_traverse_beginning, dir_wss,
+	fb_traversal_result result = traverse_fb(
+		pos_win_traverse_beginning, dir_ws,
 		u_hi_depth,
-		uint(64),
-		tries
+		uint(64)
 	);
-
-	for(int try = 0; try < max(tries, 1); ++try) {
-
-	fb_traversal_result result = results.result[try];
-	vec3 dir_out_cam_0 = dir_out_cams_0[try];
-	vec3 normal_cam_transformed = normal_cams_transformed[try];
 
 	vec3 reflection_pos = win_to_cam(
-		vec3(fb_traversal_result_texel(result) + vec2(0.5), result.z)
+		vec3(result.texel + vec2(0.5), result.z)
 	);
-	ivec2 reflection_pos_win = ivec2(fb_traversal_result_texel(result));
-	bool success = fb_traversal_result_is_success(result);
+	ivec2 reflection_pos_win = ivec2(result.texel);
+	bool success = result.success;
 
 	vec3 dir_out_cam = dir_out_cam_0;
 	vec3 dir_inc_cam = dir_inc_cam_0;
@@ -183,7 +167,7 @@ void main() {
 				vec3 s0 = sky(mat3(frx_inverseViewMatrix) * dir_out_cam, d);
 				s += s0 / float(steps);
 				normal_cam_transformed = compute_normal(
-					dir_inc_cam, normal_cam, uvec2(pos_win.xy), roughness, (try + 234912) * 1024 + i * 4096 + 1
+					dir_inc_cam, normal_cam, uvec2(pos_win.xy), roughness, i + 1
 				);
 				normal_av += normal_cam_transformed;
 				dir_out_cam = reflect(dir_inc_cam, normal_cam_transformed);
@@ -228,10 +212,6 @@ void main() {
 	}
 
 	light_1 += l;
-
-	}
-
-	light_1 /= tries > 0 ? float(tries) : 1.0;
 
 	out_post_1 = pow(light_1, vec3(1.0 / 2.2));
 }
