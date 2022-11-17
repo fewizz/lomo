@@ -105,77 +105,90 @@ fb_traversal_results traverse_fb(
 		fb_traversal_result(uint(-1), 1.0)
 	));
 
-	for(try = 0; try < 4; ++try) {
-		vec3 dir_ws = dir_wss[try];
-		bool backwards = dir_ws.z < 0.0;
-		float dir_ws_length = length(dir_ws.xy);
-		vec2 dir_xy = dir_ws.xy / dir_ws_length;
+	try = 0;
 
-		uvec2 texel = uvec2(pos_win.xy);
-		vec2 inner = vec2(fract(pos_win.xy));
-		float z = pos_win.z;
+	vec3 dir_ws = dir_wss[try];
+	bool backwards = dir_ws.z < 0.0;
+	float dir_ws_length = length(dir_ws.xy);
+	vec2 dir_xy = dir_ws.xy / dir_ws_length;
 
-		uint level = 0u;
-		float lower_depth = texelFetch(s_hi_depth, ivec2(texel), 0)[level];
+	uvec2 texel = uvec2(pos_win.xy);
+	vec2 inner = vec2(fract(pos_win.xy));
+	float z = pos_win.z;
 
-		while(true) {
-			if(max_steps == 0) {
-				return results;
-			}
-			--max_steps;
+	uint level = 0u;
+	float lower_depth = texelFetch(s_hi_depth, ivec2(texel), 0)[level];
 
-			uvec2 prev_texel = texel;
-			vec2 prev_inner = inner;
-			float prev_z = z;
-			float dist = next_cell_common(texel, inner, dir_xy, level);
-			z += dist * (dir_ws.z / dir_ws_length);
+	while(true) {
+		if(max_steps == 0) {
+			return results;
+		}
+		--max_steps;
 
-			int result_code = -1;
+		uvec2 prev_texel = texel;
+		vec2 prev_inner = inner;
+		float prev_z = z;
+		float dist = next_cell_common(texel, inner, dir_xy, level);
+		z += dist * (dir_ws.z / dir_ws_length);
 
-			if(z > lower_depth || (!backwards && z == lower_depth)) {
-				if(
-					level == 0u &&
-					!is_out_of_fb(prev_texel, z) &&
-					!fb_traversal_result_is_success(results.result[try])
-				) {
-					results.result[try] = fb_traversal_result(
-						uint((prev_texel.x & 0xFFFFu) | (prev_texel.y << 16)),
-						prev_z
-					);
-					break;
-				}
-				float mul = (lower_depth - prev_z) / (z - prev_z);
-				dist *= mul;
+		int result_code = -1;
 
-				vec2 diff = prev_inner + dist * dir_xy;
-
-				inner = fract(diff);
-				texel = prev_texel + uvec2(ivec2(floor(diff)));
-				z = lower_depth;
-			}
-
-			vec4 depths_raw = texelFetch(s_hi_depth, ivec2(texel), 0);
-			float[4] depths = float[4](
-				depths_raw[0], depths_raw[1], depths_raw[2], depths_raw[3]
-			);
-
-			/* switching the cell */
-			level = 0;
-			lower_depth = depths[0];
-			float upper_depth = depths[1];
-
-			while(
-				level < last_level &&
-				(z < upper_depth || (backwards && z == upper_depth))
+		if(z > lower_depth || (!backwards && z == lower_depth)) {
+			if(
+				level == 0u &&
+				!is_out_of_fb(prev_texel, z) &&
+				!fb_traversal_result_is_success(results.result[try])
 			) {
-				++level;
-				lower_depth = upper_depth;
-				upper_depth = (level + 1) < levels ? depths[level + 1] : 1.0;
+				results.result[try] = fb_traversal_result(
+					uint((prev_texel.x & 0xFFFFu) | (prev_texel.y << 16)),
+					prev_z
+				);
+				
+				++try;
+				if(try == 4) break;
+
+				dir_ws = dir_wss[try];
+				backwards = dir_ws.z < 0.0;
+				dir_ws_length = length(dir_ws.xy);
+				dir_xy = dir_ws.xy / dir_ws_length;
+
+				texel = uvec2(pos_win.xy);
+				inner = vec2(fract(pos_win.xy));
+				z = pos_win.z;
+
+				level = 0u;
+				lower_depth = texelFetch(s_hi_depth, ivec2(texel), 0)[level];
+				continue;
 			}
+			float mul = (lower_depth - prev_z) / (z - prev_z);
+			dist *= mul;
+
+			vec2 diff = prev_inner + dist * dir_xy;
+
+			inner = fract(diff);
+			texel = prev_texel + uvec2(ivec2(floor(diff)));
+			z = lower_depth;
+		}
+
+		vec4 depths_raw = texelFetch(s_hi_depth, ivec2(texel), 0);
+		float[4] depths = float[4](
+			depths_raw[0], depths_raw[1], depths_raw[2], depths_raw[3]
+		);
+
+		/* switching the cell */
+		level = 0;
+		lower_depth = depths[0];
+		float upper_depth = depths[1];
+
+		while(
+			level < last_level &&
+			(z < upper_depth || (backwards && z == upper_depth))
+		) {
+			++level;
+			lower_depth = upper_depth;
+			upper_depth = (level + 1) < levels ? depths[level + 1] : 1.0;
 		}
 	}
-
-	++try; // = 4
 
 	return results;
 }
