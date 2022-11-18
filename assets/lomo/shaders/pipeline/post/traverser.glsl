@@ -87,7 +87,6 @@ fb_traversal_result traverse_fb(
 	uint max_steps
 ) {
 	fb_traversal_result result = fb_traversal_result(uvec2(-1), 0.0, false);
-	bool backwards = dir_ws.z < 0.0;
 	float dir_ws_length = length(dir_ws.xy);
 	vec2 dir_xy = dir_ws.xy / dir_ws_length;
 
@@ -96,10 +95,10 @@ fb_traversal_result traverse_fb(
 	float z = pos_win.z;
 
 	uint level = 0u;
-	float lower_depth = 1.0;//texelFetch(s_hi_depth, ivec2(texel), 0)[level];
+	float lower_depth = 1.0;
 
 	while(true) {
-		if(max_steps == 0) {
+		if(max_steps == 0 || is_out_of_fb(texel, z)) {
 			break;
 		}
 		--max_steps;
@@ -110,8 +109,8 @@ fb_traversal_result traverse_fb(
 		float dist = next_cell_common(texel, inner, dir_xy, level);
 		z += dist * (dir_ws.z / dir_ws_length);
 
-		if(z > lower_depth || (!backwards && z == lower_depth)) {
-			if(level == 0u && !is_out_of_fb(prev_texel, z)) {
+		if(z >= lower_depth) {
+			if(level == 0u) {
 				return fb_traversal_result(prev_texel, prev_z, true);
 			}
 			float mul = (lower_depth - prev_z) / (z - prev_z);
@@ -125,22 +124,18 @@ fb_traversal_result traverse_fb(
 		}
 
 		vec4 depths_raw = texelFetch(s_hi_depth, ivec2(texel), 0);
-		float[4] depths = float[4](
-			depths_raw[0], depths_raw[1], depths_raw[2], depths_raw[3]
+		float[5] depths = float[5](
+			depths_raw[0], depths_raw[1], depths_raw[2], depths_raw[3], 1.0
 		);
 
-		/* switching the cell */
 		level = 0;
 		lower_depth = depths[0];
 		float upper_depth = depths[1];
 
-		while(
-			level < last_level &&
-			(z < upper_depth || (backwards && z == upper_depth))
-		) {
+		while(level < last_level && z < upper_depth) {
 			++level;
 			lower_depth = upper_depth;
-			upper_depth = (level + 1) < levels ? depths[level + 1] : 1.0;
+			upper_depth = depths[level + 1];
 		}
 	}
 
