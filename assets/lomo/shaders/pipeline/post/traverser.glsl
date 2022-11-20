@@ -94,14 +94,29 @@ fb_traversal_result traverse_fb(
 	vec2 inner = vec2(fract(pos_win.xy));
 	float z = pos_win.z;
 
-	uint level = 0u;
-	float lower_depth = 1.0;
-
 	while(true) {
 		if(max_steps == 0 || is_out_of_fb(texel, z)) {
 			break;
 		}
 		--max_steps;
+
+		vec4 depths_raw = texelFetch(s_hi_depth, ivec2(texel), 0);
+		float[5] depths = float[5](
+			depths_raw[0], depths_raw[1], depths_raw[2], depths_raw[3], 1.0
+		);
+
+		uint level = 0;
+		float lower_depth = depths[level];
+
+		{
+			float upper_depth = depths[level + 1];
+
+			while(level < last_level && z < upper_depth) {
+				++level;
+				lower_depth = upper_depth;
+				upper_depth = depths[level + 1];
+			}
+		}
 
 		uvec2 prev_texel = texel;
 		vec2 prev_inner = inner;
@@ -121,21 +136,6 @@ fb_traversal_result traverse_fb(
 			inner = fract(diff);
 			texel = prev_texel + uvec2(ivec2(floor(diff)));
 			z = lower_depth;
-		}
-
-		vec4 depths_raw = texelFetch(s_hi_depth, ivec2(texel), 0);
-		float[5] depths = float[5](
-			depths_raw[0], depths_raw[1], depths_raw[2], depths_raw[3], 1.0
-		);
-
-		level = 0;
-		lower_depth = depths[0];
-		float upper_depth = depths[1];
-
-		while(level < last_level && z < upper_depth) {
-			++level;
-			lower_depth = upper_depth;
-			upper_depth = depths[level + 1];
 		}
 	}
 

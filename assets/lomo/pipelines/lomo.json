@@ -208,7 +208,8 @@
 		"samplers": [
 			"u_post_1", "u_prev_post_1",
 			"u_extra_0",
-			"u_depth", "u_prev_depth"
+			"u_depth", "u_prev_depth",
+			"u_normal", "u_prev_normal"
 		]
 	},
 	{
@@ -544,7 +545,8 @@
 			"samplerImages": [
 				"post_1_denoised_8", "prev_post_1",
 				"extras_0",
-				"depths", "prev_depth"
+				"depths", "prev_depth",
+				"normals", "prev_normal"
 			]
 		},
 		{
@@ -558,7 +560,7 @@
 		{
 			"name": "post_0",
 			"program": "post_0",
-			"framebuffer": "prev_depth__light",
+			"framebuffer": "prev_depth__prev_normal__light",
 			"samplerImages": [
 				"normals",
 				"colors",
@@ -1230,6 +1232,18 @@
 		]
 	},
 	{
+		"name": "prev_normal",
+		"internalFormat": "RGB16_SNORM",
+		"pixelFormat": "RGB",
+		"pixelDataType": "SHORT",
+		"texParams": [
+			{ "name": "TEXTURE_MIN_FILTER", "val": "LINEAR" },
+			{ "name": "TEXTURE_MAG_FILTER", "val": "LINEAR" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
+		]
+	},
+	{
 		"name": "post_1",
 		"internalFormat": "RGB16F",
 		"pixelFormat": "RGB",
@@ -1693,9 +1707,10 @@
 		]
 	},
 	{
-		"name": "prev_depth__light",
+		"name": "prev_depth__prev_normal__light",
 		"colorAttachments": [
 			{ "image": "prev_depth" },
+			{ "image": "prev_normal" },
 			{ "image": "light" }
 		]
 	},

@@ -22,10 +22,13 @@ uniform sampler2D u_extra_1;
 uniform sampler2D u_light_1_accum;
 
 layout(location = 0) out float out_prev_depth;
-layout(location = 1) out vec3 out_light;
+layout(location = 1) out vec3 out_prev_normal;
+layout(location = 2) out vec3 out_light;
 
 void main() {
 	ivec2 coord_0 = ivec2(gl_FragCoord.xy);
+	out_prev_depth = texelFetch(u_depth, coord_0, 0).r;
+	out_prev_normal = texelFetch(u_normal, coord_0, 0).xyz;
 
 	float depth = texelFetch(u_depth, ivec2(coord_0), 0).r;
 	vec3 normal_cam = texelFetch(u_normal, ivec2(coord_0), 0).xyz;
@@ -93,8 +96,6 @@ void main() {
 	vec3 pos_cam_begin = cam_near(gl_FragCoord.xy);
 	vec3 pos_cam_end = pos_cam;
 	resulting_light = medium(resulting_light, pos_cam_begin, pos_cam_end, dir_inc_cam, sky_light);
-
-	out_prev_depth = texelFetch(u_depth, coord_0, 0).r;
 
 	out_light = pow(resulting_light, vec3(1.0 / 2.2));
 }

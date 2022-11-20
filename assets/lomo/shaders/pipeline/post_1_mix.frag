@@ -11,6 +11,9 @@ uniform sampler2D u_extra_0;
 uniform sampler2D u_depth;
 uniform sampler2D u_prev_depth;
 
+uniform sampler2D u_normal;
+uniform sampler2D u_prev_normal;
+
 layout(location = 0) out vec4 out_post_1_mixed;
 
 void main() {
@@ -34,14 +37,16 @@ void main() {
 	dvec3 r_prev_pos_win = ndc_to_win(r_prev_pos_ndc);
 
 	float prev_depth = texelFetch(u_prev_depth, ivec2(r_prev_pos_win.xy), 0).r;
+	vec3 prev_normal = texelFetch(u_prev_normal, ivec2(r_prev_pos_win.xy), 0).xyz;
+	vec3 normal = texelFetch(u_normal, ivec2(gl_FragCoord.xy), 0).xyz;
 
 	vec3 post_1 = texelFetch(u_post_1, ivec2(gl_FragCoord.xy), 0).rgb;
 	post_1 = max(post_1, vec3(0.0));
 	post_1 = pow(post_1, vec3(2.2));
 
 	vec3 prev_post_1 =
-		//texelFetch(u_prev_post_1, ivec2(r_prev_pos_win.xy), 0).rgb;
-		texture(u_prev_post_1, vec2(r_prev_pos_ndc.xy) * 0.5 + 0.5).rgb;
+		texelFetch(u_prev_post_1, ivec2(r_prev_pos_win.xy), 0).rgb;
+		//texture(u_prev_post_1, vec2(r_prev_pos_ndc.xy) * 0.5 + 0.5).rgb;
 	prev_post_1 = max(prev_post_1, vec3(0.0));
 	prev_post_1 = pow(prev_post_1, vec3(2.2));
 
@@ -61,10 +66,11 @@ void main() {
 		vec3 prev_dir_inc_cam = cam_dir_to_z1(vec2(r_prev_pos_win.xy));
 		prev_dir_inc_cam = mat3(frx_viewMatrix) * (inverse(mat3(frx_lastViewMatrix)) * prev_dir_inc_cam);
 
-		float sn = length(cross(dir_inc_cam_0, prev_dir_inc_cam));
-		//float a = asin(sn);
-		//float dt = dot(dir_inc_cam_0, prev_dir_inc_cam);
-		ratio *= exp(-(sn / roughness_0));//pow(roughness_0, dt / 1000.0);
+		float sn_dir = length(cross(dir_inc_cam_0, prev_dir_inc_cam));
+		float sn_norm = length(cross(normal, prev_normal));
+		ratio *= exp(-(2.0 * sn_dir / roughness_0));
+		if(dot(prev_normal, prev_normal) > 0.9)
+		ratio *= exp(-(2.0 * sn_norm / roughness_0));
 	}
 
 	float actual_ratio = ratio;
@@ -72,6 +78,6 @@ void main() {
 	vec3 mixed = mix(post_1, prev_post_1, actual_ratio);
 	mixed = pow(mixed, vec3(1.0 / 2.2));
 
-	ratio = increase_ratio(ratio, 128.0 * roughness_0);
+	ratio = increase_ratio(ratio, 16.0 * roughness_0);
 	out_post_1_mixed = vec4(mixed, ratio);
 }

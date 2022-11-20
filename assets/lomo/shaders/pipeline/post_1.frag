@@ -162,7 +162,8 @@ void main() {
 			);
 		}
 		else {
-			const uint steps = 16u;
+			uint steps = uint(mix(1.0, 16.0, roughness_1) * (1 - roughness_0));
+			steps = max(steps, 1u);
 			vec3 normal_av = vec3(0.0);
 
 			for(uint i = 0u; i < steps; ++i) {
@@ -189,7 +190,7 @@ void main() {
 
 		if(!straigth) {
 			s *= pow(
-				mix(max(sky_light - 0.1, 0.0) * 1.2, 0.0, emissive),
+				max(sky_light - 0.1, 0.0) * 1.2,
 				mix(12.0, 0.0, d)
 			);
 		}

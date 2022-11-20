@@ -46,12 +46,12 @@ void main() {
 			float z_diff = abs(dot(pos - pos_0, normal_0));
 
 			float weight = exp(-(
-				dot(off, off) / 512.0 / max(pow(roughness_0, 1.5), 0.0001) +
+				float(dot(off, off) > pow(roughness_0, 2.0) * 512.0) * 1000.0 +
 				//1.0 / max(dot(normal_0, normal), 0.0001) +
 				//acos(dot(normal_0, normal)) +
 				length(cross(normal_0, normal)) * 8.0 +
 				abs(roughness_0 - roughness) * 32.0 +
-				z_diff * 16.0// +
+				z_diff * 48.0// +
 				//abs(shadow_0 - shadow)
 			));
 

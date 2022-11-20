@@ -101,13 +101,13 @@ vec3 sky(vec3 dir, float sun_mul) {
 			s = vec3(0.0);
 		}
 		if(!moon_earth.success) {
-			s += max(dot(normalize(pos - moon.pos), sun_dir()), 0.0) * 1.0;
+			s += max(dot(normalize(pos - moon.pos), sun_dir()), 0.0) * 4.0;
 		}
 	}
 	else {
 		vec3 space_dir = rotation(frx_skyAngleRadians, vec3(0.0, 0.0, -1.0)) * dir;
 		float hsh = hash13(vec3(ivec3(space_dir * 256.0)));
-		s += pow(hsh, 2048.0) * 0.5;
+		s += pow(hsh, 2048.0) * 1.0;
 	}
 
 	return color + s;
