@@ -86,7 +86,6 @@ fb_traversal_result traverse_fb(
 	sampler2D s_hi_depth,
 	uint max_steps
 ) {
-	fb_traversal_result result = fb_traversal_result(uvec2(-1), 0.0, false);
 	float dir_ws_length = length(dir_ws.xy);
 	vec2 dir_xy = dir_ws.xy / dir_ws_length;
 

@@ -45,8 +45,8 @@ void main() {
 	post_1 = pow(post_1, vec3(2.2));
 
 	vec3 prev_post_1 =
-		texelFetch(u_prev_post_1, ivec2(r_prev_pos_win.xy), 0).rgb;
-		//texture(u_prev_post_1, vec2(r_prev_pos_ndc.xy) * 0.5 + 0.5).rgb;
+		//texelFetch(u_prev_post_1, ivec2(r_prev_pos_win.xy), 0).rgb;
+		texture(u_prev_post_1, vec2(r_prev_pos_ndc.xy) * 0.5 + 0.5).rgb;
 	prev_post_1 = max(prev_post_1, vec3(0.0));
 	prev_post_1 = pow(prev_post_1, vec3(2.2));
 
@@ -67,10 +67,14 @@ void main() {
 		prev_dir_inc_cam = mat3(frx_viewMatrix) * (inverse(mat3(frx_lastViewMatrix)) * prev_dir_inc_cam);
 
 		float sn_dir = length(cross(dir_inc_cam_0, prev_dir_inc_cam));
+		ratio *= exp(-(4.0 * sn_dir / roughness_0));
+
+		normal = inverse(mat3(frx_viewMatrix)) * normal;
+		prev_normal = inverse(mat3(frx_lastViewMatrix)) * prev_normal;
 		float sn_norm = length(cross(normal, prev_normal));
-		ratio *= exp(-(2.0 * sn_dir / roughness_0));
-		if(dot(prev_normal, prev_normal) > 0.9)
-		ratio *= exp(-(2.0 * sn_norm / roughness_0));
+		if(dot(prev_normal, prev_normal) > 0.9) {
+			ratio *= exp(-(2.0 * sn_norm / roughness_0));
+		}
 	}
 
 	float actual_ratio = ratio;

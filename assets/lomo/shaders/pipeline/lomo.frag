@@ -44,10 +44,10 @@ void frx_pipelineFragment() {
 	}
 
 	//glintify(a, float(frx_matGlint));
-	a.rgb *= pow(
+	/*a.rgb *= pow(
 		mix(clamp(frx_fragLight.z, 0.0, 1.0), 1.0, clamp(frx_fragEmissive, 0.0, 1.0)),
 		0.5
-	);
+	);*/
 	out_color = a;
 
 	if(

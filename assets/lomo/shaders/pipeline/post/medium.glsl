@@ -82,6 +82,9 @@ vec3 fog(vec3 light, vec3 o, vec3 dir, float max_dist, float sky_light) {
 
 	float stp = max_dist / float(steps + 1);
 	float prev_dist = 0.0;
+	vec3 sh_dir = mat3(frx_shadowViewMatrix) * dir;
+	vec4 sh_pos_begin0 = frx_shadowViewMatrix * vec4(o - frx_cameraPos, 1.0);
+	vec3 sh_pos_begin = sh_pos_begin0.xyz / sh_pos_begin0.w;
 
 	for(int i = 0; i < steps; ++i) {
 		float d = (float(i) + 0.5) * stp;
@@ -98,7 +101,7 @@ vec3 fog(vec3 light, vec3 o, vec3 dir, float max_dist, float sky_light) {
 		float delta = d - prev_dist;
 		v0 *= delta;
 
-		vsun += v0 * sun_light_at_world_pos(o0 - frx_cameraPos);
+		vsun += v0 * sun_light_at_shadow_pos(sh_pos_begin + sh_dir * d);
 		prev_dist = d;
 	}
 	vsun /= wd;

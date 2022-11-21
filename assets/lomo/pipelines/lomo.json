@@ -466,7 +466,7 @@
 				"shadow_map"
 			]
 		},
-		{
+		/*{
 			"name": "post_1_denoise_0",
 			"program": "post_1_denoise_0",
 			"framebuffer": "post_1_denoised_0",
@@ -537,13 +537,13 @@
 			"samplerImages": [
 				"post_1_denoised_7", "normals", "extras_0", "depths", "shadow_map"
 			]
-		},
+		},*/
 		{
 			"name": "post_1_mix",
 			"program": "post_1_mix",
 			"framebuffer": "post_1_mixed",
 			"samplerImages": [
-				"post_1_denoised_8", "prev_post_1",
+				"post_1", "prev_post_1",
 				"extras_0",
 				"depths", "prev_depth",
 				"normals", "prev_normal"
@@ -1203,7 +1203,7 @@
 		]
 	},
 	{
-		"size": 256,
+		"size": 512,
 		"name": "shadow_map",
 		"internalFormat": "DEPTH_COMPONENT32",
 		"pixelFormat": "DEPTH_COMPONENT",

@@ -24,7 +24,7 @@ vec3 hash33(vec3 p3) {
 	return fract((p3.xxy + p3.yxx)*p3.zyx);
 }
 
-vec2 hash24(uvec4 v) {
+vec3 hash34(uvec4 v) {
 	v = v * 1664525u + 1013904223u;
 	v.x += v.y*v.w;
 	v.y += v.z*v.x;
@@ -35,7 +35,11 @@ vec2 hash24(uvec4 v) {
 	v.y += v.z*v.x;
 	v.z += v.x*v.y;
 	v.w += v.y*v.z;
-	return v.yw * (1.0/float(0xffffffffU));
+	return v.zyw * (1.0/float(0xffffffffU));
+}
+
+vec2 hash24(uvec4 v) {
+	return hash34(v).xy;
 }
 
 float hash13(uvec3 x) {

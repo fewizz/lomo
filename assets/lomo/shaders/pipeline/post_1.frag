@@ -61,19 +61,22 @@ void main() {
 		dir_inc_cam_0, normal_cam_0, uvec2(gl_FragCoord.xy), roughness_0, 0
 	);
 	vec3 dir_out_cam_0 = reflect(dir_inc_cam_0, normal_cam_transformed);
-	vec3 dir_ws = cam_dir_to_win(pos_cam_0, dir_out_cam_0);
-	float z_offset = max(0.0, dir_ws.z);
 
-	vec3 pos_win_traverse_beginning = pos_win_0;
-	pos_win_traverse_beginning.z -= z_offset;
-	pos_win_traverse_beginning.z -= 1.0 / 1000000.0;
+	fb_traversal_result result; {
+		vec3 dir_ws = cam_dir_to_win(pos_cam_0, dir_out_cam_0);
+		float z_offset = max(0.0, dir_ws.z);
 
-	uint max_side = uint(max(frxu_size.x, frxu_size.y));
-	fb_traversal_result result = traverse_fb(
-		pos_win_traverse_beginning, dir_ws,
-		u_hi_depth,
-		max_side / 30
-	);
+		vec3 pos_win_traverse_beginning = pos_win_0;
+		pos_win_traverse_beginning.z -= z_offset;
+		pos_win_traverse_beginning.z -= 1.0 / 1000000.0;
+
+		uint max_side = uint(max(frxu_size.x, frxu_size.y));
+		result = traverse_fb(
+			pos_win_traverse_beginning, dir_ws,
+			u_hi_depth,
+			max_side / 30
+		);
+	}
 
 	vec3 reflection_pos = win_to_cam(
 		vec3(result.texel + vec2(0.5), result.z)
@@ -162,8 +165,8 @@ void main() {
 			);
 		}
 		else {
-			uint steps = uint(mix(1.0, 16.0, roughness_1) * (1 - roughness_0));
-			steps = max(steps, 1u);
+			const uint steps = 8u;//uint(mix(1.0, 16.0, roughness_1) * (1 - roughness_0));
+			//steps = max(steps, 1u);
 			vec3 normal_av = vec3(0.0);
 
 			for(uint i = 0u; i < steps; ++i) {
