@@ -78,7 +78,7 @@ vec3 sky(vec3 dir, float sun_mul) {
 	float a = dot(dir, sun_dir());
 	vec3 rgb = pow(vec3(7.2, 5.7, 4.2), vec3(4.0));
 	vec3 color = sky(eye, layer(earth_radius, 8000.0), 0.005 / rgb) * 1.5;
-	vec3 s = sky(eye, layer(earth_radius, 1200.0), 0.1 / rgb) * henyey_greenstein_phase_function(0.7, a) * vec3(4.0, 1.7, 0.3) * 1.5;
+	vec3 s = sky(eye, layer(earth_radius, 1200.0), 0.1 / rgb) * henyey_greenstein_phase_function(0.8, a) * vec3(4.0, 1.7, 0.3) * 1.5;
 	s *= sun_mul;
 
 	float t = frx_renderSeconds / (20.0 * 60.0 * 27.0);
@@ -119,8 +119,8 @@ vec3 end_sky(vec3 dir) {
 	vec3 rotated_0 = rotation(1.2, normalize(vec3(0.0, 0.0, 1.0))) * dir;
 	vec3 rotated_1 = rotation(-PI / 4.0, normalize(vec3(0.0, 0.0, 1.0))) * dir;
 	return
-		vec3(0.5, 0.1, 0.1) * abs(dir.y) +
-		vec3(0.2, 0.1, 0.8) * abs(rotated_0.y) +
+		vec3(0.5, 0.2, 0.2) * abs(dir.y) +
+		vec3(0.2, 0.2, 0.8) * abs(rotated_0.y) +
 		//vec3(0.0, 0.2, 0.0) * abs(rotated_1.y) +
 		dots;
 }

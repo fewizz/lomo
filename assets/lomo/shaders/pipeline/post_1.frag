@@ -57,8 +57,11 @@ void main() {
 
 	vec3 light_1 = vec3(0.0);
 
+	const int samples = 1;
+	for(int smpl = 0; smpl < samples; ++smpl) {
+
 	vec3 normal_cam_transformed = compute_normal(
-		dir_inc_cam_0, normal_cam_0, uvec2(gl_FragCoord.xy), roughness_0, 0
+		dir_inc_cam_0, normal_cam_0, uvec2(gl_FragCoord.xy), roughness_0, smpl
 	);
 	vec3 dir_out_cam_0 = reflect(dir_inc_cam_0, normal_cam_transformed);
 
@@ -74,7 +77,7 @@ void main() {
 		result = traverse_fb(
 			pos_win_traverse_beginning, dir_ws,
 			u_hi_depth,
-			max_side / 30
+			max_side / 20
 		);
 	}
 
@@ -144,7 +147,7 @@ void main() {
 		normal_cam = normal_cam_1;
 
 		normal_cam_transformed_1 = compute_normal(
-			dir_inc_cam, normal_cam, uvec2(pos_win.xy), roughness, 0
+			dir_inc_cam, normal_cam, uvec2(pos_win.xy), roughness, smpl
 		);
 		normal_cam_transformed = normal_cam_transformed_1;
 		dir_inc_cam = dir_out_cam;
@@ -165,15 +168,16 @@ void main() {
 			);
 		}
 		else {
-			const uint steps = 8u;//uint(mix(1.0, 16.0, roughness_1) * (1 - roughness_0));
-			//steps = max(steps, 1u);
+			const uint steps = 16u / samples;
+			
 			vec3 normal_av = vec3(0.0);
 
 			for(uint i = 0u; i < steps; ++i) {
 				vec3 s0 = sky(mat3(frx_inverseViewMatrix) * dir_out_cam, d);
 				s += s0 / float(steps);
-				normal_cam_transformed = compute_normal(
-					dir_inc_cam, normal_cam, uvec2(pos_win.xy), roughness, i + 1
+				vec3 normal_cam_transformed = compute_normal(
+					dir_inc_cam, normal_cam,
+					uvec2(pos_win.xy), roughness, i + 1 + smpl * 1024
 				);
 				normal_av += normal_cam_transformed;
 				dir_out_cam = reflect(dir_inc_cam, normal_cam_transformed);
@@ -201,6 +205,7 @@ void main() {
 	else if(frx_worldIsEnd == 1) {
 		s = end_sky(mat3(frx_inverseViewMatrix) * dir_out_cam);
 	}
+
 	vec3 l = s;
 
 	if(pass) {
@@ -219,6 +224,8 @@ void main() {
 	}
 
 	light_1 += l;
+	}
+	light_1 /= float(samples);
 
 	out_post_1 = pow(light_1, vec3(1.0 / 2.2));
 }

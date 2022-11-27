@@ -30,7 +30,8 @@ void main() {
 	for(int x = -2; x <= 2; ++x) {
 		for(int y = -2; y <= 2; ++y) {
 			int s = int(pow(2, POW));
-			ivec2 off = ivec2(x, y) * s;
+			ivec2 off0 = ivec2(x, y);
+			ivec2 off = off0 * s;
 			ivec2 coord = ivec2(gl_FragCoord.xy + off);
 			if(any(greaterThan(coord, frxu_size.xy))) continue;
 			if(any(lessThan(coord, ivec2(0)))) continue;
@@ -46,7 +47,7 @@ void main() {
 			float z_diff = abs(dot(pos - pos_0, normal_0));
 
 			float weight = exp(-(
-				float(dot(off, off)) / 256.0 / max(pow(roughness_0, 1.5), 0.00001) +
+				float(dot(off, off)) / 16.0 / max(pow(roughness_0, 2.0), 0.00001) +
 				//1.0 / max(dot(normal_0, normal), 0.0001) +
 				//acos(dot(normal_0, normal)) +
 				length(cross(normal_0, normal)) * 8.0 +

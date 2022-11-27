@@ -61,20 +61,23 @@ void main() {
 	}
 	else {
 		double diff = abs(prev_depth - r_prev_pos_win.z);
-		ratio *= max(0.0, exp(-float(diff * 2048.0)));
+		float depth_f = max(0.0, exp(-float(diff * 1024.0)));
 
 		vec3 prev_dir_inc_cam = cam_dir_to_z1(vec2(r_prev_pos_win.xy));
 		prev_dir_inc_cam = mat3(frx_viewMatrix) * (inverse(mat3(frx_lastViewMatrix)) * prev_dir_inc_cam);
 
 		float sn_dir = length(cross(dir_inc_cam_0, prev_dir_inc_cam));
-		ratio *= exp(-(4.0 * sn_dir / roughness_0));
+		ratio *= exp(-(2.0 * sn_dir / roughness_0));
 
 		normal = inverse(mat3(frx_viewMatrix)) * normal;
 		prev_normal = inverse(mat3(frx_lastViewMatrix)) * prev_normal;
 		float sn_norm = length(cross(normal, prev_normal));
+		float sn_f = 1.0;
 		if(dot(prev_normal, prev_normal) > 0.9) {
-			ratio *= exp(-(2.0 * sn_norm / roughness_0));
+			sn_f = exp(-(2.0 * sn_norm / roughness_0));
 		}
+
+		ratio *= min(depth_f, sn_f);
 	}
 
 	float actual_ratio = ratio;

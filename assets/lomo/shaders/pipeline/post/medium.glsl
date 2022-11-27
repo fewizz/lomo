@@ -76,7 +76,7 @@ vec3 fog(vec3 light, vec3 o, vec3 dir, float max_dist, float sky_light) {
 	vec3 sn = sky(sd, 1.0);
 	float vsun = 0.0;
 
-	int steps = int(frx_viewDistance / 16);
+	int steps = int(frx_viewDistance / 32);
 	float wd = frx_viewDistance * mix(1.0, 0.2, frx_smoothedRainGradient);
 	max_dist = min(max_dist, wd * 1.5);
 

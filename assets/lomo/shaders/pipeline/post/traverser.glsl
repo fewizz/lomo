@@ -86,8 +86,8 @@ fb_traversal_result traverse_fb(
 	sampler2D s_hi_depth,
 	uint max_steps
 ) {
-	float dir_ws_length = length(dir_ws.xy);
-	vec2 dir_xy = dir_ws.xy / dir_ws_length;
+	float dir_ws_xy_length = length(dir_ws.xy);
+	vec2 dir_xy = dir_ws.xy / dir_ws_xy_length;
 
 	uvec2 texel = uvec2(pos_win.xy);
 	vec2 inner = vec2(fract(pos_win.xy));
@@ -121,12 +121,9 @@ fb_traversal_result traverse_fb(
 		vec2 prev_inner = inner;
 		float prev_z = z;
 		float dist = next_cell_common(texel, inner, dir_xy, level);
-		z += dist * (dir_ws.z / dir_ws_length);
+		z += dist * (dir_ws.z / dir_ws_xy_length);
 
 		if(z >= lower_depth) {
-			if(level == 0u) {
-				return fb_traversal_result(prev_texel, prev_z, true);
-			}
 			float mul = (lower_depth - prev_z) / (z - prev_z);
 			dist *= mul;
 
@@ -134,7 +131,13 @@ fb_traversal_result traverse_fb(
 
 			inner = fract(diff);
 			texel = prev_texel + uvec2(ivec2(floor(diff)));
-			z = lower_depth;
+			float corrected_z = lower_depth;
+
+			if(level == 0u) {
+				return fb_traversal_result(prev_texel, prev_z >= lower_depth ? z : corrected_z, true);
+			}
+
+			z = corrected_z;
 		}
 	}
 
