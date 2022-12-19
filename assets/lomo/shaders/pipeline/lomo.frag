@@ -43,7 +43,7 @@ void frx_pipelineFragment() {
 		a = vec4(0.25 + a.r * 0.75, a.g * 0.75, a.b * 0.75, a.a);
 	}
 
-	//glintify(a, float(frx_matGlint));
+	glintify(a, float(frx_matGlint));
 	a.rgb *= pow(
 		mix(clamp(frx_fragLight.z, 0.0, 1.0), 1.0, clamp(frx_fragEmissive, 0.0, 1.0)),
 		0.5
@@ -74,11 +74,11 @@ void frx_pipelineFragment() {
 		out_geometric_normal = vec4(geometric_normal, 1.0);
 		out_normal = vec4(normal, 1.0);
 
-		frx_fragRoughness = mix(
+		/*frx_fragRoughness = //mix(
 			frx_fragRoughness,
 			0.3,
-			frx_fragRoughness * frx_smoothedRainGradient * pow(frx_fragLight.y * 1.06, 8.0)
-		);
+			pow(frx_fragLight.y * 1.06, 8.0),//frx_fragRoughness// * frx_smoothedRainGradient * pow(frx_fragLight.y * 1.06, 8.0)
+		);*/
 
 		out_extra_0 = vec4(
 			clamp(frx_fragRoughness, 0.0, 1.0),

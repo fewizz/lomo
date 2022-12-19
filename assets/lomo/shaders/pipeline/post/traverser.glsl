@@ -120,14 +120,14 @@ fb_traversal_result traverse_fb(
 		uvec2 prev_texel = texel;
 		vec2 prev_inner = inner;
 		float prev_z = z;
-		float dist = next_cell_common(texel, inner, dir_xy, level);
-		z += dist * (dir_ws.z / dir_ws_xy_length);
+		float dist_xy = next_cell_common(texel, inner, dir_xy, level);
+		z += dist_xy * (dir_ws.z / dir_ws_xy_length);
 
 		if(z >= lower_depth) {
 			float mul = (lower_depth - prev_z) / (z - prev_z);
-			dist *= mul;
+			dist_xy *= mul;
 
-			vec2 diff = prev_inner + dist * dir_xy;
+			vec2 diff = prev_inner + dist_xy * dir_xy;
 
 			inner = fract(diff);
 			texel = prev_texel + uvec2(ivec2(floor(diff)));

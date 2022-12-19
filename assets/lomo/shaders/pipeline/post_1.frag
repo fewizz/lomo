@@ -25,6 +25,8 @@ uniform sampler2D u_extra_0;
 uniform sampler2D u_extra_1;
 uniform sampler2D u_depth;
 uniform sampler2D u_hi_depth;
+uniform samplerCube u_sky_w_sun;
+uniform samplerCube u_sky_wo_sun;
 
 uniform sampler2D u_prev_depth;
 
@@ -61,7 +63,7 @@ void main() {
 	for(int smpl = 0; smpl < samples; ++smpl) {
 
 	vec3 normal_cam_transformed = compute_normal(
-		dir_inc_cam_0, normal_cam_0, uvec2(gl_FragCoord.xy), roughness_0, smpl
+		dir_inc_cam_0, normal_cam_0, uvec2(gl_FragCoord.xy), roughness_0, smpl * 1024
 	);
 	vec3 dir_out_cam_0 = reflect(dir_inc_cam_0, normal_cam_transformed);
 
@@ -77,7 +79,7 @@ void main() {
 		result = traverse_fb(
 			pos_win_traverse_beginning, dir_ws,
 			u_hi_depth,
-			max_side / 20
+			128
 		);
 	}
 
@@ -158,33 +160,14 @@ void main() {
 	vec3 s = vec3(0.0);
 
 	if(frx_worldHasSkylight == 1) {
+		float lod = pow(max(roughness, roughness_0), 0.1) * 9.0;
+		vec3 sky_w_sun  = textureLod(u_sky_w_sun,  mat3(frx_inverseViewMatrix) * dir_out_cam, lod).rgb;
+		vec3 sky_wo_sun = textureLod(u_sky_wo_sun, mat3(frx_inverseViewMatrix) * dir_out_cam, lod).rgb;
+
 		float d = sun_light_at(pos_cam);
 		bool straigth = pass && result.z >= 1.0;
 
-		if(straigth) {
-			s = sky(
-				mat3(frx_inverseViewMatrix) * dir_out_cam,
-				pos_win.z >= 1.0 ? 1.0 : d
-			);
-		}
-		else {
-			const uint steps = 16u / samples;
-			
-			vec3 normal_av = vec3(0.0);
-
-			for(uint i = 0u; i < steps; ++i) {
-				vec3 s0 = sky(mat3(frx_inverseViewMatrix) * dir_out_cam, d);
-				s += s0 / float(steps);
-				vec3 normal_cam_transformed = compute_normal(
-					dir_inc_cam, normal_cam,
-					uvec2(pos_win.xy), roughness, i + 1 + smpl * 1024
-				);
-				normal_av += normal_cam_transformed;
-				dir_out_cam = reflect(dir_inc_cam, normal_cam_transformed);
-			}
-			normal_av = normalize(normal_av);
-			dir_out_cam = reflect(dir_inc_cam, normal_av);
-		}
+		s = mix(sky_wo_sun, sky_w_sun, straigth && pos_win_0.z >= 1.0 ? 1.0 : d);
 
 		sphere sph = sphere(vec3(0.0, 0.0, -frx_viewDistance * 0.9), frx_viewDistance);
 		ray r = ray(pos_cam, dir_out_cam);

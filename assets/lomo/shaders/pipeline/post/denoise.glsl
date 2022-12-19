@@ -26,6 +26,9 @@ void main() {
 
 	vec3 pos_0 = win_to_cam(vec3(gl_FragCoord.xy, depth_0));
 	//float shadow_0 = sun_light_at(pos_0);
+	vec3 l_0 = texelFetch(u_light, ivec2(gl_FragCoord.xy), 0).rgb;
+	l_0 = max(l_0, vec3(0.0));
+	l_0 = pow(l_0, vec3(2.2));
 
 	for(int x = -2; x <= 2; ++x) {
 		for(int y = -2; y <= 2; ++y) {
@@ -46,8 +49,10 @@ void main() {
 
 			float z_diff = abs(dot(pos - pos_0, normal_0));
 
+			float weight_dist = 1.0;exp(-(
+				float(dot(off, off)) / 256.0
+			));
 			float weight = exp(-(
-				float(dot(off, off)) / 16.0 / max(pow(roughness_0, 2.0), 0.00001) +
 				//1.0 / max(dot(normal_0, normal), 0.0001) +
 				//acos(dot(normal_0, normal)) +
 				length(cross(normal_0, normal)) * 8.0 +
@@ -59,8 +64,8 @@ void main() {
 			vec3 l = texelFetch(u_light, coord, 0).rgb;
 			l = max(l, vec3(0.0));
 			l = pow(l, vec3(2.2));
-			light += l * weight;
-			total_weight += weight;
+			light += l * weight * weight_dist;
+			total_weight += weight * weight_dist;
 		}
 	}
 	if(total_weight > 0.0) {
