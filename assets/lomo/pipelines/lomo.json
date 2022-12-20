@@ -101,6 +101,12 @@
 ],
 "programs": [
 	{
+		"name": "vp_shadow",
+		"vertexSource": "canvas:shaders/pipeline/post/simple_full_frame.vert",
+		"fragmentSource": "lomo:shaders/pipeline/vp_shadow.frag",
+		"samplers": [ "u_shadow_map", "u_depth" ]
+	},
+	{
 		"name": "sky_w_sun",
 		"vertexSource": "canvas:shaders/pipeline/post/simple_full_frame.vert",
 		"fragmentSource": "lomo:shaders/pipeline/sky_w_sun.frag",
@@ -152,7 +158,7 @@
 			"u_depth", "u_hi_depth",
 			"u_sky_w_sun", "u_sky_wo_sun",
 			"u_prev_depth",
-			"u_shadow_map"
+			"u_vp_shadow"
 		]
 	},
 	{
@@ -332,13 +338,13 @@
 		"name": "depth_levels",
 		"vertexSource": "lomo:shaders/pipeline/full_frame_depth_1.vert",
 		"fragmentSource": "lomo:shaders/pipeline/depth_levels.frag",
-		"samplers": [ "u_depths" ]
+		"samplers": [ "u_depth" ]
 	},
 	{
-		"name": "combine_hi_depths",
+		"name": "combine_hi_depth",
 		"vertexSource": "lomo:shaders/pipeline/full_frame_depth_1.vert",
-		"fragmentSource": "lomo:shaders/pipeline/combine_hi_depths.frag",
-		"samplers": [ "u_depths" ]
+		"fragmentSource": "lomo:shaders/pipeline/combine_hi_depth.frag",
+		"samplers": [ "u_depth" ]
 	}
 ],
 
@@ -555,48 +561,54 @@
 			]
 		},
 		{
-			"name": "sort_depths",
+			"name": "sort_depth",
 			"program": "sort",
-			"framebuffer": "depths",
+			"framebuffer": "depth",
 			"samplerImages": [
 				"solid_d", "translucent_d", "entity_d",
 				"particle_d", "weather_d", "index_to_type"
 			]
 		},
 		{
+			"name": "vp_shadow",
+			"program": "vp_shadow",
+			"framebuffer": "vp_shadow",
+			"samplerImages": [ "shadow_map", "depth" ]
+		},
+		{
 			"name": "depth_level_0",
 			"program": "copy",
-			"framebuffer": "hi_depths_0",
+			"framebuffer": "hi_depth_0",
 			"samplerImages": [
-				"depths"
+				"depth"
 			]
 		},
 		{
-			"name": "hi_depths_1",
+			"name": "hi_depth_1",
 			"program": "depth_levels",
-			"framebuffer": "hi_depths_1",
-			"samplerImages": [ "hi_depths" ],
+			"framebuffer": "hi_depth_1",
+			"samplerImages": [ "hi_depth" ],
 			"layer": 1
 		},
 		{
-			"name": "hi_depths_2",
+			"name": "hi_depth_2",
 			"program": "depth_levels",
-			"framebuffer": "hi_depths_2",
-			"samplerImages": [ "hi_depths" ],
+			"framebuffer": "hi_depth_2",
+			"samplerImages": [ "hi_depth" ],
 			"layer": 2
 		},
 		{
-			"name": "hi_depths_3",
+			"name": "hi_depth_3",
 			"program": "depth_levels",
-			"framebuffer": "hi_depths_3",
-			"samplerImages": [ "hi_depths" ],
+			"framebuffer": "hi_depth_3",
+			"samplerImages": [ "hi_depth" ],
 			"layer": 3
 		},
 		{
-			"name": "combine_hi_depths",
-			"program": "combine_hi_depths",
-			"framebuffer": "hi_depths_combined",
-			"samplerImages": [ "hi_depths" ]
+			"name": "combine_hi_depth",
+			"program": "combine_hi_depth",
+			"framebuffer": "hi_depth_combined",
+			"samplerImages": [ "hi_depth" ]
 		},
 		{
 			"name": "post_1",
@@ -607,11 +619,11 @@
 				"normals",
 				"extras_0",
 				"extras_1",
-				"depths",
-				"hi_depths_combined",
+				"depth",
+				"hi_depth_combined",
 				"sky_w_sun", "sky_wo_sun",
 				"prev_depth",
-				"shadow_map"
+				"vp_shadow"
 			]
 		},
 		/*{
@@ -619,7 +631,7 @@
 			"program": "post_1_denoise_0",
 			"framebuffer": "post_1_denoised_0",
 			"samplerImages": [
-				"post_1", "normals", "extras_0", "depths", "shadow_map"
+				"post_1", "normals", "extras_0", "depth", "shadow_map"
 			]
 		},
 		{
@@ -627,7 +639,7 @@
 			"program": "post_1_denoise_1",
 			"framebuffer": "post_1_denoised_1",
 			"samplerImages": [
-				"post_1_denoised_0", "normals", "extras_0", "depths", "shadow_map"
+				"post_1_denoised_0", "normals", "extras_0", "depth", "shadow_map"
 			]
 		},
 		{
@@ -635,7 +647,7 @@
 			"program": "post_1_denoise_2",
 			"framebuffer": "post_1_denoised_2",
 			"samplerImages": [
-				"post_1_denoised_1", "normals", "extras_0", "depths", "shadow_map"
+				"post_1_denoised_1", "normals", "extras_0", "depth", "shadow_map"
 			]
 		},
 		{
@@ -643,7 +655,7 @@
 			"program": "post_1_denoise_3",
 			"framebuffer": "post_1_denoised_3",
 			"samplerImages": [
-				"post_1_denoised_2", "normals", "extras_0", "depths", "shadow_map"
+				"post_1_denoised_2", "normals", "extras_0", "depth", "shadow_map"
 			]
 		},
 		{
@@ -651,7 +663,7 @@
 			"program": "post_1_denoise_4",
 			"framebuffer": "post_1_denoised_4",
 			"samplerImages": [
-				"post_1_denoised_3", "normals", "extras_0", "depths", "shadow_map"
+				"post_1_denoised_3", "normals", "extras_0", "depth", "shadow_map"
 			]
 		},
 		{
@@ -659,7 +671,7 @@
 			"program": "post_1_denoise_5",
 			"framebuffer": "post_1_denoised_5",
 			"samplerImages": [
-				"post_1_denoised_4", "normals", "extras_0", "depths", "shadow_map"
+				"post_1_denoised_4", "normals", "extras_0", "depth", "shadow_map"
 			]
 		},
 		{
@@ -667,7 +679,7 @@
 			"program": "post_1_denoise_6",
 			"framebuffer": "post_1_denoised_6",
 			"samplerImages": [
-				"post_1_denoised_5", "normals", "extras_0", "depths", "shadow_map"
+				"post_1_denoised_5", "normals", "extras_0", "depth", "shadow_map"
 			]
 		},
 		{
@@ -675,7 +687,7 @@
 			"program": "post_1_denoise_7",
 			"framebuffer": "post_1_denoised_7",
 			"samplerImages": [
-				"post_1_denoised_6", "normals", "extras_0", "depths", "shadow_map"
+				"post_1_denoised_6", "normals", "extras_0", "depth", "shadow_map"
 			]
 		},
 		{
@@ -683,7 +695,7 @@
 			"program": "post_1_denoise_8",
 			"framebuffer": "post_1_denoised_8",
 			"samplerImages": [
-				"post_1_denoised_7", "normals", "extras_0", "depths", "shadow_map"
+				"post_1_denoised_7", "normals", "extras_0", "depth", "shadow_map"
 			]
 		},*/
 		{
@@ -693,7 +705,7 @@
 			"samplerImages": [
 				"post_1", "prev_post_1",
 				"extras_0",
-				"depths", "prev_depth",
+				"depth", "prev_depth",
 				"normals", "prev_normal"
 			]
 		},
@@ -712,7 +724,7 @@
 			"samplerImages": [
 				"normals",
 				"colors",
-				"depths",
+				"depth",
 				"extras_0",
 				"extras_1",
 				"post_1_mixed",
@@ -1283,7 +1295,7 @@
 		]
 	},
 	{
-		"name": "depths",
+		"name": "depth",
 		"internalFormat": "R32F",
 		"pixelFormat": "RED",
 		"pixelDataType": "FLOAT",
@@ -1296,7 +1308,7 @@
 		]
 	},
 	{
-		"name": "hi_depths",
+		"name": "hi_depth",
 		"internalFormat": "R32F",
 		"pixelFormat": "RED",
 		"pixelDataType": "FLOAT",
@@ -1312,7 +1324,7 @@
 		]
 	},
 	{
-		"name": "hi_depths_combined",
+		"name": "hi_depth_combined",
 		"internalFormat": "RGBA32F",
 		"pixelFormat": "RGBA",
 		"pixelDataType": "FLOAT",
@@ -1351,7 +1363,7 @@
 		]
 	},
 	{
-		"size": 512,
+		"size": 1024,
 		"name": "shadow_map",
 		"internalFormat": "DEPTH_COMPONENT32",
 		"pixelFormat": "DEPTH_COMPONENT",
@@ -1359,8 +1371,8 @@
 		"target": "TEXTURE_2D_ARRAY",
 		"depth": 4,
 		"texParams": [
-			{ "name": "TEXTURE_MIN_FILTER", "val": "LINEAR" },
-			{ "name": "TEXTURE_MAG_FILTER", "val": "LINEAR" },
+			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
 			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
 			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" },
 			{ "name": "TEXTURE_COMPARE_MODE", "val": "COMPARE_REF_TO_TEXTURE" },
@@ -1616,6 +1628,18 @@
 			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" },
 			{ "name": "TEXTURE_WRAP_R", "val": "CLAMP_TO_EDGE" }
 		]
+	},
+	{
+		"name": "vp_shadow",
+		"internalFormat": "R32F",
+		"pixelFormat": "RED",
+		"pixelDataType": "FLOAT",
+		"texParams": [
+			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
+		]
 	}
 ],
 
@@ -1732,33 +1756,33 @@
 		"depthAttachment": { "image": "translucent_d", "clearDepth": 1.0 }
 	},
 	{
-		"name": "hi_depths_0",
+		"name": "hi_depth_0",
 		"colorAttachments": [
-			{ "image": "hi_depths", "layer": 0 }
+			{ "image": "hi_depth", "layer": 0 }
 		]
 	},
 	{
-		"name": "hi_depths_1",
+		"name": "hi_depth_1",
 		"colorAttachments": [
-			{ "image": "hi_depths", "layer": 1 }
+			{ "image": "hi_depth", "layer": 1 }
 		]
 	},
 	{
-		"name": "hi_depths_2",
+		"name": "hi_depth_2",
 		"colorAttachments": [
-			{ "image": "hi_depths", "layer": 2 }
+			{ "image": "hi_depth", "layer": 2 }
 		]
 	},
 	{
-		"name": "hi_depths_3",
+		"name": "hi_depth_3",
 		"colorAttachments": [
-			{ "image": "hi_depths", "layer": 3 }
+			{ "image": "hi_depth", "layer": 3 }
 		]
 	},
 	{
-		"name": "hi_depths_combined",
+		"name": "hi_depth_combined",
 		"colorAttachments": [
-			{ "image": "hi_depths_combined" }
+			{ "image": "hi_depth_combined" }
 		]
 	},
 	{
@@ -1799,15 +1823,15 @@
 		]
 	},
 	{
-		"name": "depths",
+		"name": "depth",
 		"colorAttachments": [
-			{ "image": "depths" }
+			{ "image": "depth" }
 		]
 	},
 	{
-		"name": "hi_depths",
+		"name": "hi_depth",
 		"colorAttachments": [
-			{ "image": "hi_depths" }
+			{ "image": "hi_depth" }
 		]
 	},
 	{
@@ -1953,6 +1977,10 @@
 	{
 		"name": "bloom_upsample_0",
 		"colorAttachments": [ { "image": "bloom_upsample"}]
+	},
+	{
+		"name": "vp_shadow",
+		"colorAttachments": [ { "image": "vp_shadow"}]
 	},
 	{
 		"name": "sky_w_sun",

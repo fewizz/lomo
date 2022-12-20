@@ -39,7 +39,9 @@ void main() {
 	float prev_depth =
 		//texelFetch(u_prev_depth, ivec2(r_prev_pos_win.xy), 0).r;
 		texture(u_prev_depth, vec2(r_prev_pos_ndc.xy) * 0.5 + 0.5).r;
-	vec3 prev_normal = texelFetch(u_prev_normal, ivec2(r_prev_pos_win.xy), 0).xyz;
+	vec3 prev_normal =
+		//texelFetch(u_prev_normal, ivec2(r_prev_pos_win.xy), 0).xyz;
+		normalize(texture(u_prev_normal, vec2(r_prev_pos_ndc.xy) * 0.5 + 0.5).xyz);
 	vec3 normal = texelFetch(u_normal, ivec2(gl_FragCoord.xy), 0).xyz;
 
 	vec3 post_1 = texelFetch(u_post_1, ivec2(gl_FragCoord.xy), 0).rgb;
@@ -76,7 +78,7 @@ void main() {
 		float sn_norm = length(cross(normal, prev_normal));
 		float sn_f = 1.0;
 		if(dot(prev_normal, prev_normal) > 0.9) {
-			sn_f = exp(-(1.0 * sn_norm / roughness_0));
+			sn_f = exp(-(0.5 * sn_norm / roughness_0));
 		}
 
 		ratio *= min(depth_f, sn_f);

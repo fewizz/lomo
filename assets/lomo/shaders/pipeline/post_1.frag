@@ -9,7 +9,6 @@
 #include lomo:shaders/pipeline/post/sky.glsl
 #include lomo:shaders/pipeline/post/traverser.glsl
 #include lomo:shaders/pipeline/post/compute_normal.glsl
-#include lomo:shaders/pipeline/post/shadow.glsl
 #include lomo:shaders/pipeline/post/emitting_light.glsl
 #include lomo:shaders/pipeline/post/ratio.glsl
 #include lomo:shaders/pipeline/post/medium.glsl
@@ -27,8 +26,8 @@ uniform sampler2D u_depth;
 uniform sampler2D u_hi_depth;
 uniform samplerCube u_sky_w_sun;
 uniform samplerCube u_sky_wo_sun;
-
 uniform sampler2D u_prev_depth;
+uniform sampler2D u_vp_shadow;
 
 layout(location = 0) out vec3 out_post_1;
 
@@ -176,7 +175,7 @@ void main() {
 		vec3 sky_w_sun  = textureLod(u_sky_w_sun,  sky_dir, lod).rgb;
 		vec3 sky_wo_sun = textureLod(u_sky_wo_sun, sky_dir, lod).rgb;
 
-		float d = sun_light_at(pos_cam);
+		float d = texelFetch(u_vp_shadow, ivec2(pos_win.xy), 0).r;//sun_light_at(pos_cam);
 		//d = 1.0;
 		if(dot(sun_dir(), mat3(frx_inverseViewMatrix) * normal_cam) < 0.0) {
 			d = 0.0;

@@ -1,5 +1,6 @@
 #include frex:shaders/lib/math.glsl
 #include frex:shaders/api/world.glsl
+#include lomo:shaders/lib/transform.glsl
 
 vec3 sun_dir() {
 	float t = frx_skyAngleRadians + PI / 2.0;
