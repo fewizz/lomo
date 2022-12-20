@@ -3,15 +3,20 @@
 layout(location = 0) out vec3 face[6];
 
 void main() {
+	// d is a direction to a positive Z
 	vec3 d = normalize(
 		vec3(gl_FragCoord.xy / frxu_size.xy - 0.5, 0.5)
 	);
+	d.y *= -1.0;
+
+	const vec3 y_axis = vec3(0, 1, 0);
+	const vec3 x_axis = vec3(1, 0, 0);
 
 	// sky function takes world-space view direction
-	face[0] = sky(vec3( d.z, -d.y, -d.x), 0.0);
-	face[1] = sky(vec3(-d.z, -d.y,  d.x), 0.0);
-	face[2] = sky(vec3( d.x,  d.z,  d.y), 0.0);
-	face[3] = sky(vec3(-d.x, -d.z, -d.y), 0.0);
-	face[4] = sky(vec3( d.x, -d.y,  d.z), 0.0);
-	face[5] = sky(vec3(-d.x, -d.y, -d.z), 0.0);
+	face[0] = sky(rotation( PI / 2.0, y_axis) * d, 0.0);
+	face[1] = sky(rotation(-PI / 2.0, y_axis) * d, 0.0);
+	face[2] = sky(rotation(-PI / 2.0, x_axis) * d, 0.0);
+	face[3] = sky(rotation( PI / 2.0, x_axis) * d, 0.0);
+	face[4] = sky(                              d, 0.0);
+	face[5] = sky(rotation( PI,       y_axis) * d, 0.0);
 }

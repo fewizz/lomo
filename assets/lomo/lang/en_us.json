@@ -8,5 +8,8 @@
 	"config.lomo.help.reflections": "",
 
 	"config.lomo.value.tonemapping": "Tonemapping",
-	"config.lomo.help.tonemapping": ""
+	"config.lomo.help.tonemapping": "",
+
+	"config.lomo.value.emissivity": "Emissivity",
+	"config.lomo.help.emissivity": ""
 }

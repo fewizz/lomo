@@ -69,7 +69,7 @@ void main() {
 
 	fb_traversal_result result; {
 		vec3 dir_ws = cam_dir_to_win(pos_cam_0, dir_out_cam_0);
-		float z_offset = max(0.0, dir_ws.z);
+		float z_offset = max(0.0, dir_ws.z * 2.5);
 
 		vec3 pos_win_traverse_beginning = pos_win_0;
 		pos_win_traverse_beginning.z -= z_offset;
@@ -118,6 +118,11 @@ void main() {
 		}
 	}
 
+	pos_cam_1 = win_to_cam(vec3(
+		pos_win_1.xy,
+		texelFetch(u_depth, ivec2(pos_win_1.xy), 0).r
+	));
+
 	bool valid_normal_1 = dot(normal_cam_raw_1, normal_cam_raw_1) > 0.9;
 	bool pass = success && valid_normal_1;
 
@@ -125,6 +130,7 @@ void main() {
 	float roughness_1;
 	float reflectance_1;
 	vec3 dir_out_cam_1;
+	vec3 dir_out_cam_straigt = dir_out_cam_0;
 
 	if(pass) {
 		vec3 normal_cam_1 = normalize(normal_cam_raw_1);
@@ -155,19 +161,28 @@ void main() {
 		dir_inc_cam = dir_out_cam;
 		dir_out_cam_1 = reflect(dir_inc_cam, normal_cam_transformed);
 		dir_out_cam = dir_out_cam_1;
+		dir_out_cam_straigt = reflect(dir_out_cam_0, normal_cam_1);
 	}
 
 	vec3 s = vec3(0.0);
 
 	if(frx_worldHasSkylight == 1) {
-		float lod = pow(max(roughness, roughness_0), 0.1) * 9.0;
-		vec3 sky_w_sun  = textureLod(u_sky_w_sun,  mat3(frx_inverseViewMatrix) * dir_out_cam, lod).rgb;
-		vec3 sky_wo_sun = textureLod(u_sky_wo_sun, mat3(frx_inverseViewMatrix) * dir_out_cam, lod).rgb;
+		float lod = pow(max(roughness, roughness_0), 0.5) * 7.0;
+
+		bool hit_z_1 = pass && result.z >= 1.0;
+		vec3 sky_dir = dir_out_cam;//hit_z_1 ? dir_out_cam : dir_out_cam;
+		sky_dir = mat3(frx_inverseViewMatrix) * sky_dir;
+
+		vec3 sky_w_sun  = textureLod(u_sky_w_sun,  sky_dir, lod).rgb;
+		vec3 sky_wo_sun = textureLod(u_sky_wo_sun, sky_dir, lod).rgb;
 
 		float d = sun_light_at(pos_cam);
-		bool straigth = pass && result.z >= 1.0;
+		//d = 1.0;
+		if(dot(sun_dir(), mat3(frx_inverseViewMatrix) * normal_cam) < 0.0) {
+			d = 0.0;
+		}
 
-		s = mix(sky_wo_sun, sky_w_sun, straigth && pos_win_0.z >= 1.0 ? 1.0 : d);
+		s = mix(sky_wo_sun, sky_w_sun, hit_z_1 ? 1.0 : d);
 
 		sphere sph = sphere(vec3(0.0, 0.0, -frx_viewDistance * 0.9), frx_viewDistance);
 		ray r = ray(pos_cam, dir_out_cam);
@@ -178,7 +193,7 @@ void main() {
 			s, pos_cam, pos_cam + dir_out_cam * max(0.0, res.close), dir_out_cam, 1.0
 		);
 
-		if(!straigth) {
+		if(!hit_z_1) {
 			s *= pow(
 				max(sky_light - 0.1, 0.0) * 1.2,
 				mix(12.0, 0.0, d)

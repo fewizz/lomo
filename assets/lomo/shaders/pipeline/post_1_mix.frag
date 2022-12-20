@@ -36,7 +36,9 @@ void main() {
 	);
 	dvec3 r_prev_pos_win = ndc_to_win(r_prev_pos_ndc);
 
-	float prev_depth = texelFetch(u_prev_depth, ivec2(r_prev_pos_win.xy), 0).r;
+	float prev_depth =
+		//texelFetch(u_prev_depth, ivec2(r_prev_pos_win.xy), 0).r;
+		texture(u_prev_depth, vec2(r_prev_pos_ndc.xy) * 0.5 + 0.5).r;
 	vec3 prev_normal = texelFetch(u_prev_normal, ivec2(r_prev_pos_win.xy), 0).xyz;
 	vec3 normal = texelFetch(u_normal, ivec2(gl_FragCoord.xy), 0).xyz;
 
@@ -61,13 +63,13 @@ void main() {
 	}
 	else {
 		double diff = abs(prev_depth - r_prev_pos_win.z);
-		float depth_f = max(0.0, exp(-float(diff * 1024.0)));
+		float depth_f = max(0.0, exp(-float(diff * 2048.0)));
 
 		vec3 prev_dir_inc_cam = cam_dir_to_z1(vec2(r_prev_pos_win.xy));
 		prev_dir_inc_cam = mat3(frx_viewMatrix) * (inverse(mat3(frx_lastViewMatrix)) * prev_dir_inc_cam);
 
 		float sn_dir = length(cross(dir_inc_cam_0, prev_dir_inc_cam));
-		ratio *= exp(-(2.0 * sn_dir / roughness_0));
+		ratio *= exp(-(1.0 * sn_dir / roughness_0));
 
 		normal = inverse(mat3(frx_viewMatrix)) * normal;
 		prev_normal = inverse(mat3(frx_lastViewMatrix)) * prev_normal;
