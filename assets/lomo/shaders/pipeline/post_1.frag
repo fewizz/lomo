@@ -68,7 +68,7 @@ void main() {
 
 	fb_traversal_result result; {
 		vec3 dir_ws = cam_dir_to_win(pos_cam_0, dir_out_cam_0);
-		float z_offset = max(0.0, dir_ws.z * 2.5);
+		float z_offset = max(0.0, dir_ws.z * 8.0);
 
 		vec3 pos_win_traverse_beginning = pos_win_0;
 		pos_win_traverse_beginning.z -= z_offset;
