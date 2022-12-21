@@ -7,6 +7,7 @@ uniform sampler2D u_light;
 uniform sampler2D u_normal;
 uniform sampler2D u_extra_0;
 uniform sampler2D u_depth;
+uniform sampler2D u_ratio;
 
 layout(location = 0) out vec3 out_post_1_denoised_0;
 
@@ -23,6 +24,7 @@ void main() {
 	vec3 extra_0_0 = texelFetch(u_extra_0, ivec2(gl_FragCoord.xy), 0).rgb;
 	float roughness_0 = extra_0_0[0];
 	float depth_0 = texelFetch(u_depth, ivec2(gl_FragCoord.xy), 0).r;
+	float ratio_0 = texelFetch(u_ratio, ivec2(gl_FragCoord.xy), 0).r;
 
 	vec3 pos_0 = win_to_cam(vec3(gl_FragCoord.xy, depth_0));
 	//float shadow_0 = sun_light_at(pos_0);
@@ -30,12 +32,13 @@ void main() {
 	l_0 = max(l_0, vec3(0.0));
 	l_0 = pow(l_0, vec3(2.2));
 
-	for(int x = -2; x <= 2; ++x) {
-		for(int y = -2; y <= 2; ++y) {
+	for(int x = -1; x <= 1; ++x) {
+		for(int y = -1; y <= 1; ++y) {
 			int s = int(pow(2, POW));
 			ivec2 off0 = ivec2(x, y);
 			ivec2 off = off0 * s;
 			ivec2 coord = ivec2(gl_FragCoord.xy + off);
+
 			if(any(greaterThan(coord, frxu_size.xy))) continue;
 			if(any(lessThan(coord, ivec2(0)))) continue;
 			
@@ -49,23 +52,23 @@ void main() {
 
 			float z_diff = abs(dot(pos - pos_0, normal_0));
 
-			float weight_dist = 1.0;exp(-(
-				float(dot(off, off)) / 256.0
-			));
 			float weight = exp(-(
+				float(dot(off, off)) /
+				(mix(1024.0, 0.0, pow(ratio_0, 0.1))) /
+				(roughness_0 + 0.00001) +
+				//1.0 / (ratio_0 + 0.0001) +
 				//1.0 / max(dot(normal_0, normal), 0.0001) +
 				//acos(dot(normal_0, normal)) +
-				length(cross(normal_0, normal)) * 8.0 +
+				length(cross(normal_0, normal)) * 16.0 +
 				abs(roughness_0 - roughness) * 32.0 +
-				z_diff * 48.0// +
-				//abs(shadow_0 - shadow)
+				z_diff * 48.0
 			));
 
 			vec3 l = texelFetch(u_light, coord, 0).rgb;
 			l = max(l, vec3(0.0));
 			l = pow(l, vec3(2.2));
-			light += l * weight * weight_dist;
-			total_weight += weight * weight_dist;
+			light += l * weight;
+			total_weight += weight;
 		}
 	}
 	if(total_weight > 0.0) {

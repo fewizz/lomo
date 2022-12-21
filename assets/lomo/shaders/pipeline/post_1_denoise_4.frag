@@ -1,3 +1,3 @@
-#define POW 4
+#define POW 2
 
 #include lomo:shaders/pipeline/post/denoise.glsl

@@ -8,7 +8,7 @@
 #include lomo:shaders/lib/transform.glsl
 #include lomo:shaders/lib/hash.glsl
 
-// lomo:lomo.vert
+/* lomo:lomo.vert */
 
 void frx_pipelineVertex() {
 	if (frx_isGui) {

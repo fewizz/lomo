@@ -50,14 +50,15 @@ void main() {
 
 	pos_shd_win.xy *= tex_size;
 
-	const int steps = 8;
 
 	float radius = 0.0;
 	float max_radius = 8.0 / pow(2.0, 3 - cascade);
 
-	for(int x = 0; x < steps; ++x) {
-		for(int y = 0; y < steps; ++y) {
-			vec2 pos = vec2(x, y) / float(steps - 1);
+	const int r_steps = 6;
+
+	for(int x = 0; x < r_steps; ++x) {
+		for(int y = 0; y < r_steps; ++y) {
+			vec2 pos = vec2(x, y) / float(r_steps - 1);
 			pos = pos * 2.0 - 1.0;
 
 			pos *= max_radius;
@@ -70,6 +71,9 @@ void main() {
 	radius *= max_radius;
 
 	float result = 0.0;
+
+	const int steps = 8;
+
 	for(int x = 0; x < steps; ++x) {
 		for(int y = 0; y < steps; ++y) {
 			vec2 pos = vec2(x, y) / float(steps - 1);
