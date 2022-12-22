@@ -50,29 +50,28 @@ void main() {
 
 	pos_shd_win.xy *= tex_size;
 
-
 	float radius = 0.0;
-	float max_radius = 8.0 / pow(2.0, 3 - cascade);
+	float max_radius = 16.0 / pow(2.0, 3 - cascade);
 
-	const int r_steps = 6;
+	const int r_steps = 8;
+	const float dist_to_radius_const = 8.0;
 
 	for(int x = 0; x < r_steps; ++x) {
 		for(int y = 0; y < r_steps; ++y) {
 			vec2 pos = vec2(x, y) / float(r_steps - 1);
 			pos = pos * 2.0 - 1.0;
-
 			pos *= max_radius;
-
 			float d = texture(u_shadow_map, vec3(pos_shd_ndc.xy * 0.5 + 0.5 + pos / tex_size, cascade)).r;
-			radius += pos_shd_win.z < d ? pos_shd_win.z / 1000.0 : pos_shd_win.z - d;
+			radius += (pos_shd_win.z < d ? pos_shd_win.z / 10000000.0 : pos_shd_win.z - d) * dist_to_radius_const;
 		}
 	}
 
-	radius *= max_radius;
+	//radius *= max_radius;
 
 	float result = 0.0;
 
 	const int steps = 8;
+	int steps_done = 0;
 
 	for(int x = 0; x < steps; ++x) {
 		for(int y = 0; y < steps; ++y) {
@@ -88,6 +87,6 @@ void main() {
 	}
 
 	out_non_shadowed =
-		//result0 / max_radius;
-		1.0 - result / pow(steps, 2.0);
+		//radius / max_radius;
+		1.0 - (result / (pow(steps, 2)));
 }

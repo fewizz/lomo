@@ -106,13 +106,14 @@ void main() {
 	vec3 pos_cam_1 = reflection_pos;
 	vec3 pos_win_1 = vec3(reflection_pos_win + vec2(0.5), result.z);
 	vec3 normal_cam_raw_1 = texelFetch(u_normal, ivec2(pos_win_1), 0).xyz;
-	float depth_1 = texelFetch(u_depth, ivec2(pos_win_1), 0).r;
 
 	if(success) {
 		float depth_at_result = texelFetch(u_depth, ivec2(pos_win_1.xy), 0).r;
-		vec3 pos_cam_at = win_to_cam(vec3(pos_win_1.xy, depth_at_result));
-		float delta = distance(pos_cam_1, pos_cam_at);
-		if(delta > -pos_cam_at.z / 4.0) {
+		vec3 pos_cam_above_hit = win_to_cam(vec3(pos_win_1.xy, depth_at_result));
+
+		float diff = result.z - depth_at_result;
+
+		if(length(pos_cam_1) > length(pos_cam_above_hit) && distance(pos_cam_1, pos_cam_above_hit) > length(pos_cam_above_hit) / 0.5) {
 			success = false;
 		}
 	}
@@ -123,6 +124,7 @@ void main() {
 	));
 
 	bool valid_normal_1 = dot(normal_cam_raw_1, normal_cam_raw_1) > 0.9;
+	bool into_itself = success && dot(normal_cam_0, dir_out_cam_0) < 0.0;
 	bool pass = success && valid_normal_1;
 
 	vec3 normal_cam_transformed_1;
@@ -166,9 +168,9 @@ void main() {
 	vec3 s = vec3(0.0);
 
 	if(frx_worldHasSkylight == 1) {
-		float lod = pow(max(roughness, roughness_0), 0.2) * 7.0;
+		float lod = pow(max(roughness, roughness_0), 0.4) * 7.0;
 
-		bool hit_z_1 = pass && result.z >= 1.0;
+		bool hit_z_1 = success && result.z >= 1.0;
 		vec3 sky_dir = dir_out_cam;//hit_z_1 ? dir_out_cam : dir_out_cam;
 		sky_dir = mat3(frx_inverseViewMatrix) * sky_dir;
 
@@ -176,12 +178,11 @@ void main() {
 		vec3 sky_wo_sun = textureLod(u_sky_wo_sun, sky_dir, lod).rgb;
 
 		float d = texelFetch(u_vp_shadow, ivec2(pos_win.xy), 0).r;//sun_light_at(pos_cam);
-		//d = 1.0;
 		if(dot(sun_dir(), mat3(frx_inverseViewMatrix) * normal_cam) < 0.0) {
 			d = 0.0;
 		}
 
-		s = mix(sky_wo_sun, sky_w_sun, hit_z_1 ? 1.0 : d);
+		s = mix(sky_wo_sun, sky_w_sun, d);
 
 		sphere sph = sphere(vec3(0.0, 0.0, -frx_viewDistance * 0.9), frx_viewDistance);
 		ray r = ray(pos_cam, dir_out_cam);
@@ -189,14 +190,11 @@ void main() {
 		ray_sphere_intersection_result res = ray_sphere_intersection(r, sph);
 
 		s = medium(
-			s, pos_cam, pos_cam + dir_out_cam * max(0.0, res.close), dir_out_cam, 1.0
+			s, pos_cam, pos_cam + dir_out_cam * max(0.0, res.close), dir_out_cam, 1.0, u_sky_w_sun
 		);
 
 		if(!hit_z_1) {
-			s *= pow(
-				max(sky_light - 0.1, 0.0) * 1.2,
-				mix(12.0, 0.0, d)
-			);
+			s *= max(0.0, sky_light - 0.1);
 		}
 	}
 	else if(frx_worldIsEnd == 1) {
@@ -216,7 +214,7 @@ void main() {
 		vec3 pos_cam_end = pos_cam_1;
 
 		l = medium(
-			l, pos_cam_begin, pos_cam_end, dir_out_cam_0, sky_light_0
+			l, pos_cam_begin, pos_cam_end, dir_out_cam_0, sky_light_0, u_sky_w_sun
 		);
 	}
 
@@ -224,5 +222,5 @@ void main() {
 	}
 	light_1 /= float(samples);
 
-	out_post_1 = pow(light_1, vec3(1.0 / 2.2));
+	out_post_1 = light_1;
 }

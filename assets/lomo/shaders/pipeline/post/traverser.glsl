@@ -134,12 +134,12 @@ fb_traversal_result traverse_fb(
 			float corrected_z = lower_depth;
 
 			if(level == 0u) {
-				return fb_traversal_result(prev_texel, prev_z >= lower_depth ? z : corrected_z, true);
+				return fb_traversal_result(prev_texel, prev_z >= lower_depth ? prev_z : corrected_z, true);
 			}
 
 			z = corrected_z;
 		}
 	}
 
-	return fb_traversal_result(uvec2(0), 0.99999, false);
+	return fb_traversal_result(uvec2(0), 0/0, false);
 }
