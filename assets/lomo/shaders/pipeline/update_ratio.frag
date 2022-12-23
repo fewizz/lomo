@@ -11,17 +11,21 @@ uniform sampler2D u_prev_depth;
 uniform sampler2D u_normal;
 uniform sampler2D u_prev_normal;
 
+uniform sampler2D u_vp_shadow;
+uniform sampler2D u_prev_vp_shadow;
+
 layout(location = 0) out float out_new_ratio;
 
 float increase_ratio(float ratio, float mx) {
 	float ratio_reverted = 1.0 / (1.0 - ratio);
 	ratio_reverted += 1.0;
-	//ratio_reverted = min(ratio_reverted, mx);
+	ratio_reverted = min(ratio_reverted, mx);
 	return 1.0 - 1.0 / ratio_reverted;
 }
 
 void main() {
 	float depth_0 = texelFetch(u_depth, ivec2(gl_FragCoord.xy), 0).r;
+	float shadow_0 = texelFetch(u_vp_shadow, ivec2(gl_FragCoord.xy), 0).r;
 	vec3 pos_win_0 = vec3(gl_FragCoord.xy, depth_0);
 	vec3 pos_cam_0 = win_to_cam(pos_win_0);
 	vec4 extras_0 = texelFetch(u_extra_0, ivec2(gl_FragCoord.xy), 0);
@@ -43,6 +47,11 @@ void main() {
 	float prev_depth =
 		//texelFetch(u_prev_depth, ivec2(r_prev_pos_win.xy), 0).r;
 		texture(u_prev_depth, vec2(r_prev_pos_ndc.xy) * 0.5 + 0.5).r;
+
+	float prev_shadow =
+		//texelFetch(u_prev_depth, ivec2(r_prev_pos_win.xy), 0).r;
+		texelFetch(u_prev_vp_shadow, ivec2(r_prev_pos_win.xy), 0).r;
+
 	vec3 prev_normal =
 		//texelFetch(u_prev_normal, ivec2(r_prev_pos_win.xy), 0).xyz;
 		normalize(texture(u_prev_normal, vec2(r_prev_pos_ndc.xy) * 0.5 + 0.5).xyz);
@@ -75,6 +84,9 @@ void main() {
 		normal = normal * mat3(frx_viewMatrix);
 		prev_normal = prev_normal * mat3(frx_lastViewMatrix);
 		prev_normal = normalize(prev_normal);
+
+		ratio *= exp(-abs(prev_shadow - shadow_0) * 16.0);
+		//ratio *= exp(-abs(prev_shadow - shadow_0) * 1024.0);
 		/*ratio *= pow(
 			max(dot(normal, prev_normal), 0.0), mix(8.0, 1.0, roughness_0)
 		);*/

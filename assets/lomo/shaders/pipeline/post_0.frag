@@ -10,7 +10,6 @@
 #define MEDIUM_WITH_SUN
 #include lomo:shaders/pipeline/post/medium.glsl
 #include lomo:shaders/pipeline/post/compute_normal.glsl
-#include lomo:shaders/pipeline/post/shadow.glsl
 
 /* lomo:pipeline/post_0.frag */
 
@@ -19,19 +18,25 @@ uniform sampler2D u_color;
 uniform sampler2D u_depth;
 uniform sampler2D u_extra_0;
 uniform sampler2D u_extra_1;
-
 uniform sampler2D u_light_1_accum;
+
+uniform sampler2D u_vp_shadow;
+uniform sampler2D u_ratio;
 
 uniform samplerCube u_sky_w_sun;
 
 layout(location = 0) out float out_prev_depth;
 layout(location = 1) out vec3 out_prev_normal;
-layout(location = 2) out vec3 out_light;
+layout(location = 2) out float out_prev_vp_shadow;
+layout(location = 3) out float out_prev_ratio;
+layout(location = 4) out vec3 out_light;
 
 void main() {
 	ivec2 coord_0 = ivec2(gl_FragCoord.xy);
 	out_prev_depth = texelFetch(u_depth, coord_0, 0).r;
 	out_prev_normal = texelFetch(u_normal, coord_0, 0).xyz;
+	out_prev_vp_shadow = texelFetch(u_vp_shadow, coord_0, 0).r;
+	out_prev_ratio = texelFetch(u_ratio, coord_0, 0).r;
 
 	float depth = texelFetch(u_depth, ivec2(coord_0), 0).r;
 	vec3 normal_cam = texelFetch(u_normal, ivec2(coord_0), 0).xyz;

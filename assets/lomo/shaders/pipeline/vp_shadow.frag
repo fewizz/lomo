@@ -1,5 +1,6 @@
 #include frex:shaders/api/world.glsl
 #include lomo:shaders/lib/transform.glsl
+#include lomo:shaders/pipeline/post/sun_dir.glsl
 
 #include lomo:shaders/pipeline/post/traverser.glsl
 
@@ -88,5 +89,5 @@ void main() {
 
 	out_non_shadowed =
 		//radius / max_radius;
-		1.0 - (result / (pow(steps, 2)));
+		(1.0 - result / (pow(steps, 2))) * float(sun_dir().y > 0.0);
 }

@@ -187,7 +187,7 @@ void main() {
 			d = 0.0;
 		}
 
-		s = mix(sky_wo_sun, sky_w_sun, possibly_under ? 0.0 : d);
+		s = mix(sky_wo_sun, sky_w_sun, hit_z_1 ? 1.0 : d);
 
 		sphere sph = sphere(vec3(0.0, 0.0, -frx_viewDistance * 0.9), frx_viewDistance);
 		ray r = ray(pos_cam, dir_out_cam);
@@ -198,8 +198,8 @@ void main() {
 			s, pos_cam, pos_cam + dir_out_cam * max(0.0, res.close), dir_out_cam, 1.0, u_sky_w_sun
 		);
 
-		if(!hit_z_1) {
-			s *= max(0.0, sky_light - 0.1);
+		if(!hit_z_1 && !any(greaterThanEqual(pos_win.xy, vec2(frxu_size.xy))) && any(lessThan(pos_win.xy, vec2(0.0)))) {
+			s *= max(0.0, pow(sky_light - 0.125, 4.0));
 		}
 	}
 	else if(frx_worldIsEnd == 1) {
