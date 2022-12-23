@@ -16,7 +16,7 @@ layout(location = 0) out float out_new_ratio;
 float increase_ratio(float ratio, float mx) {
 	float ratio_reverted = 1.0 / (1.0 - ratio);
 	ratio_reverted += 1.0;
-	ratio_reverted = min(ratio_reverted, mx);
+	//ratio_reverted = min(ratio_reverted, mx);
 	return 1.0 - 1.0 / ratio_reverted;
 }
 
@@ -69,13 +69,12 @@ void main() {
 
 		ratio *= pow(
 			max(0.0, dot(dir_inc_cam_0, prev_dir_inc_cam)),
-			mix(1024.0, 64.0, roughness_0)
+			2048 * pow(1.0 - roughness_0, 1.5)
 		);
 
 		normal = normal * mat3(frx_viewMatrix);
 		prev_normal = prev_normal * mat3(frx_lastViewMatrix);
 		prev_normal = normalize(prev_normal);
-
 		/*ratio *= pow(
 			max(dot(normal, prev_normal), 0.0), mix(8.0, 1.0, roughness_0)
 		);*/

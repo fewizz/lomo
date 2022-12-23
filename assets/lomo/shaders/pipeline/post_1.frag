@@ -107,14 +107,19 @@ void main() {
 	vec3 pos_win_1 = vec3(reflection_pos_win + vec2(0.5), result.z);
 	vec3 normal_cam_raw_1 = texelFetch(u_normal, ivec2(pos_win_1), 0).xyz;
 
+	bool possibly_under = false;
+
 	if(success) {
 		float depth_at_result = texelFetch(u_depth, ivec2(pos_win_1.xy), 0).r;
 		vec3 pos_cam_above_hit = win_to_cam(vec3(pos_win_1.xy, depth_at_result));
 
 		float diff = result.z - depth_at_result;
 
-		if(length(pos_cam_1) > length(pos_cam_above_hit) && distance(pos_cam_1, pos_cam_above_hit) > length(pos_cam_above_hit) / 0.5) {
+		if(length(pos_cam_1) > length(pos_cam_above_hit) && distance(pos_cam_1, pos_cam_above_hit) > length(pos_cam_above_hit) / 4.0) {
 			success = false;
+		}
+		else {
+			possibly_under = true;
 		}
 	}
 
@@ -182,7 +187,7 @@ void main() {
 			d = 0.0;
 		}
 
-		s = mix(sky_wo_sun, sky_w_sun, d);
+		s = mix(sky_wo_sun, sky_w_sun, possibly_under ? 0.0 : d);
 
 		sphere sph = sphere(vec3(0.0, 0.0, -frx_viewDistance * 0.9), frx_viewDistance);
 		ray r = ray(pos_cam, dir_out_cam);

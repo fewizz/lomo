@@ -664,7 +664,7 @@
 				"post_1", "normals", "extras_0", "depth", "shadow_map", "ratio"
 			]
 		},
-		/*{
+		{
 			"name": "post_1_denoise_1",
 			"program": "post_1_denoise_1",
 			"framebuffer": "post_1_denoised_1",
@@ -711,7 +711,7 @@
 			"samplerImages": [
 				"post_1_denoised_5", "normals", "extras_0", "depth", "shadow_map", "ratio"
 			]
-		},*/
+		},
 		/*{
 			"name": "post_1_denoise_7",
 			"program": "post_1_denoise_7",
@@ -733,7 +733,7 @@
 			"program": "post_1_mix",
 			"framebuffer": "post_1_mixed",
 			"samplerImages": [
-				"post_1_denoised_0",
+				"post_1_denoised_6",
 				"prev_post_1",
 				"ratio",
 				"extras_0",
