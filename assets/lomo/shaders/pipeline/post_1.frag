@@ -173,7 +173,7 @@ void main() {
 	vec3 s = vec3(0.0);
 
 	if(frx_worldHasSkylight == 1) {
-		float lod = pow(max(roughness, roughness_0), 0.4) * 7.0;
+		float lod = pow(max(roughness, roughness_0), 0.1) * 7.0;
 
 		bool hit_z_1 = success && result.z >= 1.0;
 		vec3 sky_dir = dir_out_cam;//hit_z_1 ? dir_out_cam : dir_out_cam;

@@ -63,6 +63,16 @@
 				"max": 64.0,
 				"nameKey": "config.lomo.value.emissivity",
 				"descriptionKey": "config.lomo.help.emissivity"
+			},
+			"vanilla_ao": {
+				"default": true,
+				"nameKey": "config.lomo.value.vanilla_ao",
+				"descriptionKey": "config.lomo.help.vanilla_ao"
+			},
+			"taa": {
+				"default": true,
+				"nameKey": "config.lomo.value.taa",
+				"descriptionKey": "config.lomo.help.taa"
 			}
 		}
 	},

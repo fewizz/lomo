@@ -10,6 +10,8 @@
 #include lomo:shaders/lib/transform.glsl
 #include lomo:shaders/pipeline/header.glsl
 
+#include lomo:general
+
 /* lomo:pipeline/lomo.frag */
 
 layout(location = 0) out vec4 out_color;
@@ -44,10 +46,12 @@ void frx_pipelineFragment() {
 	}
 
 	glintify(a, float(frx_matGlint));
+	#ifdef VANILLA_AO
 	a.rgb *= pow(
 		mix(clamp(frx_fragLight.z, 0.0, 1.0), 1.0, clamp(frx_fragEmissive, 0.0, 1.0)),
 		0.5
 	);
+	#endif
 	out_color = a;
 
 	if(

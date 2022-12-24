@@ -46,24 +46,24 @@ void main() {
 	for(int x = -2; x <= 2; ++x) {
 		for(int y = -2; y <= 2; ++y) {
 			vec2 off = vec2(x, y) / 2.0 * radius;
-			vec2 coord = vec2(gl_FragCoord.xy + off);
-			coord /= frxu_size.xy;
-			
+			ivec2 coord_i = ivec2(gl_FragCoord.xy + off);
+			vec2 coord = vec2((gl_FragCoord.xy + off) / frxu_size.xy);
+
 			vec3 normal =
-				//texelFetch(u_normal, coord, 0).xyz;
-				texture(u_normal, coord).xyz;
+				texelFetch(u_normal, coord_i, 0).xyz;
+				//texture(u_normal, coord).xyz;
 
 			vec3 extra_0 =
-				//texelFetch(u_extra_0, coord, 0).rgb;
-				texture(u_extra_0, coord).rgb;
+				texelFetch(u_extra_0, coord_i, 0).rgb;
+				//texture(u_extra_0, coord).rgb;
 			float roughness = clamp(extra_0[0], 0.0, 1.0);
 			float depth =
-				//texelFetch(u_depth, coord, 0).r;
-				texture(u_depth, coord).r;
+				texelFetch(u_depth, coord_i, 0).r;
+				//texture(u_depth, coord).r;
 
 			float shadow =
-				//texelFetch(u_depth, coord, 0).r;
-				texture(u_shadow, coord).r;
+				texelFetch(u_shadow, coord_i, 0).r;
+				//texture(u_shadow, coord).r;
 
 			vec3 pos = win_to_cam(vec3(gl_FragCoord.xy + off, depth));
 
@@ -73,9 +73,9 @@ void main() {
 				float(dot(off, off))
 			) / (2 * variance) );
 
-			weight *= max(0.0, dot(normal_0, normal));
+			weight *= pow(max(0.0, dot(normal_0, normal)), 64.0);
 			weight *= 1.0 - min(abs(shadow_0 - shadow), 1.0);
-			weight *= 1.0 - min(z_diff * 32.0, 1.0);
+			//weight *= 1.0 - min(z_diff * 32.0, 1.0);
 
 			if(
 				roughness != roughness_0 ||
@@ -86,8 +86,9 @@ void main() {
 				weight = 0.0;
 			}
 
-			vec3 l = //texelFetch(u_light, coord, 0).rgb;
-				texture(u_light, coord).rgb;
+			vec3 l =
+				texelFetch(u_light, coord_i, 0).rgb;
+				//texture(u_light, coord).rgb;
 			l = max(l, vec3(0.0));
 			light += l * weight;
 			total_weight += weight;

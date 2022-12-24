@@ -70,7 +70,7 @@ void main() {
 	}
 	else {
 		float depth_diff = abs(prev_depth + 0.000001 - r_prev_pos_win.z);
-		ratio *= max(1.0 - depth_diff * 1024.0, 0.0);
+		ratio *= max(1.0 - depth_diff * 512.0, 0.0);
 
 		vec3 prev_dir_inc_cam = cam_dir_to_z1(vec2(r_prev_pos_win.xy));
 		prev_dir_inc_cam = mat3(frx_viewMatrix) * (prev_dir_inc_cam * mat3(frx_lastViewMatrix));
@@ -78,14 +78,14 @@ void main() {
 
 		ratio *= pow(
 			max(0.0, dot(dir_inc_cam_0, prev_dir_inc_cam)),
-			2048 * pow(1.0 - roughness_0, 1.5)
+			1024 * pow(1.0 - roughness_0, 1.5)
 		);
 
 		normal = normal * mat3(frx_viewMatrix);
 		prev_normal = prev_normal * mat3(frx_lastViewMatrix);
 		prev_normal = normalize(prev_normal);
 
-		ratio *= exp(-abs(prev_shadow - shadow_0) * 16.0);
+		//ratio *= exp(-abs(prev_shadow - shadow_0) * depth_diff * 16.0);
 		//ratio *= exp(-abs(prev_shadow - shadow_0) * 1024.0);
 		/*ratio *= pow(
 			max(dot(normal, prev_normal), 0.0), mix(8.0, 1.0, roughness_0)

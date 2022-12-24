@@ -1,15 +1,22 @@
 #include frex:shaders/api/header.glsl
 #include frex:shaders/api/world.glsl
 #include lomo:shaders/lib/transform.glsl
+#include lomo:general
 
 uniform sampler2DArray u_prev_taa;
 uniform sampler2D u_light;
 uniform sampler2D u_depth;
 
 layout(location = 0) out vec4 out_taa[4];
-layout(location = 4) out vec4 out_light;
+layout(location = 4) out vec3 out_light;
 
 void main() {
+	vec3 color = texelFetch(u_light, ivec2(gl_FragCoord.xy), 0).rgb;
+
+#ifndef TAA
+	out_light = color;
+#else
+
 	int current = int(frx_renderFrames % 4u);
 	float win_depth = texelFetch(u_depth, ivec2(gl_FragCoord.xy), 0).r;
 
@@ -30,11 +37,11 @@ void main() {
 
 	vec2 uv = prev_pos_ndc.xy * 0.5 + 0.5;
 
-	vec3 color = texelFetch(u_light, ivec2(gl_FragCoord.xy), 0).rgb;
 	vec4 colors[4];
 	for(int i = 0; i < 4; ++i) {
-		colors[i] = texelFetch(u_prev_taa, ivec3(prev_pos_win.xy, i), 0);
-			//texture(u_color_and_weight, vec3(uv, float(i)));
+		colors[i] =
+			//texelFetch(u_prev_taa, ivec3(prev_pos_win.xy, i), 0);
+			texture(u_prev_taa, vec3(uv, float(i)));
 	}
 
 	//float depth = linearize_depth(win_depth);
@@ -44,7 +51,6 @@ void main() {
 		for(int i = 0; i < 4; ++i) colors[i].w = 0.0;
 	}
 	else {
-		
 		//for(int i = 0; i < 4; ++i) {
 		float w = 0.0;
 		
@@ -52,7 +58,7 @@ void main() {
 			for(int y = -1; y <= 1; ++y) {
 				vec3 color0 = texelFetch(u_light, ivec2(gl_FragCoord.xy) + ivec2(x, y), 0).rgb;
 				float d = distance(color0, colors[current].rgb);
-				float w0 = exp(-(d * 32.0));
+				float w0 = exp(-(d * 64.0));
 				w = max(w, w0);
 			}	
 		}
@@ -78,5 +84,6 @@ void main() {
 	}
 	resulting_color /= total_weight;
 
-	out_light = vec4(resulting_color, 1.0);
+	out_light = resulting_color;
+#endif
 }

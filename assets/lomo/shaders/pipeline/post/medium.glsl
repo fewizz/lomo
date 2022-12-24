@@ -7,6 +7,7 @@
 vec3 fog(vec3 light, vec3 o, vec3 dir, float max_dist, float sky_light, samplerCube sky) {
 	vec3 sd = sun_dir();
 	vec3 sn = texture(sky, vec3(sd), 7.0).rgb;
+	sn *= float(sd.y >= 0.0);
 	float vsun = 0.0;
 
 	int steps = 32;//int(frx_viewDistance / 32);
@@ -45,7 +46,7 @@ vec3 fog(vec3 light, vec3 o, vec3 dir, float max_dist, float sky_light, samplerC
 	light = mix(
 		light,
 		(sn / (1024 * 64) + vec3(0.5)) * vec3(1.0, 2.0, 4.0),
-		vec3(min(pow(vsun, mix(2.5, 1.0, frx_smoothedRainGradient)), 1.0))
+		vec3(min(pow(vsun, mix(2.5, 1.0, frx_smoothedRainGradient)), 1.0)) * float(sd.y >= 0)
 	);
 
 	return light;

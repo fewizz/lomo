@@ -11,5 +11,11 @@
 	"config.lomo.help.tonemapping": "",
 
 	"config.lomo.value.emissivity": "Emissivity",
-	"config.lomo.help.emissivity": ""
+	"config.lomo.help.emissivity": "",
+
+	"config.lomo.value.vanilla_ao": "Vanilla AO",
+	"config.lomo.help.vanilla_ao": "",
+
+	"config.lomo.value.taa": "TAA",
+	"config.lomo.help.taa": ""
 }
