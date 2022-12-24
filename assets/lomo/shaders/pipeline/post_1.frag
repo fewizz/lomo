@@ -199,7 +199,7 @@ void main() {
 		);
 
 		if(!hit_z_1) {
-			s *= max(0.0, pow(sky_light, 4.0));
+			s *= max(0.0, pow(min(sky_light * 1.2, 1.0), 4.0));
 		}
 	}
 	else if(frx_worldIsEnd == 1) {

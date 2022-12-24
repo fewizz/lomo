@@ -101,6 +101,18 @@
 ],
 "programs": [
 	{
+		"name": "taa",
+		"vertexSource": "canvas:shaders/pipeline/post/simple_full_frame.vert",
+		"fragmentSource": "lomo:shaders/pipeline/taa.frag",
+		"samplers": [ "u_prev_taa", "u_light", "u_depth" ]
+	},
+	{
+		"name": "copy_taa",
+		"vertexSource": "canvas:shaders/pipeline/post/simple_full_frame.vert",
+		"fragmentSource": "lomo:shaders/pipeline/copy_taa.frag",
+		"samplers": [ "u_next_color_and_weight" ]
+	},
+	{
 		"name": "vp_shadow",
 		"vertexSource": "canvas:shaders/pipeline/post/simple_full_frame.vert",
 		"fragmentSource": "lomo:shaders/pipeline/vp_shadow.frag",
@@ -765,11 +777,27 @@
 			]
 		},
 		{
+			"name": "taa",
+			"program": "taa",
+			"framebuffer": "taa__light",
+			"samplerImages": [
+				"prev_taa",
+				"light",
+				"depth"
+			]
+		},
+		{
+			"name": "copy_taa",
+			"program": "copy_taa",
+			"framebuffer": "prev_taa",
+			"samplerImages": [ "taa" ]
+		},
+		{
 			"name": "select_emissive",
 			"program": "select_emissive",
 			"framebuffer": "emissive",
 			"samplerImages": [
-				"light"
+				"light_taa"
 			]
 		},
 		{
@@ -887,7 +915,7 @@
 			"name": "merge_bloom",
 			"program": "merge_bloom",
 			"framebuffer": "solid_c",
-			"samplerImages": ["bloom_upsample", "light"]
+			"samplerImages": ["bloom_upsample", "light_taa"]
 		}
 	]
 },
@@ -1439,9 +1467,26 @@
 		]
 	},
 	{
-		"name": "prev_ratio",
-		"internalFormat": "R32F",
-		"pixelFormat": "RED",
+		"name": "taa",
+		"internalFormat": "RGBA16F",
+		"pixelFormat": "RGBA",
+		"depth": 4,
+		"target": "TEXTURE_2D_ARRAY",
+		"pixelDataType": "FLOAT",
+		"texParams": [
+			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_COMPARE_MODE", "val": "NONE" }
+		]
+	},
+	{
+		"name": "prev_taa",
+		"internalFormat": "RGBA16F",
+		"pixelFormat": "RGBA",
+		"depth": 4,
+		"target": "TEXTURE_2D_ARRAY",
 		"pixelDataType": "FLOAT",
 		"texParams": [
 			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
@@ -1621,6 +1666,18 @@
 	},
 	{
 		"name": "light",
+		"internalFormat": "RGB16F",
+		"pixelFormat": "RGB",
+		"pixelDataType": "FLOAT",
+		"texParams": [
+			{ "name": "TEXTURE_MIN_FILTER", "val": "LINEAR" },
+			{ "name": "TEXTURE_MAG_FILTER", "val": "LINEAR" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" }
+		]
+	},
+	{
+		"name": "light_taa",
 		"internalFormat": "RGB16F",
 		"pixelFormat": "RGB",
 		"pixelDataType": "FLOAT",
@@ -2014,67 +2071,86 @@
 	},
 	{
 		"name": "bloom_downsample_1",
-		"colorAttachments": [ { "image": "bloom_downsample", "lod": 1}]
+		"colorAttachments": [ { "image": "bloom_downsample", "lod": 1 } ]
 	},
 	{
 		"name": "bloom_downsample_2",
-		"colorAttachments": [ { "image": "bloom_downsample", "lod": 2}]
+		"colorAttachments": [ { "image": "bloom_downsample", "lod": 2 } ]
 	},
 	{
 		"name": "bloom_downsample_3",
-		"colorAttachments": [ { "image": "bloom_downsample", "lod": 3}]
+		"colorAttachments": [ { "image": "bloom_downsample", "lod": 3 } ]
 	},
 	{
 		"name": "bloom_downsample_4",
-		"colorAttachments": [ { "image": "bloom_downsample", "lod": 4}]
+		"colorAttachments": [ { "image": "bloom_downsample", "lod": 4 } ]
 	},
 	{
 		"name": "bloom_downsample_5",
-		"colorAttachments": [ { "image": "bloom_downsample", "lod": 5}]
+		"colorAttachments": [ { "image": "bloom_downsample", "lod": 5 } ]
 	},
 	{
 		"name": "bloom_downsample_6",
-		"colorAttachments": [ { "image": "bloom_downsample", "lod": 6}]
+		"colorAttachments": [ { "image": "bloom_downsample", "lod": 6 } ]
 	},
 	{
 		"name": "bloom_upsample_6",
-		"colorAttachments": [ { "image": "bloom_upsample", "lod": 6}]
+		"colorAttachments": [ { "image": "bloom_upsample", "lod": 6 } ]
 	},
 	{
 		"name": "bloom_upsample_5",
-		"colorAttachments": [ { "image": "bloom_upsample", "lod": 5}]
+		"colorAttachments": [ { "image": "bloom_upsample", "lod": 5 } ]
 	},
 	{
 		"name": "bloom_upsample_4",
-		"colorAttachments": [ { "image": "bloom_upsample", "lod": 4}]
+		"colorAttachments": [ { "image": "bloom_upsample", "lod": 4 } ]
 	},
 	{
 		"name": "bloom_upsample_3",
-		"colorAttachments": [ { "image": "bloom_upsample", "lod": 3}]
+		"colorAttachments": [ { "image": "bloom_upsample", "lod": 3 } ]
 	},
 	{
 		"name": "bloom_upsample_2",
-		"colorAttachments": [ { "image": "bloom_upsample", "lod": 2}]
+		"colorAttachments": [ { "image": "bloom_upsample", "lod": 2 } ]
 	},
 	{
 		"name": "bloom_upsample_1",
-		"colorAttachments": [ { "image": "bloom_upsample", "lod": 1}]
+		"colorAttachments": [ { "image": "bloom_upsample", "lod": 1 } ]
 	},
 	{
 		"name": "bloom_upsample_0",
-		"colorAttachments": [ { "image": "bloom_upsample"}]
+		"colorAttachments": [ { "image": "bloom_upsample" } ]
 	},
 	{
 		"name": "vp_shadow",
-		"colorAttachments": [ { "image": "vp_shadow"}]
+		"colorAttachments": [ { "image": "vp_shadow" } ]
 	},
 	{
 		"name": "ratio",
-		"colorAttachments": [ { "image": "ratio"}]
+		"colorAttachments": [ { "image": "ratio" } ]
 	},
 	{
 		"name": "prev_ratio",
-		"colorAttachments": [ { "image": "prev_ratio"}]
+		"colorAttachments": [ { "image": "prev_ratio" } ]
+	},
+	{
+		"name": "taa__light",
+		"colorAttachments": [
+			{ "image": "taa", "layer": 0 },
+			{ "image": "taa", "layer": 1 },
+			{ "image": "taa", "layer": 2 },
+			{ "image": "taa", "layer": 3 },
+			{ "image": "light_taa" }
+		]
+	},
+	{
+		"name": "prev_taa",
+		"colorAttachments": [
+			{ "image": "prev_taa", "layer": 0 },
+			{ "image": "prev_taa", "layer": 1 },
+			{ "image": "prev_taa", "layer": 2 },
+			{ "image": "prev_taa", "layer": 3 }
+		]
 	},
 	{
 		"name": "sky_w_sun",

@@ -92,6 +92,7 @@ void main() {
 		);*/
 	}
 
+	//ratio = 0.95;
 	ratio = clamp(ratio, 0.0, 1.0);
 	out_new_ratio = ratio;
 }
