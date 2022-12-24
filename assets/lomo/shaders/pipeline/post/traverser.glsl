@@ -104,7 +104,7 @@ fb_traversal_result traverse_fb(
 			depths_raw[0], depths_raw[1], depths_raw[2], depths_raw[3], 1.0
 		);
 
-		uint level = 0;
+		uint level = 0u;
 		float lower_depth = depths[level];
 
 		{

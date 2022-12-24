@@ -22,14 +22,12 @@ vec3 fog(vec3 light, vec3 o, vec3 dir, float max_dist, float sky_light, samplerC
 	for(int i = 0; i < steps; ++i) {
 		float d = (float(i) + 0.5) * stp;
 		float offset = hash13(
-			uvec3(gl_FragCoord.xy, frx_renderFrames + i * 1024)
+			uvec3(gl_FragCoord.xy, i + frx_renderFrames * (1024u * 1024u))
 		) - 0.5;
 		d += offset * stp;
 
 		vec3 o0 = o + dir * d;
-		float v0 = exp(-(
-			max(0.0, (o0.y - 64.0)) / 32.0
-		));
+		float v0 = exp(-(max(0.0, (o0.y - 64.0)) / 32.0));
 
 		float delta = d - prev_dist;
 		v0 *= delta;
@@ -66,7 +64,7 @@ vec3 medium(vec3 light, vec3 from, vec3 to, vec3 dir, float sky_light, samplerCu
 	dir = mat3(frx_inverseViewMatrix) * dir;
 
 	if(frx_worldHasSkylight == 1) {
-		//light = fog(light, f, dir, dist, sky_light, sky);
+		light = fog(light, f, dir, dist, sky_light, sky);
 	}
 
 	return light;

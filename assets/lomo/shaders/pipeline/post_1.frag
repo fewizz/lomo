@@ -78,7 +78,7 @@ void main() {
 		result = traverse_fb(
 			pos_win_traverse_beginning, dir_ws,
 			u_hi_depth,
-			128
+			92
 		);
 	}
 
@@ -198,8 +198,8 @@ void main() {
 			s, pos_cam, pos_cam + dir_out_cam * max(0.0, res.close), dir_out_cam, 1.0, u_sky_w_sun
 		);
 
-		if(!hit_z_1 && !any(greaterThanEqual(pos_win.xy, vec2(frxu_size.xy))) && any(lessThan(pos_win.xy, vec2(0.0)))) {
-			s *= max(0.0, pow(sky_light - 0.125, 4.0));
+		if(!hit_z_1) {
+			s *= max(0.0, pow(sky_light, 4.0));
 		}
 	}
 	else if(frx_worldIsEnd == 1) {

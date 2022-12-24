@@ -65,9 +65,9 @@ void main() {
 				//texelFetch(u_depth, coord, 0).r;
 				texture(u_shadow, coord).r;
 
-			//vec3 pos = win_to_cam(vec3(gl_FragCoord.xy + off, depth));
+			vec3 pos = win_to_cam(vec3(gl_FragCoord.xy + off, depth));
 
-			//float z_diff = abs(dot(pos - pos_0, normal_0));
+			float z_diff = abs(dot(pos - pos_0, normal_0));
 
 			float weight = exp(-(
 				float(dot(off, off))
@@ -75,7 +75,7 @@ void main() {
 
 			weight *= max(0.0, dot(normal_0, normal));
 			weight *= 1.0 - min(abs(shadow_0 - shadow), 1.0);
-			//weight *= 1.0 - min(z_diff * 32.0, 1.0);
+			weight *= 1.0 - min(z_diff * 32.0, 1.0);
 
 			if(
 				roughness != roughness_0 ||

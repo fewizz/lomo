@@ -268,7 +268,8 @@
 			"u_light_1_accum",
 			"u_vp_shadow",
 			"u_ratio",
-			"u_sky_w_sun"
+			"u_sky_w_sun",
+			"u_shadow_map"
 		]
 	},
 	{
@@ -759,7 +760,8 @@
 				"post_1_mixed",
 				"vp_shadow",
 				"ratio",
-				"sky_w_sun"
+				"sky_w_sun",
+				"shadow_map"
 			]
 		},
 		{
@@ -1412,6 +1414,19 @@
 	},
 	{
 		"name": "ratio",
+		"internalFormat": "R32F",
+		"pixelFormat": "RED",
+		"pixelDataType": "FLOAT",
+		"texParams": [
+			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_COMPARE_MODE", "val": "NONE" }
+		]
+	},
+	{
+		"name": "prev_ratio",
 		"internalFormat": "R32F",
 		"pixelFormat": "RED",
 		"pixelDataType": "FLOAT",
