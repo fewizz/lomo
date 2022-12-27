@@ -58,14 +58,14 @@ void main() {
 			for(int y = -1; y <= 1; ++y) {
 				vec3 color0 = texelFetch(u_light, ivec2(gl_FragCoord.xy) + ivec2(x, y), 0).rgb;
 				float d = distance(color0, colors[current].rgb);
-				float w0 = exp(-(d * 64.0));
+				float w0 = 1.0 - min(1.0, pow(d, 2.5) * 1024.0 * 1024.0);//exp(-pow(d, 1.5 * 128.0));
 				w = max(w, w0);
 			}	
 		}
 
 		for(uint i = 0u; i < 4u; ++i) {
 			uint ind = (frx_renderFrames + i) % 4u;
-			colors[ind].w *= mix(w, 1.0, pow(i / 4.0, 8.0));
+			colors[ind].w *= w;//mix(w, 1.0, pow(i / 4.0, 8.0));
 		}
 	}
 
