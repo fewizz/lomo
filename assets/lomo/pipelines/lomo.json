@@ -68,12 +68,12 @@
 				"default": true,
 				"nameKey": "config.lomo.value.vanilla_ao",
 				"descriptionKey": "config.lomo.help.vanilla_ao"
-			},
+			}/*,
 			"taa": {
 				"default": true,
 				"nameKey": "config.lomo.value.taa",
 				"descriptionKey": "config.lomo.help.taa"
-			}
+			}*/
 		}
 	},
 	{
@@ -786,7 +786,7 @@
 				"shadow_map"
 			]
 		},
-		{
+		/*{
 			"name": "taa",
 			"program": "taa",
 			"framebuffer": "taa__light",
@@ -801,13 +801,13 @@
 			"program": "copy_taa",
 			"framebuffer": "prev_taa",
 			"samplerImages": [ "taa" ]
-		},
+		},*/
 		{
 			"name": "select_emissive",
 			"program": "select_emissive",
 			"framebuffer": "emissive",
 			"samplerImages": [
-				"light_taa"
+				"light"
 			]
 		},
 		{
@@ -925,7 +925,7 @@
 			"name": "merge_bloom",
 			"program": "merge_bloom",
 			"framebuffer": "solid_c",
-			"samplerImages": ["bloom_upsample", "light_taa"]
+			"samplerImages": ["bloom_upsample", "light"]
 		}
 	]
 },

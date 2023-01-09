@@ -52,20 +52,35 @@ void main() {
 	}
 	else {
 		//for(int i = 0; i < 4; ++i) {
-		float w = 0.0;
+		float d = distance(color, colors[current].rgb);
+		float w = 1.0 -
+			min(1.0, pow(d, 1.5) * 256.0);
 		
-		for(int x = -1; x <= 1; ++x) {
+		/*if(d >= 0.05) {
+			w = 0.0;
+		}*/
+		
+		/*for(int x = -1; x <= 1; ++x) {
 			for(int y = -1; y <= 1; ++y) {
-				vec3 color0 = texelFetch(u_light, ivec2(gl_FragCoord.xy) + ivec2(x, y), 0).rgb;
+				ivec2 off = ivec2(x, y);
+				vec3 color0 = texelFetch(u_light, ivec2(gl_FragCoord.xy) + off, 0).rgb;
 				float d = distance(color0, colors[current].rgb);
-				float w0 = 1.0 - min(1.0, pow(d, 2.5) * 1024.0 * 1024.0);//exp(-pow(d, 1.5 * 128.0));
+				//float l = length(vec2(off) + 1.0);
+				//l = max(0.0, min(l, 1.0));
+
+				float w0 = 1.0 -
+					min(
+						1.0,
+						pow(d, 1.0)
+					);
+
 				w = max(w, w0);
-			}	
-		}
+			}
+		}*/
 
 		for(uint i = 0u; i < 4u; ++i) {
 			uint ind = (frx_renderFrames + i) % 4u;
-			colors[ind].w *= w;//mix(w, 1.0, pow(i / 4.0, 8.0));
+			colors[ind].w = w;//mix(w, 1.0, pow(i / 4.0, 8.0));
 		}
 	}
 

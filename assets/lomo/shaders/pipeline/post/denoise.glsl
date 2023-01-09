@@ -75,7 +75,7 @@ void main() {
 
 			weight *= pow(max(0.0, dot(normal_0, normal)), 64.0);
 			weight *= 1.0 - min(abs(shadow_0 - shadow), 1.0);
-			//weight *= 1.0 - min(z_diff * 32.0, 1.0);
+			weight *= 1.0 - min(z_diff * 32.0, 1.0);
 
 			if(
 				roughness != roughness_0 ||

@@ -86,7 +86,7 @@ void main() {
 		prev_normal = normalize(prev_normal);
 
 		//ratio *= exp(-abs(prev_shadow - shadow_0) * depth_diff * 16.0);
-		//ratio *= exp(-abs(prev_shadow - shadow_0) * 1024.0);
+		ratio *= exp(-abs(prev_shadow - shadow_0) * 1024.0);
 		/*ratio *= pow(
 			max(dot(normal, prev_normal), 0.0), mix(8.0, 1.0, roughness_0)
 		);*/

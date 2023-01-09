@@ -65,7 +65,7 @@ vec3 medium(vec3 light, vec3 from, vec3 to, vec3 dir, float sky_light, samplerCu
 	dir = mat3(frx_inverseViewMatrix) * dir;
 
 	if(frx_worldHasSkylight == 1) {
-		//light = fog(light, f, dir, dist, sky_light, sky);
+		light = fog(light, f, dir, dist, sky_light, sky);
 	}
 
 	return light;
