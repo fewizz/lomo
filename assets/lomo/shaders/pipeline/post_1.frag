@@ -58,29 +58,25 @@ void main() {
 
 	vec3 light_1 = vec3(0.0);
 
-	const int samples = 1;
-	for(int smpl = 0; smpl < samples; ++smpl) {
+	const uint samples = 1u;
+
+	for(uint smpl = 0u; smpl < samples; ++smpl) {
 
 	vec3 normal_cam_transformed = compute_normal(
-		dir_inc_cam_0, normal_cam_0, uvec2(gl_FragCoord.xy), roughness_0, smpl * 1024
+		dir_inc_cam_0, normal_cam_0, uvec2(gl_FragCoord.xy), roughness_0, smpl * 1024u
 	);
 	vec3 dir_out_cam_0 = reflect(dir_inc_cam_0, normal_cam_transformed);
 
-	fb_traversal_result result; {
-		vec3 dir_ws = cam_dir_to_win(pos_cam_0, dir_out_cam_0);
-		float z_offset = max(0.0, dir_ws.z * 8.0);
+	vec3 dir_ws = cam_dir_to_win(pos_cam_0, dir_out_cam_0);
+	float z_offset = max(0.0, dir_ws.z * 8.0);
 
-		vec3 pos_win_traverse_beginning = pos_win_0;
-		pos_win_traverse_beginning.z -= z_offset;
-		pos_win_traverse_beginning.z -= 1.0 / 1000000.0;
+	vec3 pos_win_traverse_beginning = pos_win_0;
+	pos_win_traverse_beginning.z -= z_offset;
+	pos_win_traverse_beginning.z -= 1.0 / 100000.0;
 
-		uint max_side = uint(max(frxu_size.x, frxu_size.y));
-		result = traverse_fb(
-			pos_win_traverse_beginning, dir_ws,
-			u_hi_depth,
-			92
-		);
-	}
+	fb_traversal_result result =
+		//fb_traversal_result(uvec2(0), 0/0, false);
+		traverse_fb(pos_win_traverse_beginning, dir_ws, u_hi_depth, 92u);
 
 	vec3 reflection_pos = win_to_cam(
 		vec3(result.texel + vec2(0.5), result.z)
@@ -117,9 +113,9 @@ void main() {
 
 		if(length(pos_cam_1) > length(pos_cam_above_hit) && distance(pos_cam_1, pos_cam_above_hit) > length(pos_cam_above_hit) / 4.0) {
 			success = false;
+			//possibly_under = true;
 		}
 		else {
-			possibly_under = true;
 		}
 	}
 
@@ -173,7 +169,13 @@ void main() {
 	vec3 s = vec3(0.0);
 
 	if(frx_worldHasSkylight == 1) {
-		float lod = pow(max(roughness, roughness_0), 0.1) * 7.0;
+		float lod;
+		if(pass) {
+			lod = pow(max(roughness, roughness_0), 0.1) * 7.0;
+		}
+		else {
+			lod = pow(roughness_0, 0.1) * 7.0;
+		}
 
 		bool hit_z_1 = success && result.z >= 1.0;
 		vec3 sky_dir = dir_out_cam;//hit_z_1 ? dir_out_cam : dir_out_cam;
@@ -183,11 +185,13 @@ void main() {
 		vec3 sky_wo_sun = textureLod(u_sky_wo_sun, sky_dir, lod).rgb;
 
 		float d = texelFetch(u_vp_shadow, ivec2(pos_win.xy), 0).r;//sun_light_at(pos_cam);
-		if(dot(sun_dir(), mat3(frx_inverseViewMatrix) * normal_cam) < 0.0) {
-			d = 0.0;
-		}
 
-		s = mix(sky_wo_sun, sky_w_sun, hit_z_1 ? 1.0 : d);
+		float dt = dot(sun_dir(), mat3(frx_inverseViewMatrix) * normal_cam);
+		//if(dot(sun_dir(), mat3(frx_inverseViewMatrix) * normal_cam) < 0.0) {
+		//	d = 0.0;
+		//}
+
+		s = mix(sky_wo_sun, sky_w_sun, possibly_under ? 0.0 : (hit_z_1 ? 1.0 : d) * max(0.0, dt));
 
 		sphere sph = sphere(vec3(0.0, 0.0, -frx_viewDistance * 0.9), frx_viewDistance);
 		ray r = ray(pos_cam, dir_out_cam);
@@ -200,6 +204,9 @@ void main() {
 
 		if(!hit_z_1) {
 			s *= max(0.0, pow(min(sky_light * 1.2, 1.0), 4.0));
+		}
+		if(possibly_under) {
+			//s*=0.5;
 		}
 	}
 	else if(frx_worldIsEnd == 1) {
@@ -214,17 +221,19 @@ void main() {
 			color, l, light,
 			roughness_1, reflectance_1
 		);
-
-		vec3 pos_cam_begin = pos_cam_0;
-		vec3 pos_cam_end = pos_cam_1;
-
-		l = medium(
-			l, pos_cam_begin, pos_cam_end, dir_out_cam_0, sky_light_0, u_sky_w_sun
-		);
 	}
+
+	vec3 pos_cam_begin = pos_cam_0;
+	vec3 pos_cam_end = pass ? pos_cam_1 : pos_cam_begin + dir_out_cam_0 * frx_viewDistance;
+
+	l = medium(
+		l, pos_cam_begin, pos_cam_end, dir_out_cam_0, sky_light_0, u_sky_w_sun
+	);
+	//}
 
 	light_1 += l;
 	}
+
 	light_1 /= float(samples);
 
 	out_post_1 = light_1;

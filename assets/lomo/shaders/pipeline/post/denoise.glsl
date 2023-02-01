@@ -28,17 +28,24 @@ void main() {
 	float ratio_0 = texelFetch(u_ratio, ivec2(gl_FragCoord.xy), 0).r;
 	float shadow_0 = texelFetch(u_shadow, ivec2(gl_FragCoord.xy), 0).r;
 	ratio_0 = clamp(ratio_0, 0.0, 1.0);
+	//float ratio_reverted = 1.0 / (1.0 - ratio_0);
+	//ratio_reverted -= 1.0;
+	//ratio_reverted = max(ratio_reverted, 1.0);
+	//ratio_0 = ratio_reverted;
+	//ratio_0 = 1.0 - 1.0 / ratio_reverted;
 
 	vec3 pos_0 = win_to_cam(vec3(gl_FragCoord.xy, depth_0));
 	vec3 l_0 = texelFetch(u_light, ivec2(gl_FragCoord.xy), 0).rgb;
 	l_0 = max(l_0, vec3(0.0));
 
-	float max_ratio = 1024.0 * pow(roughness_0, 1.5);
+	float max_ratio = 1024.0 * pow(roughness_0, 1.5) + 1.0F;
 	max_ratio = 1.0 - 1.0 / max_ratio;
 
 	float radius =
 		pow(2.0, POW) *
-		((max_ratio - ratio_0) / 2.0 + pow(roughness_0, 1.5));//clamp(roughness_0 * 2.0 - ratio_0, 0.0, 1.0);
+		pow((max_ratio - ratio_0), 0.5) / max_ratio * pow(roughness_0, 1.5)
+		//pow((max_ratio - ratio_0), pow(1.0 - roughness_0, 1.0 / 4.0)) * 0.5
+	;
 
 	radius = clamp(radius, 0.0001, pow(2.0, POW));
 	float variance = 0.3 * pow(radius, 2.0);

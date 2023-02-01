@@ -60,7 +60,7 @@ void main() {
 
 	float ratio = texelFetch(u_prev_ratio, ivec2(r_prev_pos_win.xy), 0).r;
 	ratio = max(ratio, 0.0);
-	ratio = increase_ratio(ratio, 1024.0 * pow(roughness_0, 1.5));
+	ratio = increase_ratio(ratio, 1024.0 * pow(roughness_0, 1.5) + 1.0);
 
 	if(
 		any(greaterThan(vec3(r_prev_pos_ndc), vec3( 1.0))) ||
@@ -69,7 +69,7 @@ void main() {
 		ratio = 0.0;
 	}
 	else {
-		float depth_diff = abs(prev_depth + 0.000001 - r_prev_pos_win.z);
+		float depth_diff = abs(prev_depth - r_prev_pos_win.z);
 		ratio *= max(1.0 - depth_diff * 512.0, 0.0);
 
 		vec3 prev_dir_inc_cam = cam_dir_to_z1(vec2(r_prev_pos_win.xy));
@@ -78,7 +78,7 @@ void main() {
 
 		ratio *= pow(
 			max(0.0, dot(dir_inc_cam_0, prev_dir_inc_cam)),
-			1024 * pow(1.0 - roughness_0, 1.5)
+			2048 * pow(1.5 - roughness_0, 1.5)
 		);
 
 		normal = normal * mat3(frx_viewMatrix);
@@ -86,10 +86,10 @@ void main() {
 		prev_normal = normalize(prev_normal);
 
 		//ratio *= exp(-abs(prev_shadow - shadow_0) * depth_diff * 16.0);
-		ratio *= exp(-abs(prev_shadow - shadow_0) * 1024.0);
-		/*ratio *= pow(
+		ratio *= exp(-abs(prev_shadow - shadow_0) * 1.0);
+		ratio *= pow(
 			max(dot(normal, prev_normal), 0.0), mix(8.0, 1.0, roughness_0)
-		);*/
+		);
 	}
 
 	//ratio = 0.95;

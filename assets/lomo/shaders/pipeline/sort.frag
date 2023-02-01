@@ -16,14 +16,14 @@ layout(location = 0) out vec4 out_values;
 void main() {
 	ivec2 coord = ivec2(gl_FragCoord.xy);
 
-	const uint layers = 5u;
+	const uint layers = 2u;
 
 	vec4 values[layers] = vec4[] (
 		texelFetch(u_solid, coord, 0),
-		texelFetch(u_translucent, coord, 0),
-		texelFetch(u_entity, coord, 0),
-		texelFetch(u_particle, coord, 0),
-		texelFetch(u_weather, coord, 0)
+		texelFetch(u_translucent, coord, 0)//,
+		//texelFetch(u_entity, coord, 0),
+		//texelFetch(u_particle, coord, 0),
+		//texelFetch(u_weather, coord, 0)
 	);
 
 	uint index_to_type = floatBitsToUint(

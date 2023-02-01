@@ -3,7 +3,7 @@
 "nameKey": "pipeline.lomo.name",
 "descriptionKey": "pipeline.lomo.desc",
 
-"glslVersion": 400,
+"glslVersion": 330,
 "enablePBR": true,
 
 "materialProgram": {
@@ -14,10 +14,10 @@
 "drawTargets": {
 	"solidTerrain": "solid_cnged",
 	"translucentTerrain": "translucent_cnged",
-	"translucentEntity": "entity_cnged",
-	"weather": "weather_cnged",
+	"translucentEntity": "translucent_cnged",
+	"weather": "solid_cnged",
 	"clouds": "cloud_cd",
-	"translucentParticles": "particle_cnged"
+	"translucentParticles": "solid_cnged"
 },
 
 "sky": {
@@ -25,9 +25,9 @@
 },
 
 "fabulousTargets": {
-	"entity": "entity_cnged",
-	"particles": "particle_cnged",
-	"weather": "weather_cnged",
+	"entity": "translucent_cnged",
+	"particles": "translucent_cnged",
+	"weather": "translucent_cnged",
 	"clouds": "cloud_cd",
 	"translucent": "translucent_cnged"
 },
@@ -1434,7 +1434,7 @@
 		]
 	},
 	{
-		"size": 1024,
+		"size": 512,
 		"name": "shadow_map",
 		"internalFormat": "DEPTH_COMPONENT32",
 		"pixelFormat": "DEPTH_COMPONENT",
@@ -1745,8 +1745,8 @@
 		"size": 512,
 		"lod": 7,
 		"texParams": [
-			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST_MIPMAP_LINEAR" },
-			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_MIN_FILTER", "val": "LINEAR_MIPMAP_LINEAR" },
+			{ "name": "TEXTURE_MAG_FILTER", "val": "LINEAR" },
 			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
 			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" },
 			{ "name": "TEXTURE_WRAP_R", "val": "CLAMP_TO_EDGE" }
@@ -1761,8 +1761,8 @@
 		"size": 512,
 		"lod": 7,
 		"texParams": [
-			{ "name": "TEXTURE_MIN_FILTER", "val": "NEAREST_MIPMAP_LINEAR" },
-			{ "name": "TEXTURE_MAG_FILTER", "val": "NEAREST" },
+			{ "name": "TEXTURE_MIN_FILTER", "val": "LINEAR_MIPMAP_LINEAR" },
+			{ "name": "TEXTURE_MAG_FILTER", "val": "LINEAR" },
 			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
 			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" },
 			{ "name": "TEXTURE_WRAP_R", "val": "CLAMP_TO_EDGE" }

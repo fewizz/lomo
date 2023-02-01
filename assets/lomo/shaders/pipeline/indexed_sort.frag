@@ -15,17 +15,17 @@ layout(location = 1) out float out_type_to_index;
 void main() {
 	ivec2 coord = ivec2(gl_FragCoord.xy);
 
-	const uint layers = 5u;
+	const uint layers = 2u;
 
 	float type_to_depth[layers] = float[](
 		texelFetch(u_solid_d, coord, 0).r,
-		texelFetch(u_translucent_d, coord, 0).r,
-		texelFetch(u_entity_d, coord, 0).r,
-		texelFetch(u_particle_d, coord, 0).r,
-		texelFetch(u_weather_d, coord, 0).r
+		texelFetch(u_translucent_d, coord, 0).r//,
+		//texelFetch(u_entity_d, coord, 0).r,
+		//texelFetch(u_particle_d, coord, 0).r,
+		//texelFetch(u_weather_d, coord, 0).r
 	);
 
-	bool done[layers] = bool[](false, false, false, false, false);
+	bool done[layers] = bool[](false, false);//, false, false, false);
 	uint type_to_index[layers];
 	uint index_to_type[layers];
 

@@ -1,8 +1,8 @@
 #include frex:shaders/api/world.glsl
+#include frex:shaders/api/header.glsl
 #include lomo:shaders/lib/transform.glsl
+#include lomo:shaders/lib/hash.glsl
 #include lomo:shaders/pipeline/post/sun_dir.glsl
-
-#include lomo:shaders/pipeline/post/traverser.glsl
 
 #include lomo:shaders/pipeline/post/sun_dir.glsl
 
@@ -35,7 +35,7 @@ void main() {
 	}
 
 	vec3 pos_win = vec3(gl_FragCoord.xy, depth_win);
-	vec3 pos_cam = vec3(win_to_cam(pos_win));
+	vec3 pos_cam = win_to_cam(pos_win);
 	vec3 pos_wrd = cam_to_wrd(pos_cam);
 
 	vec4 pos_shd0 = frx_shadowViewMatrix * vec4(pos_wrd, 1.0);
@@ -47,19 +47,19 @@ void main() {
 	vec3 pos_shd_ndc = pos_shd_ndc0.xyz /= pos_shd_ndc0.w;
 	vec3 pos_shd_win = pos_shd_ndc * 0.5 + 0.5;
 
-	vec2 tex_size = vec2(1024);//textureSize(u_shadow_map, cascade).xy;
+	vec2 tex_size = vec2(SHADOW_MAP_SIZE);
 
 	pos_shd_win.xy *= tex_size;
 
 	float radius = 0.0;
 	float max_radius = 16.0 / pow(2.0, 3 - cascade);
 
-	const int r_steps = 8;
+	const int r_steps = 6;
 	const float dist_to_radius_const = 8.0;
 
 	for(int x = 0; x < r_steps; ++x) {
 		for(int y = 0; y < r_steps; ++y) {
-			vec2 pos = vec2(x, y) / float(r_steps - 1);
+			vec2 pos = (vec2(x, y) + hash23(uvec3(pos_shd0 * 1000.0)) * 2.0 - 1.0) / float(r_steps);
 			pos = pos * 2.0 - 1.0;
 			pos *= max_radius;
 			float d = texture(u_shadow_map, vec3(pos_shd_ndc.xy * 0.5 + 0.5 + pos / tex_size, cascade)).r;
@@ -71,7 +71,7 @@ void main() {
 
 	float result = 0.0;
 
-	const int steps = 8;
+	const int steps = 6;
 	int steps_done = 0;
 
 	for(int x = 0; x < steps; ++x) {
@@ -80,7 +80,6 @@ void main() {
 			pos = pos * 2.0 - 1.0;
 
 			pos *= radius;
-
 			float d = texture(u_shadow_map, vec3(pos_shd_ndc.xy * 0.5 + 0.5 + pos / tex_size, cascade)).r;
 
 			result += float(pos_shd_win.z > d);
@@ -88,6 +87,5 @@ void main() {
 	}
 
 	out_non_shadowed =
-		//radius / max_radius;
 		(1.0 - result / (pow(steps, 2))) * float(sun_dir().y > 0.0);
 }
