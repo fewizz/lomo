@@ -4,7 +4,6 @@ nameKey: "lomo.name",
 descriptionKey: "lomo.desc",
 
 glslVersion: 330,
-runVanillaClear: true,
 
 materialProgram: {
 	vertexSource: "lomo:shaders/material.vert",
@@ -13,10 +12,10 @@ materialProgram: {
 	samplerImages: ["minecraft:textures/misc/enchanted_glint_item.png", "minecraft:textures/misc/enchanted_glint_entity.png"]
 },
 
-defaultFramebuffer: "default",
+defaultFramebuffer: "solid",
 
 drawTargets: {
-	solidTerrain: "solid_terrain",
+	solidTerrain: "solid",
 	translucentTerrain: "translucent_terrain",
 	translucentEntity: "translucent_entity",
 	translucentParticles: "translucent_particles",
@@ -24,87 +23,72 @@ drawTargets: {
 	clouds: "clouds"
 },
 
-/*fabulousTargets: {
-	translucent: "fabulous_translucent",
-	entity: "fabulous_entity",
-	particles: "fabulous_particles",
-	weather: "fabulous_weather",
-	clouds: "fabulous_clouds"
-},*/
+fabulousTargets: {
+	translucent: "misc",
+	entity: "misc",
+	particles: "misc",
+	weather: "weather",
+	clouds: "clouds"
+},
 
 include: [
-	"canvas:pipeline/basic_light_config.json5"
+	"canvas:pipeline/basic_light_config.json5",
+
+	"lomo:pipeline/fabulous/blend.json5",
+	"lomo:pipeline/fabulous/taa.json5"
 ],
 
-beforeWorldRender: {
-	passes: [
-		{
-			name: "clear_default",
-			framebuffer: "default",
-			program: "frex_clear"
-		},
-		{
-			name: "clear_solid_terrain",
-			framebuffer: "solid_terrain",
-			program: "frex_clear"
-		},
-		{
-			name: "clear_translucent_terrain",
-			framebuffer: "translucent_terrain",
-			program: "frex_clear"
-		},
-		{
-			name: "clear_translucent_entity",
-			framebuffer: "translucent_entity",
-			program: "frex_clear"
-		},
-		{
-			name: "clear_translucent_particles",
-			framebuffer: "translucent_particles",
-			program: "frex_clear"
-		},
-		{
-			name: "clear_weather",
-			framebuffer: "weather",
-			program: "frex_clear"
-		},
-		{
-			name: "clear_clouds",
-			framebuffer: "clouds",
-			program: "frex_clear"
-		},
-		{
-			name: "clear_fabulous_translucent",
-			framebuffer: "fabulous_translucent",
-			program: "frex_clear"
-		},
-		{
-			name: "clear_fabulous_entity",
-			framebuffer: "fabulous_entity",
-			program: "frex_clear"
-		},
-		{
-			name: "clear_fabulous_particles",
-			framebuffer: "fabulous_particles",
-			program: "frex_clear"
-		},
-		{
-			name: "clear_fabulous_weather",
-			framebuffer: "fabulous_weather",
-			program: "frex_clear"
-		},
-		{
-			name: "clear_fabulous_clouds",
-			framebuffer: "fabulous_clouds",
-			program: "frex_clear"
-		}
-	]
-},
+programs: [
+	{
+		name: "copy",
+		vertexSource: "lomo:shaders/full_frame.vert",
+		fragmentSource: "lomo:shaders/copy.frag",
+		samplers: [ "u_texture" ],
+	}
+],
+
+beforeWorldRender: { passes: [
+	{
+		name: "clear_solid",
+		framebuffer: "solid",
+		program: "frex_clear"
+	},
+	{
+		name: "clear_translucent_terrain",
+		framebuffer: "translucent_terrain",
+		program: "frex_clear"
+	},
+	{
+		name: "clear_translucent_entity",
+		framebuffer: "translucent_entity",
+		program: "frex_clear"
+	},
+	{
+		name: "clear_translucent_particles",
+		framebuffer: "translucent_particles",
+		program: "frex_clear"
+	},
+	{
+		name: "clear_weather",
+		framebuffer: "weather",
+		program: "frex_clear"
+	},
+	{
+		name: "clear_clouds",
+		framebuffer: "clouds",
+		program: "frex_clear"
+	},
+	{
+		name: "clear_misc",
+		framebuffer: "misc",
+		program: "frex_clear"
+	}
+]},
 
 images: [
 	{
-		name: "default_color",
-		internalFormat: "RGBA8",
+		name: "solid_color",
+		internalFormat: "RGBA16F",
 		pixelFormat: "RGBA",
 		texParams: [
 			{ name: "TEXTURE_MIN_FILTER", val: "NEAREST" },
@@ -114,32 +98,8 @@ images: [
 		]
 	},
 	{
-		name: "default_depth",
-		internalFormat: "DEPTH_COMPONENT",
-		pixelFormat: "DEPTH_COMPONENT",
-		texParams: [
-			{ name: "TEXTURE_MIN_FILTER", val: "NEAREST" },
-			{ name: "TEXTURE_MAG_FILTER", val: "NEAREST" },
-			{ name: "TEXTURE_WRAP_S", val: "CLAMP_TO_EDGE" },
-			{ name: "TEXTURE_WRAP_T", val: "CLAMP_TO_EDGE" },
-			{ name: "TEXTURE_COMPARE_MODE", val: "NONE" }
-		]
-	},
-
-	{
-		name: "solid_terrain_color",
-		internalFormat: "RGBA8",
-		pixelFormat: "RGBA",
-		texParams: [
-			{ name: "TEXTURE_MIN_FILTER", val: "NEAREST" },
-			{ name: "TEXTURE_MAG_FILTER", val: "NEAREST" },
-			{ name: "TEXTURE_WRAP_S", val: "CLAMP_TO_EDGE" },
-			{ name: "TEXTURE_WRAP_T", val: "CLAMP_TO_EDGE" }
-		]
-	},
-	{
-		name: "solid_terrain_depth",
-		internalFormat: "DEPTH_COMPONENT",
+		name: "solid_depth",
+		internalFormat: "DEPTH_COMPONENT32",
 		pixelFormat: "DEPTH_COMPONENT",
 		texParams: [
 			{ name: "TEXTURE_MIN_FILTER", val: "NEAREST" },
@@ -152,7 +112,7 @@ images: [
 
 	{
 		name: "translucent_terrain_color",
-		internalFormat: "RGBA8",
+		internalFormat: "RGBA16F",
 		pixelFormat: "RGBA",
 		texParams: [
 			{ name: "TEXTURE_MIN_FILTER", val: "NEAREST" },
@@ -163,7 +123,7 @@ images: [
 	},
 	{
 		name: "translucent_terrain_depth",
-		internalFormat: "DEPTH_COMPONENT",
+		internalFormat: "DEPTH_COMPONENT32",
 		pixelFormat: "DEPTH_COMPONENT",
 		texParams: [
 			{ name: "TEXTURE_MIN_FILTER", val: "NEAREST" },
@@ -176,7 +136,7 @@ images: [
 
 	{
 		name: "translucent_entity_color",
-		internalFormat: "RGBA8",
+		internalFormat: "RGBA16F",
 		pixelFormat: "RGBA",
 		texParams: [
 			{ name: "TEXTURE_MIN_FILTER", val: "NEAREST" },
@@ -187,7 +147,7 @@ images: [
 	},
 	{
 		name: "translucent_entity_depth",
-		internalFormat: "DEPTH_COMPONENT",
+		internalFormat: "DEPTH_COMPONENT32",
 		pixelFormat: "DEPTH_COMPONENT",
 		texParams: [
 			{ name: "TEXTURE_MIN_FILTER", val: "NEAREST" },
@@ -200,7 +160,7 @@ images: [
 
 	{
 		name: "translucent_particles_color",
-		internalFormat: "RGBA8",
+		internalFormat: "RGBA16F",
 		pixelFormat: "RGBA",
 		texParams: [
 			{ name: "TEXTURE_MIN_FILTER", val: "NEAREST" },
@@ -211,7 +171,7 @@ images: [
 	},
 	{
 		name: "translucent_particles_depth",
-		internalFormat: "DEPTH_COMPONENT",
+		internalFormat: "DEPTH_COMPONENT32",
 		pixelFormat: "DEPTH_COMPONENT",
 		texParams: [
 			{ name: "TEXTURE_MIN_FILTER", val: "NEAREST" },
@@ -224,7 +184,7 @@ images: [
 
 	{
 		name: "weather_color",
-		internalFormat: "RGBA8",
+		internalFormat: "RGBA16F",
 		pixelFormat: "RGBA",
 		texParams: [
 			{ name: "TEXTURE_MIN_FILTER", val: "NEAREST" },
@@ -235,7 +195,7 @@ images: [
 	},
 	{
 		name: "weather_depth",
-		internalFormat: "DEPTH_COMPONENT",
+		internalFormat: "DEPTH_COMPONENT32",
 		pixelFormat: "DEPTH_COMPONENT",
 		texParams: [
 			{ name: "TEXTURE_MIN_FILTER", val: "NEAREST" },
@@ -248,7 +208,7 @@ images: [
 
 	{
 		name: "clouds_color",
-		internalFormat: "RGBA8",
+		internalFormat: "RGBA16F",
 		pixelFormat: "RGBA",
 		texParams: [
 			{ name: "TEXTURE_MIN_FILTER", val: "NEAREST" },
@@ -259,7 +219,7 @@ images: [
 	},
 	{
 		name: "clouds_depth",
-		internalFormat: "DEPTH_COMPONENT",
+		internalFormat: "DEPTH_COMPONENT32",
 		pixelFormat: "DEPTH_COMPONENT",
 		texParams: [
 			{ name: "TEXTURE_MIN_FILTER", val: "NEAREST" },
@@ -271,8 +231,8 @@ images: [
 	},
 
 	{
-		name: "fabulous_translucent_color",
-		internalFormat: "RGBA8",
+		name: "misc_color",
+		internalFormat: "RGBA16F",
 		pixelFormat: "RGBA",
 		texParams: [
 			{ name: "TEXTURE_MIN_FILTER", val: "NEAREST" },
@@ -282,8 +242,8 @@ images: [
 		]
 	},
 	{
-		name: "fabulous_translucent_depth",
-		internalFormat: "DEPTH_COMPONENT",
+		name: "misc_depth",
+		internalFormat: "DEPTH_COMPONENT32",
 		pixelFormat: "DEPTH_COMPONENT",
 		texParams: [
 			{ name: "TEXTURE_MIN_FILTER", val: "NEAREST" },
@@ -292,122 +252,17 @@ images: [
 			{ name: "TEXTURE_WRAP_T", val: "CLAMP_TO_EDGE" },
 			{ name: "TEXTURE_COMPARE_MODE", val: "NONE" }
 		]
-	},
-
-	{
-		name: "fabulous_entity_color",
-		internalFormat: "RGBA8",
-		pixelFormat: "RGBA",
-		texParams: [
-			{ name: "TEXTURE_MIN_FILTER", val: "NEAREST" },
-			{ name: "TEXTURE_MAG_FILTER", val: "NEAREST" },
-			{ name: "TEXTURE_WRAP_S", val: "CLAMP_TO_EDGE" },
-			{ name: "TEXTURE_WRAP_T", val: "CLAMP_TO_EDGE" }
-		]
-	},
-	{
-		name: "fabulous_entity_depth",
-		internalFormat: "DEPTH_COMPONENT",
-		pixelFormat: "DEPTH_COMPONENT",
-		texParams: [
-			{ name: "TEXTURE_MIN_FILTER", val: "NEAREST" },
-			{ name: "TEXTURE_MAG_FILTER", val: "NEAREST" },
-			{ name: "TEXTURE_WRAP_S", val: "CLAMP_TO_EDGE" },
-			{ name: "TEXTURE_WRAP_T", val: "CLAMP_TO_EDGE" },
-			{ name: "TEXTURE_COMPARE_MODE", val: "NONE" }
-		]
-	},
-
-	{
-		name: "fabulous_particles_color",
-		internalFormat: "RGBA8",
-		pixelFormat: "RGBA",
-		texParams: [
-			{ name: "TEXTURE_MIN_FILTER", val: "NEAREST" },
-			{ name: "TEXTURE_MAG_FILTER", val: "NEAREST" },
-			{ name: "TEXTURE_WRAP_S", val: "CLAMP_TO_EDGE" },
-			{ name: "TEXTURE_WRAP_T", val: "CLAMP_TO_EDGE" }
-		]
-	},
-	{
-		name: "fabulous_particles_depth",
-		internalFormat: "DEPTH_COMPONENT",
-		pixelFormat: "DEPTH_COMPONENT",
-		texParams: [
-			{ name: "TEXTURE_MIN_FILTER", val: "NEAREST" },
-			{ name: "TEXTURE_MAG_FILTER", val: "NEAREST" },
-			{ name: "TEXTURE_WRAP_S", val: "CLAMP_TO_EDGE" },
-			{ name: "TEXTURE_WRAP_T", val: "CLAMP_TO_EDGE" },
-			{ name: "TEXTURE_COMPARE_MODE", val: "NONE" }
-		]
-	},
-
-	{
-		name: "fabulous_weather_color",
-		internalFormat: "RGBA8",
-		pixelFormat: "RGBA",
-		texParams: [
-			{ name: "TEXTURE_MIN_FILTER", val: "NEAREST" },
-			{ name: "TEXTURE_MAG_FILTER", val: "NEAREST" },
-			{ name: "TEXTURE_WRAP_S", val: "CLAMP_TO_EDGE" },
-			{ name: "TEXTURE_WRAP_T", val: "CLAMP_TO_EDGE" }
-		]
-	},
-	{
-		name: "fabulous_weather_depth",
-		internalFormat: "DEPTH_COMPONENT",
-		pixelFormat: "DEPTH_COMPONENT",
-		texParams: [
-			{ name: "TEXTURE_MIN_FILTER", val: "NEAREST" },
-			{ name: "TEXTURE_MAG_FILTER", val: "NEAREST" },
-			{ name: "TEXTURE_WRAP_S", val: "CLAMP_TO_EDGE" },
-			{ name: "TEXTURE_WRAP_T", val: "CLAMP_TO_EDGE" },
-			{ name: "TEXTURE_COMPARE_MODE", val: "NONE" }
-		]
-	},
-
-	{
-		name: "fabulous_clouds_color",
-		internalFormat: "RGBA8",
-		pixelFormat: "RGBA",
-		texParams: [
-			{ name: "TEXTURE_MIN_FILTER", val: "NEAREST" },
-			{ name: "TEXTURE_MAG_FILTER", val: "NEAREST" },
-			{ name: "TEXTURE_WRAP_S", val: "CLAMP_TO_EDGE" },
-			{ name: "TEXTURE_WRAP_T", val: "CLAMP_TO_EDGE" }
-		]
-	},
-	{
-		name: "fabulous_clouds_depth",
-		internalFormat: "DEPTH_COMPONENT",
-		pixelFormat: "DEPTH_COMPONENT",
-		texParams: [
-			{ name: "TEXTURE_MIN_FILTER", val: "NEAREST" },
-			{ name: "TEXTURE_MAG_FILTER", val: "NEAREST" },
-			{ name: "TEXTURE_WRAP_S", val: "CLAMP_TO_EDGE" },
-			{ name: "TEXTURE_WRAP_T", val: "CLAMP_TO_EDGE" },
-			{ name: "TEXTURE_COMPARE_MODE", val: "NONE" }
-		]
-	},
+	}
 ],
 
 framebuffers: [
 	{
-		name: "default",
+		name: "solid",
 		colorAttachments: [{
-			image: "default_color", clearColor: 0
+			image: "solid_color", clearColor: 0
 		}],
 		depthAttachment: {
-			image: "default_depth", clearDepth: 1.0
-		}
-	},
-	{
-		name: "solid_terrain",
-		colorAttachments: [{
-			image: "solid_terrain_color", clearColor: 0
-		}],
-		depthAttachment: {
-			image: "solid_terrain_depth", clearDepth: 1.0
+			image: "solid_depth", clearDepth: 1.0
 		}
 	},
 	{
@@ -456,48 +311,12 @@ framebuffers: [
 		}
 	},
 	{
-		name: "fabulous_translucent",
+		name: "misc",
 		colorAttachments: [{
-			image: "fabulous_translucent_color", clearColor: 0
+			image: "misc_color", clearColor: 0
 		}],
 		depthAttachment: {
-			image: "fabulous_translucent_depth", clearDepth: 1.0
-		}
-	},
-	{
-		name: "fabulous_entity",
-		colorAttachments: [{
-			image: "fabulous_entity_color", clearColor: 0
-		}],
-		depthAttachment: {
-			image: "fabulous_entity_depth", clearDepth: 1.0
-		}
-	},
-	{
-		name: "fabulous_particles",
-		colorAttachments: [{
-			image: "fabulous_particles_color", clearColor: 0
-		}],
-		depthAttachment: {
-			image: "fabulous_particles_depth", clearDepth: 1.0
-		}
-	},
-	{
-		name: "fabulous_weather",
-		colorAttachments: [{
-			image: "fabulous_weather_color", clearColor: 0
-		}],
-		depthAttachment: {
-			image: "fabulous_weather_depth", clearDepth: 1.0
-		}
-	},
-	{
-		name: "fabulous_clouds",
-		colorAttachments: [{
-			image: "fabulous_clouds_color", clearColor: 0
-		}],
-		depthAttachment: {
-			image: "fabulous_clouds_depth", clearDepth: 1.0
+			image: "misc_depth", clearDepth: 1.0
 		}
 	}
 ]
