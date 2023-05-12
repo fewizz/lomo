@@ -24,13 +24,13 @@ drawTargets: {
 	clouds: "clouds"
 },
 
-/*fabulousTargets: {
+fabulousTargets: {
 	translucent: "fabulous_translucent",
 	entity: "fabulous_entity",
 	particles: "fabulous_particles",
 	weather: "fabulous_weather",
 	clouds: "fabulous_clouds"
-},*/
+},
 
 include: [
 	"canvas:pipeline/basic_light_config.json5"
