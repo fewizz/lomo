@@ -26,13 +26,19 @@ fabulous: { passes: [
 		framebuffer: "taa",
 		program: "taa",
 		samplerImages: [
-			"blended_color", "blended_depth"
+			"blended_color", "blended_depth",
 			"previous_taa"
 		]
 	},
 	{
 		name: "copy_taa",
 		framebuffer: "previous_taa",
+		program: "copy",
+		samplerImages: [ "taa" ]
+	},
+	{
+		name: "copy_taa_to_main",
+		framebuffer: "solid",
 		program: "copy",
 		samplerImages: [ "taa" ]
 	}

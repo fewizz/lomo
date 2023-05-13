@@ -43,7 +43,7 @@ programs: [
 		name: "copy",
 		vertexSource: "lomo:shaders/full_frame.vert",
 		fragmentSource: "lomo:shaders/copy.frag",
-		samplers: [ "u_texture" ],
+		samplers: [ "u_color" ],
 	}
 ],
 
