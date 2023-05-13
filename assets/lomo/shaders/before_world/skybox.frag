@@ -1,0 +1,26 @@
+#include lomo:shaders/sky.glsl
+#include lomo:shaders/lib/linear.glsl
+#include frex:shaders/lib/math.glsl
+
+uniform ivec2 frxu_size;
+
+layout(location = 0) out vec3 face[6];
+
+void main() {
+	// d is a direction to a positive Z
+	vec3 d = normalize(
+		vec3(gl_FragCoord.xy / frxu_size.xy - 0.5, 0.5)
+	);
+	d.y *= -1.0;
+
+	const vec3 y_axis = vec3(0, 1, 0);
+	const vec3 x_axis = vec3(1, 0, 0);
+
+	// sky function takes world-space view direction
+	face[0] = sky(rotation( PI / 2.0, y_axis) * d);
+	face[1] = sky(rotation(-PI / 2.0, y_axis) * d);
+	face[2] = sky(rotation(-PI / 2.0, x_axis) * d);
+	face[3] = sky(rotation( PI / 2.0, x_axis) * d);
+	face[4] = sky(                              d);
+	face[5] = sky(rotation( PI,       y_axis) * d);
+}

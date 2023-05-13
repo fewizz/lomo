@@ -32,7 +32,7 @@ void main() {
 
 	vec3 prev_color = texture(u_previous_taa, prev_window_space_pos / vec2(frxu_size)).rgb;
 
-	vec3 mn = vec3(1.0);
+	vec3 mn = vec3(1024.0);
 	vec3 mx = vec3(0.0);
 
 	// compiler will probably unroll this

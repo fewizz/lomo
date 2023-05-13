@@ -6,12 +6,11 @@ programs: [
 		vertexSource: "lomo:shaders/full_frame.vert",
 		fragmentSource: "lomo:shaders/fabulous/blend.frag",
 		samplers: [
-			"u_solid_color", "u_solid_depth",
-			"u_translucent_terrain_color", "u_translucent_terrain_depth",
-			"u_translucent_entity_color", "u_translucent_entity_depth",
-			"u_translucent_particles_color", "u_translucent_particles_depth",
-			"u_misc_color", "u_misc_depth"
-		],
+			"u_solid_color", "u_solid_normal", "u_solid_data", "u_solid_depth",
+			"u_translucent_color", "u_translucent_normal", "u_translucent_data", "u_translucent_depth",
+			"u_translucent_particles_color", "u_translucent_particles_normal", "u_translucent_particles_data", "u_translucent_particles_depth",
+			"u_misc_color", "u_misc_normal", "u_misc_data", "u_misc_depth"
+		]
 	}
 ],
 
@@ -21,11 +20,10 @@ fabulous: { passes: [
 		program: "blend",
 		framebuffer: "blended",
 		samplerImages: [
-			"solid_color", "solid_depth",
-			"translucent_terrain_color", "translucent_terrain_depth",
-			"translucent_entity_color", "translucent_entity_depth",
-			"translucent_particles_color", "translucent_particles_depth",
-			"misc_color", "misc_depth",
+			"solid_color", "solid_normal", "solid_data", "solid_depth",
+			"translucent_color", "translucent_normal", "translucent_data", "translucent_depth",
+			"translucent_particles_color", "translucent_particles_normal", "translucent_particles_data", "translucent_particles_depth",
+			"misc_color", "misc_normal", "misc_data", "misc_depth",
 		]
 	}
 ]},
@@ -35,6 +33,18 @@ images: [
 		name: "blended_color",
 		internalFormat: "RGBA16F",
 		pixelFormat: "RGBA",
+		texParams: [
+			{ name: "TEXTURE_MIN_FILTER", val: "NEAREST" },
+			{ name: "TEXTURE_MAG_FILTER", val: "NEAREST" },
+			{ name: "TEXTURE_WRAP_S", val: "CLAMP_TO_EDGE" },
+			{ name: "TEXTURE_WRAP_T", val: "CLAMP_TO_EDGE" }
+		]
+	},
+	{
+		name: "blended_normal",
+		internalFormat: "RGB16_SNORM",
+		pixelFormat: "RGB",
+		"pixelDataType": "SHORT",
 		texParams: [
 			{ name: "TEXTURE_MIN_FILTER", val: "NEAREST" },
 			{ name: "TEXTURE_MAG_FILTER", val: "NEAREST" },
@@ -54,7 +64,18 @@ images: [
 			{ name: "TEXTURE_WRAP_T", val: "CLAMP_TO_EDGE" },
 			{ name: "TEXTURE_COMPARE_MODE", val: "NONE" }
 		]
-	}
+	},
+	{
+		name: "blended_data",
+		internalFormat: "RGBA8",
+		pixelFormat: "RGBA",
+		texParams: [
+			{ name: "TEXTURE_MIN_FILTER", val: "NEAREST" },
+			{ name: "TEXTURE_MAG_FILTER", val: "NEAREST" },
+			{ name: "TEXTURE_WRAP_S", val: "CLAMP_TO_EDGE" },
+			{ name: "TEXTURE_WRAP_T", val: "CLAMP_TO_EDGE" }
+		]
+	},
 ],
 
 framebuffers: [
@@ -62,6 +83,8 @@ framebuffers: [
 		name: "blended",
 		colorAttachments: [
 			{ image: "blended_color" },
+			{ image: "blended_normal" },
+			{ image: "blended_data" },
 			{ image: "blended_depth" }
 		]
 	},

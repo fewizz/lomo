@@ -1,0 +1,42 @@
+{
+
+programs: [
+	{
+		name: "generate_normal",
+		vertexSource: "lomo:shaders/full_frame.vert",
+		fragmentSource: "lomo:shaders/fabulous/generate_normal.frag",
+		samplers: [ "u_depth" ],
+	}
+],
+
+fabulous: { passes: [
+	{
+		name: "generate_weather_normal",
+		program: "generate_normal",
+		framebuffer: "weather_normal",
+		samplerImages: [ "weather_depth" ]
+	},
+	{
+		name: "generate_misc_normal",
+		program: "generate_normal",
+		framebuffer: "misc_normal",
+		samplerImages: [ "misc_depth" ]
+	}
+]},
+
+framebuffers: [
+	{
+		name: "weather_normal",
+		colorAttachments: [
+			{ image: "weather_normal" }
+		],
+	},
+	{
+		name: "misc_normal",
+		colorAttachments: [
+			{ image: "misc_normal" }
+		],
+	}
+]
+
+}

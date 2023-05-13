@@ -1,0 +1,55 @@
+{
+
+programs: [
+	{
+		name: "skybox",
+		vertexSource: "lomo:shaders/full_frame.vert",
+		fragmentSource: "lomo:shaders/before_world/skybox.frag",
+		samplers: [],
+	}
+],
+
+beforeWorldRender: { passes: [
+	{
+		name: "skybox",
+		framebuffer: "skybox",
+		program: "skybox",
+		width: 512, height: 512,
+		samplerImages: []
+	}
+]},
+
+images: [
+	{
+		name: "skybox",
+		target: "TEXTURE_CUBE_MAP",
+		internalFormat: "RGB16F",
+		pixelFormat: "RGB",
+		pixelDataType: "FLOAT",
+		size: 512,
+		lod: 7,
+		texParams: [
+			{ "name": "TEXTURE_MIN_FILTER", "val": "LINEAR_MIPMAP_LINEAR" },
+			{ "name": "TEXTURE_MAG_FILTER", "val": "LINEAR" },
+			{ "name": "TEXTURE_WRAP_S", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_WRAP_T", "val": "CLAMP_TO_EDGE" },
+			{ "name": "TEXTURE_WRAP_R", "val": "CLAMP_TO_EDGE" }
+		]
+	}
+],
+
+framebuffers: [
+	{
+		name: "skybox",
+		colorAttachments: [
+			{ image: "skybox", lod: 0, layer: 0 },
+			{ image: "skybox", lod: 0, layer: 1 },
+			{ image: "skybox", lod: 0, layer: 2 },
+			{ image: "skybox", lod: 0, layer: 3 },
+			{ image: "skybox", lod: 0, layer: 4 },
+			{ image: "skybox", lod: 0, layer: 5 }
+		]
+	}
+]
+
+}

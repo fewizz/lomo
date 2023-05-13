@@ -11,10 +11,8 @@
 #include canvas:basic_light_config
 
 layout(location = 0) out vec4 out_color;
-
-vec4 aoFactor(vec2 lightCoord, float ao) {
-	return vec4(ao, ao, ao, 1.0);
-}
+layout(location = 1) out vec4 out_normal;
+layout(location = 2) out vec4 out_data;
 
 void frx_pipelineFragment() {
 	vec4 a = frx_fragColor;
@@ -31,10 +29,22 @@ void frx_pipelineFragment() {
 		float ao = frx_fragLight.z;
 		a *= frx_fragEnableAo ? vec4(vec3(ao), 1.0) : vec4(1.0);
 
+		/*vec3 ndc_near = vec3(gl_FragCoord.xy, 0.0) / vec3(frx_viewWidth, frx_viewHeight, 1.0) * 2.0 - 1.0;
+		vec3 ndc_far  = vec3(gl_FragCoord.xy, 1.0) / vec3(frx_viewWidth, frx_viewHeight, 1.0) * 2.0 - 1.0;
+
+		vec4 world_near0 = frx_inverseViewProjectionMatrix * vec4(ndc_near, 1.0);
+		vec4 world_far0  = frx_inverseViewProjectionMatrix * vec4(ndc_far, 1.0);
+		vec3 world_near = world_near0.xyz / world_near0.w;
+		vec3 world_far  = world_far0.xyz  / world_far0.w;
+
+		vec3 dir = normalize(world_far - world_near);
+
+		a *= textureLod(u_skybox, dir, 0.0);*/
+
 		if (frx_fragEnableDiffuse) {
 			float df = pv_diffuse + (1.0 - pv_diffuse) * frx_fragEmissive * 0.5f;
 
-			a *= vec4(df, df, df, 1.0);
+			//a *= vec4(df, df, df, 1.0);
 		}
 	}
 
@@ -47,4 +57,22 @@ void frx_pipelineFragment() {
 	glintify(a, float(frx_matGlint));
 	out_color = p_fog(a);
 	gl_FragDepth = gl_FragCoord.z;
+
+	vec3 geometric_normal = normalize(frx_vertexNormal);
+	vec3 tangent = normalize(frx_vertexTangent.xyz);
+	mat3 TBN = mat3(
+		tangent,
+		cross(geometric_normal, tangent),
+		geometric_normal
+	);
+
+	vec3 normal = TBN * frx_fragNormal;
+
+	if(!frx_isHand) {
+		normal = mat3(frx_viewMatrix) * normal;
+		//geometric_normal = mat3(frx_viewMatrix) * geometric_normal;
+	}
+
+	out_normal = vec4(normal, 1.0);
+	out_data = vec4(frx_fragLight.xy, frx_fragRoughness, 1.0);
 }
