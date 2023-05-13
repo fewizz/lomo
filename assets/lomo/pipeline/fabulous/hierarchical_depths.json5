@@ -1,0 +1,70 @@
+{
+
+programs: [
+	{
+		name: "hierarchical_depths",
+		vertexSource: "lomo:shaders/full_frame.vert",
+		fragmentSource: "lomo:shaders/fabulous/hierarchical_depths.frag",
+		samplers: [ "u_depth" ],
+	}
+],
+
+fabulous: { passes: [
+	{
+		name: "blended_depth_2",
+		program: "hierarchical_depths",
+		framebuffer: "blended_depth_2",
+		lod: 2,
+		samplerImages: [ "blended_depth" ]
+	},
+	{
+		name: "blended_depth_4",
+		program: "hierarchical_depths",
+		framebuffer: "blended_depth_4",
+		lod: 4,
+		samplerImages: [ "blended_depth" ]
+	},
+	{
+		name: "blended_depth_6",
+		program: "hierarchical_depths",
+		framebuffer: "blended_depth_6",
+		lod: 6,
+		samplerImages: [ "blended_depth" ]
+	},
+	{
+		name: "blended_depth_8",
+		program: "hierarchical_depths",
+		framebuffer: "blended_depth_8",
+		lod: 8,
+		samplerImages: [ "blended_depth" ]
+	}
+]},
+
+framebuffers: [
+	{
+		name: "blended_depth_2",
+		colorAttachments: [
+			{ image: "blended_depth", lod: 2 }
+		]
+	},
+	{
+		name: "blended_depth_4",
+		colorAttachments: [
+			{ image: "blended_depth", lod: 4 }
+		]
+	},
+	{
+		name: "blended_depth_6",
+		colorAttachments: [
+			{ image: "blended_depth", lod: 6 }
+		]
+	},
+	{
+		name: "blended_depth_8",
+		colorAttachments: [
+			{ image: "blended_depth", lod: 8 }
+		]
+	}
+]
+
+}

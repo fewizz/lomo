@@ -45,6 +45,7 @@ include: [
 
 	"lomo:pipeline/fabulous/generate_normal.json5",
 	"lomo:pipeline/fabulous/blend.json5",
+	"lomo:pipeline/fabulous/hierarchical_depths.json5",
 	"lomo:pipeline/fabulous/post.json5",
 	"lomo:pipeline/fabulous/taa.json5"
 ],
