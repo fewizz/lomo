@@ -1,14 +1,22 @@
 #include canvas:shaders/pipeline/pipeline.glsl
 #include lomo:shaders/sky.glsl
 
+uniform sampler2D u_blended_without_particles_color;
+uniform sampler2D u_blended_without_particles_depth;
+
 uniform sampler2D u_blended_color;
 uniform sampler2D u_blended_normal;
 uniform sampler2D u_blended_data;
 uniform sampler2D u_blended_depth;
 
+uniform sampler2D u_solid_color;
+uniform sampler2D u_solid_depth;
+uniform sampler2D u_translucent_depth;
+uniform sampler2D u_translucent_color;
+
 uniform samplerCube u_skybox;
 
-layout(location = 0) out vec4 out_color;
+layout(location = 0) out vec3 out_color;
 
 bool traverse(
 	vec3 pos, vec3 dir, int steps, out ivec2 hit_pos, out float hit_z, out float hit_depth
@@ -44,11 +52,11 @@ bool traverse(
 		}
 
 		uint level = last_level;
-		float upper_depth = texelFetch(u_blended_depth, itexel >> last_level, int(last_level)).r;
+		float upper_depth = texelFetch(u_blended_without_particles_depth, itexel >> last_level, int(last_level)).r;
 
 		while(z >= upper_depth && level > 0u) {
 			level -= power_of_two;
-			upper_depth = texelFetch(u_blended_depth, itexel >> level, int(level)).r;
+			upper_depth = texelFetch(u_blended_without_particles_depth, itexel >> level, int(level)).r;
 		}
 		// position before advance
 		uvec2 prev_texel = texel;
@@ -105,6 +113,7 @@ void main() {
 	vec3 normal = texelFetch(u_blended_normal, ivec2(gl_FragCoord.xy), 0).xyz;
 	vec3 data = texelFetch(u_blended_data, ivec2(gl_FragCoord.xy), 0).xyz;
 	float depth = texelFetch(u_blended_depth, ivec2(gl_FragCoord.xy), 0).x;
+	vec3 pos_win = vec3(gl_FragCoord.xy, depth);
 
 	vec3 dir; {
 		vec3 ndc_near = vec3(gl_FragCoord.xy, 0.0) / vec3(frx_viewWidth, frx_viewHeight, 1.0) * 2.0 - 1.0;
@@ -118,11 +127,31 @@ void main() {
 		dir = normalize(world_far - world_near);
 	}
 
-	if(depth < 1.0 && data.z < 0.1) {
-		vec3 n = mat3(frx_inverseViewMatrix) * normal;
-		vec3 reflect_dir = reflect(dir, n);
+	if(normal == vec3(0.0)) {
+		out_color = depth  == 1.0 ? sky(dir) : color;
+		return;
+	}
 
-		vec3 pos_win = vec3(gl_FragCoord.xy, depth);
+	vec3 n = mat3(frx_inverseViewMatrix) * normal;
+
+	float solid_depth = texelFetch(u_solid_depth, ivec2(gl_FragCoord.xy), 0).x;
+	vec3 solid_pos_cam = win_to_cam(vec3(gl_FragCoord.xy, solid_depth));
+
+	float translucent_depth = texelFetch(u_translucent_depth, ivec2(gl_FragCoord.xy), 0).x;
+	vec3 translucent_pos_cam = win_to_cam(vec3(gl_FragCoord.xy, translucent_depth));
+
+	/*if(translucent_depth < solid_depth) {
+		float dist = distance(translucent_pos_cam, solid_pos_cam);
+		vec4 translucent_color = texelFetch(u_translucent_color, ivec2(gl_FragCoord.xy), 0);
+		translucent_color.rgb = pow(translucent_color.rgb, vec3(2.0));
+		vec3 solid_color = pow(texelFetch(u_solid_color, ivec2(gl_FragCoord.xy), 0).rgb, vec3(2.2));
+		translucent_color.a = 1.0 - exp(-dist * translucent_color.a);
+		color = (solid_color * (1.0 - translucent_color.a)) + translucent_color.rgb;
+	}*/
+
+	vec3 reflect_dir = reflect(dir, n);
+
+	if(depth < 1.0 && data.z < 0.1) {
 		vec3 ndc = pos_win / vec3(frxu_size, 1.0) * 2.0 - 1.0;
 		vec4 d = frx_viewProjectionMatrix * vec4(reflect_dir, 0.0);
 		vec3 dir_win = normalize(
@@ -132,22 +161,31 @@ void main() {
 		ivec2 hit_pos;
 		float hit_z;
 		float hit_depth;
+
+		bool result = traverse(pos_win, dir_win, 48, hit_pos, hit_z, hit_depth);
+
+		vec3 pos_at_depth = win_to_cam(vec3(vec2(hit_pos) + 0.5, hit_depth));
+		vec3 pos_at_z = win_to_cam(vec3(vec2(hit_pos) + 0.5, hit_z));
+
 		vec3 reflected_color;
 
 		if(
-			traverse(pos_win, dir_win, 48, hit_pos, hit_z, hit_depth) &&
+			result &&
+			!(length(pos_at_z) > length(pos_at_depth) && distance(pos_at_z, pos_at_depth) > length(pos_at_depth) / 4.0) &&
 			hit_depth < 1.0
 		) {
-			reflected_color = texelFetch(u_blended_color, hit_pos, 0).rgb;
+			reflected_color = texelFetch(u_blended_without_particles_color, hit_pos, 0).rgb;
 		}
 		else {
 			reflected_color = sky(reflect_dir);
 		}
-		color = mix(reflected_color, color, max(0.0, dot(reflect_dir, n)));
-	}
-	else if(depth == 1.0) {
-		color = sky(dir);
+
+		color = mix(
+			reflected_color,
+			color,
+			pow(max(0.0, dot(reflect_dir, n)), 1.0 / 2.0)
+		);
 	}
 
-	out_color = vec4(color, 1.0);
+	out_color = color;
 }

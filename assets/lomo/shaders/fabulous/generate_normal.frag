@@ -8,6 +8,11 @@ layout(location = 0) out vec3 out_normal;
 void main() {
 	float depth = texelFetch(u_depth, ivec2(gl_FragCoord.xy), 0).r;
 
+	if(depth == 1.0) {
+		out_normal = vec3(0.0);
+		return;
+	}
+
 	vec2 pos_win = gl_FragCoord.xy;
 	vec3 pos_cam = win_to_cam(vec3(pos_win, depth));
 
@@ -15,12 +20,14 @@ void main() {
 		texelFetch(u_depth, ivec2(pos_win) + ivec2(-1,  0), 0).r,
 		texelFetch(u_depth, ivec2(pos_win) + ivec2( 1,  0), 0).r
 	);
+
 	int closest_x = abs(depth - xs[0]) < abs(depth - xs[1]) ? 0 : 1;
 
 	float ys[2] = float[2](
 		texelFetch(u_depth, ivec2(pos_win) + ivec2( 0, -1), 0).r,
 		texelFetch(u_depth, ivec2(pos_win) + ivec2( 0,  1), 0).r
 	);
+
 	int closest_y = abs(depth - ys[0]) < abs(depth - ys[1]) ? 0 : 1;
 
 	vec3 x = win_to_cam(

@@ -33,5 +33,4 @@ void frx_pipelineVertex() {
 		ndc = window_space_pos / vec3(frx_viewWidth, frx_viewHeight, 1.0) * 2.0 - 1.0;
 		gl_Position = vec4(ndc, 1.0) * camera_space_pos.w;
 	}
-	pv_diffuse = p_diffuse(frx_vertexNormal);
 }

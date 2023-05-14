@@ -19,7 +19,7 @@ materialProgram: {
 	]
 },
 
-defaultFramebuffer: "solid",
+defaultFramebuffer: "default",
 
 drawTargets: {
 	solidTerrain: "solid",
@@ -39,7 +39,6 @@ fabulousTargets: {
 },
 
 include: [
-	"canvas:pipeline/basic_light_config.json5",
 
 	"lomo:pipeline/before_world/skybox.json5",
 
@@ -47,7 +46,8 @@ include: [
 	"lomo:pipeline/fabulous/blend.json5",
 	"lomo:pipeline/fabulous/hierarchical_depths.json5",
 	"lomo:pipeline/fabulous/post.json5",
-	"lomo:pipeline/fabulous/taa.json5"
+	"lomo:pipeline/fabulous/taa.json5",
+	"lomo:pipeline/fabulous/final.json5"
 ],
 
 programs: [
@@ -95,8 +95,8 @@ beforeWorldRender: { passes: [
 images: [
 	{
 		name: "solid_color",
-		internalFormat: "RGBA16F",
-		pixelFormat: "RGBA",
+		internalFormat: "RGB16F",
+		pixelFormat: "RGB",
 		texParams: [
 			{ name: "TEXTURE_MIN_FILTER", val: "NEAREST" },
 			{ name: "TEXTURE_MAG_FILTER", val: "NEAREST" },
@@ -142,7 +142,7 @@ images: [
 
 	{
 		name: "translucent_color",
-		internalFormat: "RGBA16F",
+		internalFormat: "RGBA8",
 		pixelFormat: "RGBA",
 		texParams: [
 			{ name: "TEXTURE_MIN_FILTER", val: "NEAREST" },
@@ -189,7 +189,7 @@ images: [
 
 	{
 		name: "translucent_particles_color",
-		internalFormat: "RGBA16F",
+		internalFormat: "RGBA8",
 		pixelFormat: "RGBA",
 		texParams: [
 			{ name: "TEXTURE_MIN_FILTER", val: "NEAREST" },
@@ -236,7 +236,7 @@ images: [
 
 	{
 		name: "weather_color",
-		internalFormat: "RGBA16F",
+		internalFormat: "RGBA8",
 		pixelFormat: "RGBA",
 		texParams: [
 			{ name: "TEXTURE_MIN_FILTER", val: "NEAREST" },
@@ -283,7 +283,7 @@ images: [
 
 	{
 		name: "clouds_color",
-		internalFormat: "RGBA16F",
+		internalFormat: "RGBA8",
 		pixelFormat: "RGBA",
 		texParams: [
 			{ name: "TEXTURE_MIN_FILTER", val: "NEAREST" },
@@ -307,7 +307,7 @@ images: [
 
 	{
 		name: "misc_color",
-		internalFormat: "RGBA16F",
+		internalFormat: "RGBA8",
 		pixelFormat: "RGBA",
 		texParams: [
 			{ name: "TEXTURE_MIN_FILTER", val: "NEAREST" },
@@ -354,6 +354,15 @@ images: [
 ],
 
 framebuffers: [
+	{
+		name: "default",
+		colorAttachments: [
+			{ image: "solid_color" }
+		],
+		depthAttachment: {
+			image: "solid_depth"
+		}
+	},
 	{
 		name: "solid",
 		colorAttachments: [

@@ -35,12 +35,6 @@ fabulous: { passes: [
 		framebuffer: "previous_taa",
 		program: "copy",
 		samplerImages: [ "taa" ]
-	},
-	{
-		name: "copy_taa_to_main",
-		framebuffer: "solid",
-		program: "copy",
-		samplerImages: [ "taa" ]
 	}
 ]},
 

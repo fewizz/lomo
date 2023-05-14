@@ -1,0 +1,21 @@
+{
+
+programs: [
+	{
+		name: "final",
+		vertexSource: "lomo:shaders/full_frame.vert",
+		fragmentSource: "lomo:shaders/fabulous/final.frag",
+		samplers: [ "u_color" ]
+	}
+],
+
+fabulous: { passes: [
+	{
+		name: "final",
+		framebuffer: "default",
+		program: "final",
+		samplerImages: [ "taa" ]
+	}
+]}
+
+}

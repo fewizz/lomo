@@ -6,7 +6,9 @@ programs: [
 		vertexSource: "lomo:shaders/full_frame.vert",
 		fragmentSource: "lomo:shaders/fabulous/post.frag",
 		samplers: [
+			"u_blended_without_particles_color", "u_blended_without_particles_depth",
 			"u_blended_color", "u_blended_normal", "u_blended_data", "u_blended_depth",
+			"u_solid_color", "u_solid_depth", "u_translucent_depth", "u_translucent_color"
 			"u_skybox"
 		]
 	}
@@ -18,7 +20,9 @@ fabulous: { passes: [
 		program: "post",
 		framebuffer: "post",
 		samplerImages: [
+			"blended_without_particles_color", "blended_without_particles_depth",
 			"blended_color", "blended_normal", "blended_data", "blended_depth",
+			"solid_color", "solid_depth", "translucent_depth", "translucent_color",
 			"skybox"
 		]
 	}

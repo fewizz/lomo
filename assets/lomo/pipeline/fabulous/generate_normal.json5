@@ -16,12 +16,12 @@ fabulous: { passes: [
 		framebuffer: "weather_normal",
 		samplerImages: [ "weather_depth" ]
 	},
-	{
+	/*{
 		name: "generate_misc_normal",
 		program: "generate_normal",
 		framebuffer: "misc_normal",
 		samplerImages: [ "misc_depth" ]
-	}
+	}*/
 ]},
 
 framebuffers: [

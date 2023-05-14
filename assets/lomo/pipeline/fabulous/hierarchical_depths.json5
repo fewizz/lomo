@@ -11,58 +11,58 @@ programs: [
 
 fabulous: { passes: [
 	{
-		name: "blended_depth_2",
+		name: "blended_without_particles_depth_2",
 		program: "hierarchical_depths",
-		framebuffer: "blended_depth_2",
+		framebuffer: "blended_without_particles_depth_2",
 		lod: 2,
-		samplerImages: [ "blended_depth" ]
+		samplerImages: [ "blended_without_particles_depth" ]
 	},
 	{
-		name: "blended_depth_4",
+		name: "blended_without_particles_depth_4",
 		program: "hierarchical_depths",
-		framebuffer: "blended_depth_4",
+		framebuffer: "blended_without_particles_depth_4",
 		lod: 4,
-		samplerImages: [ "blended_depth" ]
+		samplerImages: [ "blended_without_particles_depth" ]
 	},
 	{
-		name: "blended_depth_6",
+		name: "blended_without_particles_depth_6",
 		program: "hierarchical_depths",
-		framebuffer: "blended_depth_6",
+		framebuffer: "blended_without_particles_depth_6",
 		lod: 6,
-		samplerImages: [ "blended_depth" ]
+		samplerImages: [ "blended_without_particles_depth" ]
 	},
 	{
-		name: "blended_depth_8",
+		name: "blended_without_particles_depth_8",
 		program: "hierarchical_depths",
-		framebuffer: "blended_depth_8",
+		framebuffer: "blended_without_particles_depth_8",
 		lod: 8,
-		samplerImages: [ "blended_depth" ]
+		samplerImages: [ "blended_without_particles_depth" ]
 	}
 ]},
 
 framebuffers: [
 	{
-		name: "blended_depth_2",
+		name: "blended_without_particles_depth_2",
 		colorAttachments: [
-			{ image: "blended_depth", lod: 2 }
+			{ image: "blended_without_particles_depth", lod: 2 }
 		]
 	},
 	{
-		name: "blended_depth_4",
+		name: "blended_without_particles_depth_4",
 		colorAttachments: [
-			{ image: "blended_depth", lod: 4 }
+			{ image: "blended_without_particles_depth", lod: 4 }
 		]
 	},
 	{
-		name: "blended_depth_6",
+		name: "blended_without_particles_depth_6",
 		colorAttachments: [
-			{ image: "blended_depth", lod: 6 }
+			{ image: "blended_without_particles_depth", lod: 6 }
 		]
 	},
 	{
-		name: "blended_depth_8",
+		name: "blended_without_particles_depth_8",
 		colorAttachments: [
-			{ image: "blended_depth", lod: 8 }
+			{ image: "blended_without_particles_depth", lod: 8 }
 		]
 	}
 ]

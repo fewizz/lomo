@@ -41,6 +41,17 @@ images: [
 		]
 	},
 	{
+		name: "blended_without_particles_color",
+		internalFormat: "RGBA16F",
+		pixelFormat: "RGBA",
+		texParams: [
+			{ name: "TEXTURE_MIN_FILTER", val: "NEAREST" },
+			{ name: "TEXTURE_MAG_FILTER", val: "NEAREST" },
+			{ name: "TEXTURE_WRAP_S", val: "CLAMP_TO_EDGE" },
+			{ name: "TEXTURE_WRAP_T", val: "CLAMP_TO_EDGE" }
+		]
+	},
+	{
 		name: "blended_normal",
 		internalFormat: "RGB16_SNORM",
 		pixelFormat: "RGB",
@@ -53,13 +64,12 @@ images: [
 		]
 	},
 	{
-		name: "blended_depth",
-		internalFormat: "R32F",
-		pixelFormat: "RED",
-		pixelDataType: "FLOAT",
-		lod: 8,
+		name: "blended_without_particles_normal",
+		internalFormat: "RGB16_SNORM",
+		pixelFormat: "RGB",
+		"pixelDataType": "SHORT",
 		texParams: [
-			{ name: "TEXTURE_MIN_FILTER", val: "NEAREST_MIPMAP_NEAREST" },
+			{ name: "TEXTURE_MIN_FILTER", val: "NEAREST" },
 			{ name: "TEXTURE_MAG_FILTER", val: "NEAREST" },
 			{ name: "TEXTURE_WRAP_S", val: "CLAMP_TO_EDGE" },
 			{ name: "TEXTURE_WRAP_T", val: "CLAMP_TO_EDGE" }
@@ -76,12 +86,53 @@ images: [
 			{ name: "TEXTURE_WRAP_T", val: "CLAMP_TO_EDGE" }
 		]
 	},
+	{
+		name: "blended_without_particles_data",
+		internalFormat: "RGBA8",
+		pixelFormat: "RGBA",
+		texParams: [
+			{ name: "TEXTURE_MIN_FILTER", val: "NEAREST" },
+			{ name: "TEXTURE_MAG_FILTER", val: "NEAREST" },
+			{ name: "TEXTURE_WRAP_S", val: "CLAMP_TO_EDGE" },
+			{ name: "TEXTURE_WRAP_T", val: "CLAMP_TO_EDGE" }
+		]
+	},
+	{
+		name: "blended_depth",
+		internalFormat: "R32F",
+		pixelFormat: "RED",
+		pixelDataType: "FLOAT",
+		texParams: [
+			{ name: "TEXTURE_MIN_FILTER", val: "NEAREST" },
+			{ name: "TEXTURE_MAG_FILTER", val: "NEAREST" },
+			{ name: "TEXTURE_WRAP_S", val: "CLAMP_TO_EDGE" },
+			{ name: "TEXTURE_WRAP_T", val: "CLAMP_TO_EDGE" }
+		]
+	},
+	{
+		name: "blended_without_particles_depth",
+		internalFormat: "R32F",
+		pixelFormat: "RED",
+		pixelDataType: "FLOAT",
+		lod: 8,
+		texParams: [
+			{ name: "TEXTURE_MIN_FILTER", val: "NEAREST_MIPMAP_NEAREST" },
+			{ name: "TEXTURE_MAG_FILTER", val: "NEAREST" },
+			{ name: "TEXTURE_WRAP_S", val: "CLAMP_TO_EDGE" },
+			{ name: "TEXTURE_WRAP_T", val: "CLAMP_TO_EDGE" }
+		]
+	}
 ],
 
 framebuffers: [
 	{
 		name: "blended",
 		colorAttachments: [
+			{ image: "blended_without_particles_color" },
+			{ image: "blended_without_particles_normal" },
+			{ image: "blended_without_particles_data" },
+			{ image: "blended_without_particles_depth" },
+
 			{ image: "blended_color" },
 			{ image: "blended_normal" },
 			{ image: "blended_data" },
