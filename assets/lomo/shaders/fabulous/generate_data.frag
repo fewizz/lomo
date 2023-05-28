@@ -1,15 +1,16 @@
 #include frex:shaders/api/view.glsl
 #include lomo:shaders/lib/linear.glsl
+#inlcude lomo:shaders/lib/pack.glsl
 
 uniform sampler2D u_depth;
 
-layout(location = 0) out vec3 out_normal;
+layout(location = 0) out uvec3 out_data;
 
 void main() {
-	float depth = texelFetch(u_depth, ivec2(gl_FragCoord.xy), 0).r;
+	/*float depth = texelFetch(u_depth, ivec2(gl_FragCoord.xy), 0).r;
 
 	if(depth == 1.0) {
-		out_normal = vec3(0.0);
+		out_data = uvec3(0u);
 		return;
 	}
 
@@ -40,5 +41,15 @@ void main() {
 
 	vec3 normal = normalize(cross(x - pos_cam, y - pos_cam));
 
-	out_normal = normal * sign(closest_x * 2 - 1) * sign(closest_y * 2 - 1);
+	normal * sign(closest_x * 2 - 1) * sign(closest_y * 2 - 1);
+
+	uint u_norm; {
+		vec3 n = normal * 0.5 + 0.5;
+		uint x = pack(n.x, 10u);
+		uint y = pack(n.y, 10u) << 10;
+		uint z = pack(n.z, 10u) << (10 + 10);
+		u_norm = z | y | x;
+	}*/
+
+	out_data = uvec3(0u);
 }

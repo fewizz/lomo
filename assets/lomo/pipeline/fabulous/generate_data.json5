@@ -2,18 +2,18 @@
 
 programs: [
 	{
-		name: "generate_normal",
+		name: "generate_data",
 		vertexSource: "lomo:shaders/full_frame.vert",
-		fragmentSource: "lomo:shaders/fabulous/generate_normal.frag",
+		fragmentSource: "lomo:shaders/fabulous/generate_data.frag",
 		samplers: [ "u_depth" ],
 	}
 ],
 
 fabulous: { passes: [
 	{
-		name: "generate_weather_normal",
-		program: "generate_normal",
-		framebuffer: "weather_normal",
+		name: "generate_weather_data",
+		program: "generate_data",
+		framebuffer: "weather_data",
 		samplerImages: [ "weather_depth" ]
 	},
 	/*{
@@ -26,15 +26,15 @@ fabulous: { passes: [
 
 framebuffers: [
 	{
-		name: "weather_normal",
+		name: "weather_data",
 		colorAttachments: [
-			{ image: "weather_normal" }
+			{ image: "weather_data" }
 		],
 	},
 	{
 		name: "misc_normal",
 		colorAttachments: [
-			{ image: "misc_normal" }
+			{ image: "misc_data" }
 		],
 	}
 ]

@@ -42,11 +42,12 @@ include: [
 
 	"lomo:pipeline/before_world/skybox.json5",
 
-	"lomo:pipeline/fabulous/generate_normal.json5",
+	"lomo:pipeline/fabulous/generate_data.json5",
 	"lomo:pipeline/fabulous/blend.json5",
 	"lomo:pipeline/fabulous/hierarchical_depths.json5",
 	"lomo:pipeline/fabulous/post.json5",
 	"lomo:pipeline/fabulous/taa.json5",
+	"lomo:pipeline/fabulous/dof.json5",
 	"lomo:pipeline/fabulous/final.json5"
 ],
 
@@ -105,21 +106,10 @@ images: [
 		]
 	},
 	{
-		name: "solid_normal",
-		internalFormat: "RGB16_SNORM",
-		pixelFormat: "RGB",
-		"pixelDataType": "SHORT",
-		texParams: [
-			{ name: "TEXTURE_MIN_FILTER", val: "NEAREST" },
-			{ name: "TEXTURE_MAG_FILTER", val: "NEAREST" },
-			{ name: "TEXTURE_WRAP_S", val: "CLAMP_TO_EDGE" },
-			{ name: "TEXTURE_WRAP_T", val: "CLAMP_TO_EDGE" }
-		]
-	},
-	{
 		name: "solid_data",
-		internalFormat: "RGBA8",
-		pixelFormat: "RGBA",
+		internalFormat: "RGBA32UI",
+		pixelFormat: "RGBA_INTEGER",
+		pixelDataType: "UNSIGNED_INT",
 		texParams: [
 			{ name: "TEXTURE_MIN_FILTER", val: "NEAREST" },
 			{ name: "TEXTURE_MAG_FILTER", val: "NEAREST" },
@@ -152,21 +142,10 @@ images: [
 		]
 	},
 	{
-		name: "translucent_normal",
-		internalFormat: "RGB16_SNORM",
-		pixelFormat: "RGB",
-		"pixelDataType": "SHORT",
-		texParams: [
-			{ name: "TEXTURE_MIN_FILTER", val: "NEAREST" },
-			{ name: "TEXTURE_MAG_FILTER", val: "NEAREST" },
-			{ name: "TEXTURE_WRAP_S", val: "CLAMP_TO_EDGE" },
-			{ name: "TEXTURE_WRAP_T", val: "CLAMP_TO_EDGE" }
-		]
-	},
-	{
 		name: "translucent_data",
-		internalFormat: "RGBA8",
-		pixelFormat: "RGBA",
+		internalFormat: "RGBA32UI",
+		pixelFormat: "RGBA_INTEGER",
+		pixelDataType: "UNSIGNED_INT",
 		texParams: [
 			{ name: "TEXTURE_MIN_FILTER", val: "NEAREST" },
 			{ name: "TEXTURE_MAG_FILTER", val: "NEAREST" },
@@ -199,21 +178,10 @@ images: [
 		]
 	},
 	{
-		name: "translucent_particles_normal",
-		internalFormat: "RGB16_SNORM",
-		pixelFormat: "RGB",
-		"pixelDataType": "SHORT",
-		texParams: [
-			{ name: "TEXTURE_MIN_FILTER", val: "NEAREST" },
-			{ name: "TEXTURE_MAG_FILTER", val: "NEAREST" },
-			{ name: "TEXTURE_WRAP_S", val: "CLAMP_TO_EDGE" },
-			{ name: "TEXTURE_WRAP_T", val: "CLAMP_TO_EDGE" }
-		]
-	},
-	{
 		name: "translucent_particles_data",
-		internalFormat: "RGBA8",
-		pixelFormat: "RGBA",
+		internalFormat: "RGBA32UI",
+		pixelFormat: "RGBA_INTEGER",
+		pixelDataType: "UNSIGNED_INT",
 		texParams: [
 			{ name: "TEXTURE_MIN_FILTER", val: "NEAREST" },
 			{ name: "TEXTURE_MAG_FILTER", val: "NEAREST" },
@@ -246,21 +214,10 @@ images: [
 		]
 	},
 	{
-		name: "weather_normal",
-		internalFormat: "RGB16_SNORM",
-		pixelFormat: "RGB",
-		"pixelDataType": "SHORT",
-		texParams: [
-			{ name: "TEXTURE_MIN_FILTER", val: "NEAREST" },
-			{ name: "TEXTURE_MAG_FILTER", val: "NEAREST" },
-			{ name: "TEXTURE_WRAP_S", val: "CLAMP_TO_EDGE" },
-			{ name: "TEXTURE_WRAP_T", val: "CLAMP_TO_EDGE" }
-		]
-	},
-	{
 		name: "weather_data",
-		internalFormat: "RGBA8",
-		pixelFormat: "RGBA",
+		internalFormat: "RGBA32UI",
+		pixelFormat: "RGBA_INTEGER",
+		pixelDataType: "UNSIGNED_INT",
 		texParams: [
 			{ name: "TEXTURE_MIN_FILTER", val: "NEAREST" },
 			{ name: "TEXTURE_MAG_FILTER", val: "NEAREST" },
@@ -317,21 +274,10 @@ images: [
 		]
 	},
 	{
-		name: "misc_normal",
-		internalFormat: "RGB16_SNORM",
-		pixelFormat: "RGB",
-		"pixelDataType": "SHORT",
-		texParams: [
-			{ name: "TEXTURE_MIN_FILTER", val: "NEAREST" },
-			{ name: "TEXTURE_MAG_FILTER", val: "NEAREST" },
-			{ name: "TEXTURE_WRAP_S", val: "CLAMP_TO_EDGE" },
-			{ name: "TEXTURE_WRAP_T", val: "CLAMP_TO_EDGE" }
-		]
-	},
-	{
 		name: "misc_data",
-		internalFormat: "RGBA8",
-		pixelFormat: "RGBA",
+		internalFormat: "RGBA32UI",
+		pixelFormat: "RGBA_INTEGER",
+		pixelDataType: "UNSIGNED_INT",
 		texParams: [
 			{ name: "TEXTURE_MIN_FILTER", val: "NEAREST" },
 			{ name: "TEXTURE_MAG_FILTER", val: "NEAREST" },
@@ -367,7 +313,6 @@ framebuffers: [
 		name: "solid",
 		colorAttachments: [
 			{ image: "solid_color", clearColor: 0 },
-			{ image: "solid_normal", clearColor: 0 },
 			{ image: "solid_data", clearColor: 0 }
 		],
 		depthAttachment: {
@@ -378,7 +323,6 @@ framebuffers: [
 		name: "translucent",
 		colorAttachments: [
 			{ image: "translucent_color", clearColor: 0 },
-			{ image: "translucent_normal", clearColor: 0 },
 			{ image: "translucent_data", clearColor: 0 }
 		],
 		depthAttachment: {
@@ -389,7 +333,6 @@ framebuffers: [
 		name: "translucent_particles",
 		colorAttachments: [
 			{ image: "translucent_particles_color", clearColor: 0 },
-			{ image: "translucent_particles_normal", clearColor: 0 },
 			{ image: "translucent_particles_data", clearColor: 0 }
 		],
 		depthAttachment: {
@@ -400,7 +343,6 @@ framebuffers: [
 		name: "weather",
 		colorAttachments: [
 			{ image: "weather_color", clearColor: 0 },
-			{ image: "weather_normal", clearColor: 0 },
 			{ image: "weather_data", clearColor: 0 }
 		],
 		depthAttachment: {
@@ -420,7 +362,6 @@ framebuffers: [
 		name: "misc",
 		colorAttachments: [
 			{ image: "misc_color", clearColor: 0 },
-			{ image: "misc_normal", clearColor: 0 },
 			{ image: "misc_data", clearColor: 0 }
 		],
 		depthAttachment: {

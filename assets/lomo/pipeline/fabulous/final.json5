@@ -14,7 +14,7 @@ fabulous: { passes: [
 		name: "final",
 		framebuffer: "default",
 		program: "final",
-		samplerImages: [ "taa" ]
+		samplerImages: [ "dof" ]
 	}
 ]}
 

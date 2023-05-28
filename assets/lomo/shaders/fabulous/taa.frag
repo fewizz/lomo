@@ -35,7 +35,6 @@ void main() {
 	vec3 mn = vec3(1024.0);
 	vec3 mx = vec3(0.0);
 
-	// compiler will probably unroll this
 	for(int x = -1; x <= 1; ++x) {
 		for(int y = -1; y <= 1; ++y) {
 			vec2 off = vec2(x, y);

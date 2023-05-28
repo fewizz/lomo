@@ -1,16 +1,18 @@
 #include canvas:shaders/pipeline/pipeline.glsl
 #include lomo:shaders/sky.glsl
+#include lomo:shaders/lib/pack.glsl
 
 uniform sampler2D u_blended_without_particles_color;
+uniform usampler2D u_blended_without_particles_data;
 uniform sampler2D u_blended_without_particles_depth;
 
 uniform sampler2D u_blended_color;
-uniform sampler2D u_blended_normal;
-uniform sampler2D u_blended_data;
+uniform usampler2D u_blended_data;
 uniform sampler2D u_blended_depth;
 
 uniform sampler2D u_solid_color;
 uniform sampler2D u_solid_depth;
+
 uniform sampler2D u_translucent_depth;
 uniform sampler2D u_translucent_color;
 
@@ -108,10 +110,47 @@ bool traverse(
 	return false;
 }
 
+void apply_light(inout vec3 color, vec3 reflection_dir, float block_light, float sky_light, float roughness, float emissive, vec3 emissive_color) {
+	/*vec3 sky = textureLod(u_skybox, reflection_dir, pow(roughness, 1.0 / 8.0) * 7.0).rgb;
+
+	color *= mix(
+		sky_light * sky,
+		block_light * emissive_color,
+		emissive
+	);*/
+}
+
 void main() {
 	vec3 color = texelFetch(u_blended_color, ivec2(gl_FragCoord.xy), 0).rgb;
-	vec3 normal = texelFetch(u_blended_normal, ivec2(gl_FragCoord.xy), 0).xyz;
-	vec3 data = texelFetch(u_blended_data, ivec2(gl_FragCoord.xy), 0).xyz;
+	uvec4 data = texelFetch(u_blended_data, ivec2(gl_FragCoord.xy), 0);
+
+	vec3 frag_normal; {
+		float x = unpack(data.x >> 12, 12u);
+		float y = unpack(data.x,       12u);
+		float z = unpack(data.z >> 12, 12u);
+		frag_normal = vec3(x, y, z) * 2.0 - 1.0;
+	}
+
+	vec3 vertex_normal; {
+		float x = unpack(data.y >> 12, 12u);
+		float y = unpack(data.y,       12u);
+		float z = unpack(data.z,       12u);
+		vertex_normal = vec3(x, y, z) * 2.0 - 1.0;
+	}
+
+	float emissive  = unpack(data.x >> (12 + 12), 8u);
+	float roughness = unpack(data.y >> (12 + 12), 8u);
+
+	float block_light = unpack(data.w >> 1, 8u);
+	float sky_light   = unpack(data.w >> (1 + 8), 8u);
+
+	vec3 emissive_color; {
+		float r = unpack(data.w >> (1 + 8 + 8),         5u);
+		float g = unpack(data.w >> (1 + 8 + 8 + 5),     5u);
+		float b = unpack(data.w >> (1 + 8 + 8 + 5 + 5), 5u);
+		emissive_color = vec3(r, g, b);
+	}
+
 	float depth = texelFetch(u_blended_depth, ivec2(gl_FragCoord.xy), 0).x;
 	vec3 pos_win = vec3(gl_FragCoord.xy, depth);
 
@@ -119,20 +158,20 @@ void main() {
 		vec3 ndc_near = vec3(gl_FragCoord.xy, 0.0) / vec3(frx_viewWidth, frx_viewHeight, 1.0) * 2.0 - 1.0;
 		vec3 ndc_far  = vec3(gl_FragCoord.xy, 1.0) / vec3(frx_viewWidth, frx_viewHeight, 1.0) * 2.0 - 1.0;
 
-		vec4 world_near0 = frx_inverseViewProjectionMatrix * vec4(ndc_near, 1.0);
-		vec4 world_far0  = frx_inverseViewProjectionMatrix * vec4(ndc_far, 1.0);
-		vec3 world_near = world_near0.xyz / world_near0.w;
-		vec3 world_far  = world_far0.xyz  / world_far0.w;
+		vec4 near0 = frx_inverseProjectionMatrix * vec4(ndc_near, 1.0);
+		vec4 far0  = frx_inverseProjectionMatrix * vec4(ndc_far, 1.0);
+		vec3 near = near0.xyz / near0.w;
+		vec3 far  = far0.xyz  / far0.w;
 
-		dir = normalize(world_far - world_near);
+		dir = normalize(far - near);
 	}
 
-	if(normal == vec3(0.0)) {
-		out_color = depth  == 1.0 ? sky(dir) : color;
+	if(dot(frag_normal, frag_normal) > 1.2) {
+		out_color = depth  == 1.0 ? sky(mat3(frx_inverseViewMatrix) * dir) : color;
 		return;
 	}
 
-	vec3 n = mat3(frx_inverseViewMatrix) * normal;
+	frag_normal = normalize(frag_normal);
 
 	float solid_depth = texelFetch(u_solid_depth, ivec2(gl_FragCoord.xy), 0).x;
 	vec3 solid_pos_cam = win_to_cam(vec3(gl_FragCoord.xy, solid_depth));
@@ -149,11 +188,11 @@ void main() {
 		color = (solid_color * (1.0 - translucent_color.a)) + translucent_color.rgb;
 	}*/
 
-	vec3 reflect_dir = reflect(dir, n);
+	vec3 reflect_dir = reflect(dir, frag_normal);
 
-	if(depth < 1.0 && data.z < 0.1) {
+	if(depth < 1.0 && roughness < 0.1) {
 		vec3 ndc = pos_win / vec3(frxu_size, 1.0) * 2.0 - 1.0;
-		vec4 d = frx_viewProjectionMatrix * vec4(reflect_dir, 0.0);
+		vec4 d = frx_projectionMatrix * vec4(reflect_dir, 0.0);
 		vec3 dir_win = normalize(
 			(d.xyz - ndc.xyz * d.w) * vec3(frxu_size, 1.0)
 		);
@@ -175,15 +214,57 @@ void main() {
 			hit_depth < 1.0
 		) {
 			reflected_color = texelFetch(u_blended_without_particles_color, hit_pos, 0).rgb;
+			uvec4 data = texelFetch(u_blended_without_particles_data, hit_pos, 0);
+
+			vec3 frag_normal; {
+				float x = unpack(data.x >> 12, 12u);
+				float y = unpack(data.x,       12u);
+				float z = unpack(data.z >> 12, 12u);
+				frag_normal = vec3(x, y, z) * 2.0 - 1.0;
+			}
+
+			float emissive  = unpack(data.x >> (12 + 12), 8u);
+			float roughness = unpack(data.y >> (12 + 12), 8u);
+
+			float block_light = unpack(data.w >> 1, 8u);
+			float sky_light   = unpack(data.w >> (1 + 8), 8u);
+
+			vec3 emissive_color; {
+				float r = unpack(data.w >> (1 + 8 + 8),         5u);
+				float g = unpack(data.w >> (1 + 8 + 8 + 5),     5u);
+				float b = unpack(data.w >> (1 + 8 + 8 + 5 + 5), 5u);
+				emissive_color = vec3(r, g, b);
+			}
+
+			apply_light(
+				reflected_color,
+				mat3(frx_inverseViewMatrix) * reflect(reflect_dir, frag_normal),
+				block_light,
+				sky_light,
+				roughness,
+				emissive,
+				emissive_color
+			);
 		}
 		else {
-			reflected_color = sky(reflect_dir);
+			reflected_color = sky(mat3(frx_inverseViewMatrix) * reflect_dir);
 		}
 
 		color = mix(
 			reflected_color,
 			color,
-			pow(max(0.0, dot(reflect_dir, n)), 1.0 / 2.0)
+			pow(max(0.0, dot(reflect_dir, frag_normal)), 1.0 / 2.0)
+		);
+	}
+	else {
+		apply_light(
+			color,
+			mat3(frx_inverseViewMatrix) * reflect_dir,
+			block_light,
+			sky_light,
+			roughness,
+			emissive,
+			emissive_color
 		);
 	}
 

@@ -1,0 +1,46 @@
+{
+
+programs: [
+	{
+		name: "dof",
+		vertexSource: "lomo:shaders/full_frame.vert",
+		fragmentSource: "lomo:shaders/fabulous/dof.frag",
+		samplers: [ "u_color", "u_depth" ]
+	}
+],
+
+fabulous: { passes: [
+	{
+		name: "dof",
+		program: "dof",
+		framebuffer: "dof",
+		samplerImages: [
+			"taa", "blended_without_particles_depth"
+		]
+	}
+]},
+
+images: [
+	{
+		name: "dof",
+		internalFormat: "RGBA16F",
+		pixelFormat: "RGBA",
+		texParams: [
+			{ name: "TEXTURE_MIN_FILTER", val: "NEAREST" },
+			{ name: "TEXTURE_MAG_FILTER", val: "NEAREST" },
+			{ name: "TEXTURE_WRAP_S", val: "CLAMP_TO_EDGE" },
+			{ name: "TEXTURE_WRAP_T", val: "CLAMP_TO_EDGE" }
+		]
+	}
+],
+
+framebuffers: [
+	{
+		name: "dof",
+		colorAttachments: [{
+			image: "dof"
+		}]
+	}
+]
+
+}
