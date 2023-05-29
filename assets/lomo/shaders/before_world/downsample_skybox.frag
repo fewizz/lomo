@@ -15,7 +15,7 @@ vec3 sky(mat3 z_to_w, vec3 dir) {
 
 	mat3 m = mat3(perp_x, perp_y, dir);
 
-	float radius = PI * 0.5 / pow(2.0, max(0.0, float(7 - previous_lod)));
+	float radius = PI * 0.7 / pow(2.0, max(0.0, float(7 - previous_lod)));
 
 	vec3 result = vec3(0.0);
 

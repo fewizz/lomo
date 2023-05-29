@@ -6,11 +6,11 @@ programs: [
 		vertexSource: "lomo:shaders/full_frame.vert",
 		fragmentSource: "lomo:shaders/fabulous/blend.frag",
 		samplers: [
-			"u_solid_color", "u_solid_data", "u_solid_depth",
-			"u_translucent_color", "u_translucent_data", "u_translucent_depth",
-			"u_translucent_particles_color", "u_translucent_particles_data", "u_translucent_particles_depth",
-			"u_weather_color", "u_weather_data", "u_weather_depth",
-			"u_misc_color", "u_misc_data", "u_misc_depth"
+			"u_solid_color", "u_solid_depth",
+			"u_translucent_color", "u_translucent_depth",
+			"u_translucent_particles_color", "u_translucent_particles_depth",
+			"u_weather_color", "u_weather_depth",
+			"u_misc_color", "u_misc_depth"
 		]
 	}
 ],
@@ -21,11 +21,11 @@ fabulous: { passes: [
 		program: "blend",
 		framebuffer: "blended",
 		samplerImages: [
-			"solid_color", "solid_data", "solid_depth",
-			"translucent_color", "translucent_data", "translucent_depth",
-			"translucent_particles_color", "translucent_particles_data", "translucent_particles_depth",
-			"weather_color", "weather_data", "weather_depth",
-			"misc_color", "misc_data", "misc_depth",
+			"solid_color" "solid_depth",
+			"translucent_color", "translucent_depth",
+			"translucent_particles_color", "translucent_particles_depth",
+			"weather_color", "weather_depth",
+			"misc_color", "misc_depth",
 		]
 	}
 ]},
@@ -46,30 +46,6 @@ images: [
 		name: "blended_without_particles_color",
 		internalFormat: "RGBA16F",
 		pixelFormat: "RGBA",
-		texParams: [
-			{ name: "TEXTURE_MIN_FILTER", val: "NEAREST" },
-			{ name: "TEXTURE_MAG_FILTER", val: "NEAREST" },
-			{ name: "TEXTURE_WRAP_S", val: "CLAMP_TO_EDGE" },
-			{ name: "TEXTURE_WRAP_T", val: "CLAMP_TO_EDGE" }
-		]
-	},
-	{
-		name: "blended_data",
-		internalFormat: "RGBA32UI",
-		pixelFormat: "RGBA_INTEGER",
-		pixelDataType: "UNSIGNED_INT",
-		texParams: [
-			{ name: "TEXTURE_MIN_FILTER", val: "NEAREST" },
-			{ name: "TEXTURE_MAG_FILTER", val: "NEAREST" },
-			{ name: "TEXTURE_WRAP_S", val: "CLAMP_TO_EDGE" },
-			{ name: "TEXTURE_WRAP_T", val: "CLAMP_TO_EDGE" }
-		]
-	},
-	{
-		name: "blended_without_particles_data",
-		internalFormat: "RGBA32UI",
-		pixelFormat: "RGBA_INTEGER",
-		pixelDataType: "UNSIGNED_INT",
 		texParams: [
 			{ name: "TEXTURE_MIN_FILTER", val: "NEAREST" },
 			{ name: "TEXTURE_MAG_FILTER", val: "NEAREST" },
@@ -109,11 +85,9 @@ framebuffers: [
 		name: "blended",
 		colorAttachments: [
 			{ image: "blended_without_particles_color" },
-			{ image: "blended_without_particles_data" },
 			{ image: "blended_without_particles_depth" },
 
 			{ image: "blended_color" },
-			{ image: "blended_data" },
 			{ image: "blended_depth" }
 		]
 	}

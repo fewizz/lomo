@@ -2,6 +2,8 @@
 #include frex:shaders/api/view.glsl
 #include frex:shaders/api/player.glsl
 
+//out vec3 prev_camera_space_pos;
+
 vec2 taa_offset() {
 	// 0: -0.25, -0.25
 	// 1:  0.25, -0.25
@@ -19,6 +21,10 @@ void frx_pipelineVertex() {
 		frx_distance = length(gl_Position.xyz);
 	} else {
 		frx_vertex += frx_modelToCamera;
+
+		/*vec4 prev_camera_space_pos0 = frx_vertex + vec4(frx_cameraPos, 0.0) - vec4(frx_lastCameraPos, 0.0);
+		prev_camera_space_pos0 = (frx_lastViewMatrix * prev_camera_space_pos0);
+		prev_camera_space_pos = prev_camera_space_pos0.xyz / prev_camera_space_pos0.w;*/
 
 		vec4 view_coord = frx_viewMatrix * frx_vertex;
 		frx_distance = length(view_coord.xyz);

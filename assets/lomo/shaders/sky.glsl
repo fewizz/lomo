@@ -85,8 +85,8 @@ vec3 sky(vec3 dir, float sun_mul) {
 	vec3 color = sky(
 		eye,
 		layer(earth_radius, 8000.0),
-		0.005 / rgb
-	);
+		0.001 / rgb
+	) * vec3(0.5, 0.8, 1.2);
 	vec3 s = sky(
 		eye,
 		layer(earth_radius, 8000.0),
