@@ -20,14 +20,14 @@ beforeWorldRender: { passes: [
 		name: "skybox",
 		framebuffer: "skybox",
 		program: "skybox",
-		width: 1024, height: 1024,
+		width: 512, height: 512,
 		samplerImages: []
 	},
 	{
 		name: "downsample_skybox_1",
 		framebuffer: "skybox_1",
 		program: "downsample_skybox",
-		width: 1024, height: 1024,
+		width: 512, height: 512,
 		lod: 1,
 		samplerImages: [ "skybox" ]
 	},
@@ -35,7 +35,7 @@ beforeWorldRender: { passes: [
 		name: "downsample_skybox_2",
 		framebuffer: "skybox_2",
 		program: "downsample_skybox",
-		width: 1024, height: 1024,
+		width: 512, height: 512,
 		lod: 2,
 		samplerImages: [ "skybox" ]
 	},
@@ -43,7 +43,7 @@ beforeWorldRender: { passes: [
 		name: "downsample_skybox_3",
 		framebuffer: "skybox_3",
 		program: "downsample_skybox",
-		width: 1024, height: 1024,
+		width: 512, height: 512,
 		lod: 3,
 		samplerImages: [ "skybox" ]
 	},
@@ -51,7 +51,7 @@ beforeWorldRender: { passes: [
 		name: "downsample_skybox_4",
 		framebuffer: "skybox_4",
 		program: "downsample_skybox",
-		width: 1024, height: 1024,
+		width: 512, height: 512,
 		lod: 4,
 		samplerImages: [ "skybox" ]
 	},
@@ -59,7 +59,7 @@ beforeWorldRender: { passes: [
 		name: "downsample_skybox_5",
 		framebuffer: "skybox_5",
 		program: "downsample_skybox",
-		width: 1024, height: 1024,
+		width: 512, height: 512,
 		lod: 5,
 		samplerImages: [ "skybox" ]
 	},
@@ -67,7 +67,7 @@ beforeWorldRender: { passes: [
 		name: "downsample_skybox_6",
 		framebuffer: "skybox_6",
 		program: "downsample_skybox",
-		width: 1024, height: 1024,
+		width: 512, height: 512,
 		lod: 6,
 		samplerImages: [ "skybox" ]
 	},
@@ -75,7 +75,7 @@ beforeWorldRender: { passes: [
 		name: "downsample_skybox_7",
 		framebuffer: "skybox_7",
 		program: "downsample_skybox",
-		width: 1024, height: 1024,
+		width: 512, height: 512,
 		lod: 7,
 		samplerImages: [ "skybox" ]
 	}
@@ -85,10 +85,10 @@ images: [
 	{
 		name: "skybox",
 		target: "TEXTURE_CUBE_MAP",
-		internalFormat: "RGB16F",
+		internalFormat: "RGB32F",
 		pixelFormat: "RGB",
 		pixelDataType: "FLOAT",
-		size: 1024,
+		size: 512,
 		lod: 7,
 		texParams: [
 			{ "name": "TEXTURE_MIN_FILTER", "val": "LINEAR_MIPMAP_LINEAR" },

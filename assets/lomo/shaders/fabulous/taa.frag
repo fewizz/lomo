@@ -46,7 +46,7 @@ void main() {
 	}
 
 	out_color = vec4(
-		clamp(mix(prev_color, color, 1.0 / 4.0), mn, mx),
+		clamp(mix(prev_color, color, 1.0 / 6.0), mn, mx),
 		1.0
 	);
 }

@@ -157,6 +157,10 @@ void frx_pipelineFragment() {
 			dir = normalize(far - near);
 		}
 
+		/*vec3 changed_normal = compute_normal(
+			dir, frag_normal, gl_FragCoord.xy, frx_fragRoughness, 0u
+		);*/
+
 		vec3 reflect_dir = reflect(dir, frag_normal);
 
 		vec3 pos_win = gl_FragCoord.xyz;
@@ -176,7 +180,7 @@ void frx_pipelineFragment() {
 
 		bool result = false;
 		
-		if(frx_fragRoughness < 0.6) {
+		if(frx_fragRoughness <= 0.1) {
 			result = traverse(pos_win, dir_win, 48, hit_pos, hit_z, hit_depth);
 		}
 
@@ -217,7 +221,9 @@ void frx_pipelineFragment() {
 			frx_fragEmissive
 		);
 
-		a.rgb *= mix(1.0, ao, pow(frx_fragRoughness, 0.5));
+		if (frx_fragEnableAo) {
+			a.rgb *= mix(1.0, ao, pow(frx_fragRoughness, 0.1) * (1.0 - frx_fragLight.x));
+		}
 	}
 
 	if (frx_matFlash == 1) {
