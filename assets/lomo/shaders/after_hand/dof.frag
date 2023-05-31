@@ -8,7 +8,6 @@ uniform sampler2D u_depth;
 layout(location = 0) out vec3 out_color;
 
 void main() {
-	#define DOF
 	#ifdef DOF
 	float depth0 = texelFetch(u_depth, ivec2(gl_FragCoord.xy), 0).x;
 	vec3 pos = vec3(gl_FragCoord.xy, depth0);
