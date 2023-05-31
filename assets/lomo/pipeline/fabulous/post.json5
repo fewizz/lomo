@@ -13,7 +13,7 @@ fabulous: { passes: [
 	{
 		name: "post",
 		program: "post",
-		framebuffer: "post",
+		framebuffer: "solid_color",
 		samplerImages: [
 			"blended_color", "blended_depth"
 		]

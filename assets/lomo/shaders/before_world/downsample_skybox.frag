@@ -15,13 +15,13 @@ vec3 sky(mat3 z_to_w, vec3 dir) {
 
 	mat3 m = mat3(perp_x, perp_y, dir);
 
-	float radius = PI * 0.7 / pow(2.0, max(0.0, float(7 - previous_lod)));
+	float radius = PI * 1.0 / pow(2.0, max(0.0, float(7 - previous_lod)));
 
 	vec3 result = vec3(0.0);
 
 	float weight_sum = 0.0;
 
-	const int steps = 5;
+	const int steps = 7;
 
 	for(int x = 0; x < steps; ++x) {
 		for(int y = 0; y < steps; ++y) {
@@ -30,7 +30,7 @@ vec3 sky(mat3 z_to_w, vec3 dir) {
 			vec3 r0 = rotation(radius * c_pos.y, vec3(1.0, 0.0, 0.0)) * vec3(0, 0, 1);
 			vec3 r1 = rotation(radius * c_pos.x, cross(r0, vec3(1.0, 0.0, 0.0))) * r0;
 
-			float weight = exp(-dot(c_pos, c_pos));
+			float weight = exp(-dot(c_pos, c_pos) * 2.0);
 
 			vec3 t = textureLod(u_skybox, z_to_w * (m * r1), previous_lod).rgb;
 			result += t * weight;

@@ -205,12 +205,11 @@ void frx_pipelineFragment() {
 			).rgb * pow(frx_fragLight.y, 4.0);
 		}
 
-		//if(result) {
 		a = mix(
 			vec4(reflected_color, 1.0),
 			vec4(a.rgb * reflected_color, a.a),
 			pow(
-				max(0.0, dot(reflect_dir, frag_normal)),
+				max(0.0, dot(reflect_dir, frag_normal)) + 0.0001,
 				pow((1.0 - frx_fragRoughness), 4.0)
 			)
 		);
@@ -234,7 +233,7 @@ void frx_pipelineFragment() {
 
 	glintify(a, float(frx_matGlint));
 
-	out_color = p_fog(a);
+	out_color = a;
 	out_color.rgb = pow(out_color.rgb, vec3(1.0 / 2.2));
 
 	gl_FragDepth = gl_FragCoord.z;

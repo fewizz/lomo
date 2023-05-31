@@ -24,7 +24,7 @@ struct layer {
 	float depth;
 };
 
-const uint layers_count = 4u;
+const uint layers_count = 5u;
 layer layers[layers_count];
 uint layers_loaded = 0u;
 

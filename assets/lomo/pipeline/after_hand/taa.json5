@@ -4,7 +4,7 @@ programs: [
 	{
 		name: "taa",
 		vertexSource: "lomo:shaders/full_frame.vert",
-		fragmentSource: "lomo:shaders/fabulous/taa.frag",
+		fragmentSource: "lomo:shaders/after_hand/taa.frag",
 		samplers: [
 			"u_color", "u_depth",
 			"u_previous_taa"
@@ -20,13 +20,13 @@ onResize: { passes: [
 	}
 ]},
 
-fabulous: { passes: [
+afterRenderHand: { passes: [
 	{
 		name: "taa",
 		framebuffer: "taa",
 		program: "taa",
 		samplerImages: [
-			"post", "blended_depth",
+			"solid_color", "blended_depth",
 			"previous_taa"
 		]
 	},

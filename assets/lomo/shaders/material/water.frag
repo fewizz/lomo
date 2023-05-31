@@ -6,7 +6,7 @@
 void frx_materialFragment() {
 	#ifdef PBR_ENABLED
 
-	frx_fragColor = vec4(vec3(0.2, 0.6, 1.0), 0.3);
+	frx_fragColor = vec4(vec3(0.2, 0.6, 1.0), 0.5);
 
 	frx_fragNormal = normalize(vec3(
 		snoise(

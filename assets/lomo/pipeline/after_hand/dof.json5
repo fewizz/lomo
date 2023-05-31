@@ -4,12 +4,12 @@ programs: [
 	{
 		name: "dof",
 		vertexSource: "lomo:shaders/full_frame.vert",
-		fragmentSource: "lomo:shaders/fabulous/dof.frag",
+		fragmentSource: "lomo:shaders/after_hand/dof.frag",
 		samplers: [ "u_color", "u_depth" ]
 	}
 ],
 
-fabulous: { passes: [
+afterRenderHand: { passes: [
 	{
 		name: "dof",
 		program: "dof",

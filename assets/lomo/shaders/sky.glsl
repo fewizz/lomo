@@ -24,19 +24,23 @@ struct layer {
 
 float ray_layer_intersection(ray r, layer l) {
 	sphere top_sphere = sphere(
-		vec3(0.0, -l.height, 0.0), l.height - l.scale_height * log(0.05)
+		vec3(0.0, -l.height, 0.0), l.height + (l.scale_height * 1.5)
 	);
 	sphere bot_sphere = sphere(
-		vec3(0.0, -l.height, 0.0), l.height
+		vec3(0.0, -l.height, 0.0), l.height - 20000.0
 	);
 	ray_sphere_intersection_result top = ray_sphere_intersection(r, top_sphere);
+	ray_sphere_intersection_result bot = ray_sphere_intersection(r, bot_sphere);
+	if(bot.success && bot.close >= 0.0) {
+		return bot.close;
+	}
 	if(top.success) {
 		return max(0.0, top.far) - max(0.0, top.close);
 	}
 	return 0.0;
 }
 
-const int steps = 4;
+const int steps = 6;
 
 float od(vec3 po, vec3 dir, float dist, layer l) {
 	float stp = dist / float(steps);
@@ -54,21 +58,32 @@ float henyey_greenstein_phase_function(float g, float cosa) {
 	return 3.0*(1.0-g*g)/(2.0*(2.0+g*g)) * (1.0+cosa*cosa)/pow(1.0+g*g-2.0*g*cosa, 3.0/2.0);
 }
 
+float rayleigh_phase_function(float cosa) {
+	return 3.0 / (16.0 * PI) * (1.0 + cosa * cosa);
+}
+
 vec3 sky(ray r, layer l, vec3 coeffs) {
 	float dist = ray_layer_intersection(r, l);
 	float stp = dist / float(steps);
 	dist = stp / 2.0;
-	vec3 result = vec3(0);
+	vec3 result = vec3(0.0);
 	for(int i = 0; i < steps; ++i) {
 		ray r0 = ray(r.pos + r.dir * dist, sun_dir());
-		float dist0 = ray_layer_intersection(r0, l);
-		result +=
-			exp(
-				-coeffs * (
-					od(r0.pos, sun_dir(), dist0, l) +
-					od(r.pos, r.dir, dist, l)
-				)
-			) * stp;
+		sphere bot_sphere = sphere(
+			vec3(0.0, -l.height, 0.0), l.height - 20000.0
+		);
+		ray_sphere_intersection_result bot = ray_sphere_intersection(r0, bot_sphere);
+
+		if(!(bot.success && bot.close >= 0.0)) {
+			float dist0 = ray_layer_intersection(r0, l);
+			result +=
+				exp(
+					-coeffs * (
+						od(r0.pos, sun_dir(), dist0, l) +
+						od(r.pos, r.dir, dist, l)
+					)
+				) * stp;
+		}
 		dist += stp;
 	}
 	return result * coeffs;
@@ -78,6 +93,7 @@ const float earth_radius = 6000000.0;
 
 vec3 sky(vec3 dir, float sun_mul) {
 	vec3 eye_pos = frx_cameraPos;
+	//eye_pos.y += 1000.0;
 	eye_pos.x = 0.0; eye_pos.z = 0.0;
 	ray eye = ray(eye_pos, dir);
 	float a = dot(dir, sun_dir());
@@ -85,15 +101,17 @@ vec3 sky(vec3 dir, float sun_mul) {
 	vec3 color = sky(
 		eye,
 		layer(earth_radius, 8000.0),
-		0.002 / rgb
-	);
-	vec3 s = sky(
+		0.0015 / rgb
+	) * 80.0 * rayleigh_phase_function(a);
+	vec3 m = sky(
 		eye,
-		layer(earth_radius, 8000.0),
-		0.15 / rgb
-	) * henyey_greenstein_phase_function(0.998, a);
+		layer(earth_radius, 1200.0),
+		0.5 / rgb
+	) * 5.0 * henyey_greenstein_phase_function(0.996, a) * vec3(1.0, 0.4, 0.1);
 
-	s *= sun_mul;
+	m *= sun_mul;
+
+	vec3 s = (1.0 - smoothstep(0.0, PI / 80.0, acos(a))) * vec3(1.0, 1.0, 0.5) * 8192 * 0.0;
 
 	/*float t = frx_renderSeconds / (20.0 * 60.0 * 27.0);
 	t += -frx_renderSeconds / (20.0 * 60.0);
@@ -124,7 +142,7 @@ vec3 sky(vec3 dir, float sun_mul) {
 		s += pow(hsh, 2048.0) * 1.0;
 	}*/
 
-	return color + s;
+	return color + m + s;
 }
 
 vec3 sky(vec3 dir) {

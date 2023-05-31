@@ -11,6 +11,7 @@ layout(location = 0) out vec4 out_color;
 void main() {
 	float depth = texelFetch(u_depth, ivec2(gl_FragCoord.xy), 0).x;
 	vec3 color = texelFetch(u_color, ivec2(gl_FragCoord.xy), 0).rgb;
+	color = pow(color, vec3(2.2));
 
 	vec3 ndc = vec3(gl_FragCoord.xy, depth) / vec3(frxu_size, 1.0) * 2.0 - 1.0;
 	vec4 world0 = frx_inverseViewProjectionMatrix * vec4(ndc, 1.0);
@@ -40,13 +41,14 @@ void main() {
 			vec2 off = vec2(x, y);
 			off = off != vec2(0.0) ? normalize(off) : off;
 			vec3 c = texture(u_color, (gl_FragCoord.xy + off) / vec2(frxu_size)).rgb;
+			c = pow(c, vec3(2.2));
 			mn = min(c, mn);
 			mx = max(c, mx);
 		}
 	}
 
 	out_color = vec4(
-		clamp(mix(prev_color, color, 1.0 / 6.0), mn, mx),
+		clamp(mix(prev_color, color, 1.0 / 4.0), mn, mx),
 		1.0
 	);
 }
