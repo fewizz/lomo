@@ -8,6 +8,7 @@ uniform sampler2D u_depth;
 layout(location = 0) out vec3 out_color;
 
 void main() {
+	//#define DOF
 	#ifdef DOF
 	float depth0 = texelFetch(u_depth, ivec2(gl_FragCoord.xy), 0).x;
 	vec3 pos = vec3(gl_FragCoord.xy, depth0);
@@ -31,10 +32,10 @@ void main() {
 	vec3 color = vec3(0.0);
 	float weight_sum = 0.0;
 
-	const int s = 8;
+	const int radius = 4;
 
-	for(int x = -s; x <= s; ++x) {
-		for(int y = -s; y <= s; ++y) {
+	for(int x = -radius; x <= radius; ++x) {
+		for(int y = -radius; y <= radius; ++y) {
 			ivec2 ipos = ivec2(gl_FragCoord.xy) + ivec2(x, y);
 			float depth = texelFetch(u_depth, ipos, 0).x;
 			vec3 color0 = texelFetch(u_color, ipos, 0).rgb;
@@ -42,14 +43,16 @@ void main() {
 			vec3 pos = vec3(gl_FragCoord.xy + vec2(x, y), depth);
 			vec3 pos_cam = win_to_cam(pos);
 
-			float rad =
+			float dist_to_mid_z = abs(pos_cam.z - mid_cam.z);
+			float dist_to_z = abs(pos_cam.z - near.z);
+
+			float radius0 =
 				min(
-					abs(pos_cam.z - mid_cam.z) / abs(near.z -pos_cam.z) * 2.0,
-					s
+					dist_to_mid_z / dist_to_z * 0.5,
+					radius
 				);
 
-			float weight =
-				clamp(rad + 1.0 - length(vec2(x, y)), 0.0, 1.0);
+			float weight = clamp(radius0 + 1.0 - length(vec2(x, y)), 0.0, 1.0);
 
 			color += color0 * weight;
 			weight_sum += weight;

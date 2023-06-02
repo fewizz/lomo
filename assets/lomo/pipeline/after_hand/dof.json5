@@ -15,7 +15,7 @@ afterRenderHand: { passes: [
 		program: "dof",
 		framebuffer: "dof",
 		samplerImages: [
-			"taa", "blended_without_particles_depth"
+			"taa", "taa_depth"
 		]
 	}
 ]},

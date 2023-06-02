@@ -164,12 +164,30 @@ void frx_pipelineFragment() {
 		vec3 reflect_dir = reflect(dir, frag_normal);
 
 		vec3 pos_win = gl_FragCoord.xyz;
-		if(!frx_isHand) {
-			pos_win.z = texelFetch(u_prev_depth, ivec2(gl_FragCoord.xy), 0).x;
-		}
+
 		vec3 ndc = pos_win / vec3(frx_viewWidth, frx_viewHeight, 1.0) * 2.0 - 1.0;
+		vec4 world0 = frx_inverseViewProjectionMatrix * vec4(ndc, 1.0);
+		vec3 world = world0.xyz / world0.w;
+		world += frx_cameraPos;
+		// going backwards
+		world -= frx_lastCameraPos;
+		vec4 ndc0 = frx_lastViewProjectionMatrix * vec4(world, 1.0);
+		ndc = ndc0.xyz / ndc0.w;
+		pos_win = ndc * 0.5 + 0.5;
+		pos_win.xy *= vec2(frx_viewWidth, frx_viewHeight);
+
 		vec3 prev_reflect_dir = mat3(frx_lastViewMatrix) * (mat3(frx_inverseViewMatrix) * reflect_dir);
-		vec4 d = frx_projectionMatrix * vec4(prev_reflect_dir, 0.0);
+		vec4 d = frx_lastProjectionMatrix * vec4(prev_reflect_dir, 0.0);
+
+		if(!frx_isHand) {
+			pos_win.z = texelFetch(
+				u_prev_depth,
+				ivec2(pos_win.xy),
+				0
+			).x;
+			ndc.z = pos_win.z * 2.0 - 1.0;
+		}
+
 		vec3 dir_win = normalize(
 			(d.xyz - ndc.xyz * d.w) * vec3(frx_viewWidth, frx_viewHeight, 1.0)
 		);
@@ -198,11 +216,16 @@ void frx_pipelineFragment() {
 			reflected_color = texelFetch(u_prev_color, hit_pos, 0).rgb;
 		}
 		else {
-			reflected_color = textureLod(
-				u_skybox,
-				mat3(frx_inverseViewMatrix) * normalize(mix(reflect_dir, frag_normal, frx_fragRoughness)),
-				pow(frx_fragRoughness, 1.0 / 6.0) * 7.0
-			).rgb * pow(frx_fragLight.y, 4.0);
+			if(frx_worldHasSkylight == 1) {
+				reflected_color = textureLod(
+					u_skybox,
+					mat3(frx_inverseViewMatrix) * normalize(mix(reflect_dir, frag_normal, frx_fragRoughness)),
+					pow(frx_fragRoughness, 1.0 / 6.0) * 7.0
+				).rgb * pow(frx_fragLight.y, 4.0);
+			}
+			else {
+				reflected_color = pow(texture(frxs_lightmap, vec2(0.03125, frx_fragLight.y)).rgb, vec3(2.2));
+			}
 		}
 
 		a = mix(
@@ -210,7 +233,7 @@ void frx_pipelineFragment() {
 			vec4(a.rgb * reflected_color, a.a),
 			pow(
 				max(0.0, dot(reflect_dir, frag_normal)) + 0.0001,
-				pow((1.0 - frx_fragRoughness), 4.0)
+				pow(frx_fragReflectance * (1.0 - frx_fragRoughness), 16.0)
 			)
 		);
 

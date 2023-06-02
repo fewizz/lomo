@@ -91,7 +91,7 @@ vec3 sky(ray r, layer l, vec3 coeffs) {
 
 const float earth_radius = 6000000.0;
 
-vec3 sky(vec3 dir, float sun_mul) {
+vec3 overworld_sky(vec3 dir, float sun_mul) {
 	vec3 eye_pos = frx_cameraPos;
 	//eye_pos.y += 1000.0;
 	eye_pos.x = 0.0; eye_pos.z = 0.0;
@@ -102,16 +102,16 @@ vec3 sky(vec3 dir, float sun_mul) {
 		eye,
 		layer(earth_radius, 8000.0),
 		0.0015 / rgb
-	) * 80.0 * rayleigh_phase_function(a);
+	) * 40.0 * rayleigh_phase_function(a);
 	vec3 m = sky(
 		eye,
 		layer(earth_radius, 1200.0),
 		0.5 / rgb
-	) * 5.0 * henyey_greenstein_phase_function(0.996, a) * vec3(1.0, 0.4, 0.1);
+	) * 4.0 * henyey_greenstein_phase_function(0.996, a) * vec3(1.0, 0.4, 0.1);
 
 	m *= sun_mul;
 
-	vec3 s = (1.0 - smoothstep(0.0, PI / 80.0, acos(a))) * vec3(1.0, 1.0, 0.5) * 8192 * 0.0;
+	//vec3 s = (1.0 - smoothstep(0.0, PI / 80.0, acos(a))) * vec3(1.0, 1.0, 0.5) * 4096.0 * 0.0;
 
 	/*float t = frx_renderSeconds / (20.0 * 60.0 * 27.0);
 	t += -frx_renderSeconds / (20.0 * 60.0);
@@ -142,11 +142,7 @@ vec3 sky(vec3 dir, float sun_mul) {
 		s += pow(hsh, 2048.0) * 1.0;
 	}*/
 
-	return color + m + s;
-}
-
-vec3 sky(vec3 dir) {
-	return sky(dir, 1.0);
+	return color + m;
 }
 
 vec3 end_sky(vec3 dir) {
@@ -159,4 +155,17 @@ vec3 end_sky(vec3 dir) {
 		vec3(0.2, 0.2, 0.8) * abs(rotated_0.y) +
 		//vec3(0.0, 0.2, 0.0) * abs(rotated_1.y) +
 		dots;
+}
+
+vec3 sky(vec3 dir) {
+	if(frx_worldHasSkylight == 1) {
+		if(frx_worldIsOverworld == 1) {
+			return overworld_sky(dir, 1.0);
+		}
+		if(frx_worldIsEnd == 1) {
+			return end_sky(dir);
+		}
+		return vec3(1.0);
+	}
+	return vec3(0.0);
 }

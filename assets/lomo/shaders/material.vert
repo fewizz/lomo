@@ -16,27 +16,29 @@ vec2 taa_offset() {
 }
 
 void frx_pipelineVertex() {
-	if (frx_isGui) {
+	if (frx_isGui && !frx_isHand) {
 		gl_Position = frx_guiViewProjectionMatrix * frx_vertex;
-		frx_distance = length(gl_Position.xyz);
 	} else {
-		frx_vertex += frx_modelToCamera;
+		vec4 ndc0;
 
-		/*vec4 prev_camera_space_pos0 = frx_vertex + vec4(frx_cameraPos, 0.0) - vec4(frx_lastCameraPos, 0.0);
-		prev_camera_space_pos0 = (frx_lastViewMatrix * prev_camera_space_pos0);
-		prev_camera_space_pos = prev_camera_space_pos0.xyz / prev_camera_space_pos0.w;*/
+		if(!frx_isHand) {
+			frx_vertex += frx_modelToCamera;
 
-		vec4 view_coord = frx_viewMatrix * frx_vertex;
-		frx_distance = length(view_coord.xyz);
+			vec4 view_coord = frx_viewMatrix * frx_vertex;
 
-		vec4 camera_space_pos = frx_projectionMatrix * view_coord;
+			ndc0 = frx_projectionMatrix * view_coord;
+		}
+		else {
+			ndc0 = frx_guiViewProjectionMatrix * frx_vertex;
+		}
 
-		vec3 ndc = camera_space_pos.xyz / camera_space_pos.w;
+		vec3 ndc = ndc0.xyz / ndc0.w;
+
 		vec3 window_space_pos = (ndc.xyz * 0.5 + 0.5) * vec3(frx_viewWidth, frx_viewHeight, 1.0);
 
 		window_space_pos.xy += taa_offset();
 
 		ndc = window_space_pos / vec3(frx_viewWidth, frx_viewHeight, 1.0) * 2.0 - 1.0;
-		gl_Position = vec4(ndc, 1.0) * camera_space_pos.w;
+		gl_Position = vec4(ndc, 1.0) * ndc0.w;
 	}
 }

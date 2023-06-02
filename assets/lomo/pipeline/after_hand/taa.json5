@@ -6,8 +6,8 @@ programs: [
 		vertexSource: "lomo:shaders/full_frame.vert",
 		fragmentSource: "lomo:shaders/after_hand/taa.frag",
 		samplers: [
-			"u_color", "u_depth",
-			"u_previous_taa"
+			"u_color", "u_depth", "u_solid_depth"
+			"u_previous_taa", "u_previous_taa_depth"
 		],
 	}
 ],
@@ -16,6 +16,11 @@ onResize: { passes: [
 	{
 		name: "clear_previous_taa",
 		framebuffer: "previous_taa",
+		program: "frex_clear"
+	},
+	{
+		name: "clear_previous_taa_depth",
+		framebuffer: "previous_taa_depth",
 		program: "frex_clear"
 	}
 ]},
@@ -26,8 +31,8 @@ afterRenderHand: { passes: [
 		framebuffer: "taa",
 		program: "taa",
 		samplerImages: [
-			"solid_color", "blended_depth",
-			"previous_taa"
+			"solid_color", "blended_depth", "solid_depth"
+			"previous_taa", "previous_taa_depth"
 		]
 	},
 	{
@@ -35,6 +40,12 @@ afterRenderHand: { passes: [
 		framebuffer: "previous_taa",
 		program: "copy",
 		samplerImages: [ "taa" ]
+	},
+	{
+		name: "copy_taa_depth",
+		framebuffer: "previous_taa_depth",
+		program: "copy",
+		samplerImages: [ "taa_depth" ]
 	}
 ]},
 
@@ -60,20 +71,53 @@ images: [
 			{ name: "TEXTURE_WRAP_S", val: "CLAMP_TO_EDGE" },
 			{ name: "TEXTURE_WRAP_T", val: "CLAMP_TO_EDGE" }
 		]
+	},
+	{
+		name: "taa_depth",
+		internalFormat: "R32F",
+		pixelFormat: "RED",
+		pixelDataType: "FLOAT",
+		texParams: [
+			{ name: "TEXTURE_MIN_FILTER", val: "NEAREST" },
+			{ name: "TEXTURE_MAG_FILTER", val: "NEAREST" },
+			{ name: "TEXTURE_WRAP_S", val: "CLAMP_TO_EDGE" },
+			{ name: "TEXTURE_WRAP_T", val: "CLAMP_TO_EDGE" },
+			{ name: "TEXTURE_COMPARE_MODE", val: "NONE" }
+		]
+	},
+	{
+		name: "previous_taa_depth",
+		internalFormat: "R32F",
+		pixelFormat: "RED",
+		pixelDataType: "FLOAT",
+		texParams: [
+			{ name: "TEXTURE_MIN_FILTER", val: "NEAREST" },
+			{ name: "TEXTURE_MAG_FILTER", val: "NEAREST" },
+			{ name: "TEXTURE_WRAP_S", val: "CLAMP_TO_EDGE" },
+			{ name: "TEXTURE_WRAP_T", val: "CLAMP_TO_EDGE" },
+			{ name: "TEXTURE_COMPARE_MODE", val: "NONE" }
+		]
 	}
 ],
 
 framebuffers: [
 	{
 		name: "taa",
-		colorAttachments: [{
-			image: "taa"
-		}]
+		colorAttachments: [
+			{ image: "taa" },
+			{ image: "taa_depth" }
+		]
 	},
 	{
 		name: "previous_taa",
 		colorAttachments: [{
 			image: "previous_taa", clearColor: 0
+		}]
+	},
+	{
+		name: "previous_taa_depth",
+		colorAttachments: [{
+			image: "previous_taa_depth", clearColor: 0
 		}]
 	}
 ]

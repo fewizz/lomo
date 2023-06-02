@@ -19,7 +19,7 @@ void frx_materialFragment() {
 	));
 
 	frx_fragRoughness = 0.0;
-	frx_fragReflectance = 0.02;
+	frx_fragReflectance = 1.0;
 
 	#endif
 }
