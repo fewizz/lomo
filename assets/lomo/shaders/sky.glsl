@@ -102,12 +102,12 @@ vec3 overworld_sky(vec3 dir, float sun_mul) {
 		eye,
 		layer(earth_radius, 8000.0),
 		0.0015 / rgb
-	) * 40.0 * rayleigh_phase_function(a);
+	) * 40.0 * rayleigh_phase_function(a) * vec3(0.5, 0.8, 1.0);
 	vec3 m = sky(
 		eye,
 		layer(earth_radius, 1200.0),
 		0.5 / rgb
-	) * 4.0 * henyey_greenstein_phase_function(0.996, a) * vec3(1.0, 0.4, 0.1);
+	) * 3.0 * henyey_greenstein_phase_function(0.996, a) * vec3(1.0, 0.4, 0.4);
 
 	m *= sun_mul;
 

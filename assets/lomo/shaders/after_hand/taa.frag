@@ -31,10 +31,9 @@ void main() {
 	if(!hand) {
 		world += frx_cameraPos;
 		world -= frx_lastCameraPos;
+		vec4 ndc0 = frx_lastViewProjectionMatrix * vec4(world, 1.0);
+		ndc = ndc0.xyz / ndc0.w;
 	}
-
-	vec4 ndc0 = frx_lastViewProjectionMatrix * vec4(world, 1.0);
-	ndc = ndc0.xyz / ndc0.w;
 
 	if(any(greaterThanEqual(abs(ndc.xy), vec2(1.0)))) {
 		out_color = vec4(color, 1.0);

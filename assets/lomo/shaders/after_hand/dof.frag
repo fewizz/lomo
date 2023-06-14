@@ -48,7 +48,7 @@ void main() {
 
 			float radius0 =
 				min(
-					dist_to_mid_z / dist_to_z * 0.5,
+					dist_to_mid_z / dist_to_z * 0.05,
 					radius
 				);
 

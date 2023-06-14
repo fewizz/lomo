@@ -45,7 +45,6 @@ fabulousTargets: {
 },
 
 include: [
-
 	"lomo:pipeline/before_world/skybox.json5",
 
 	"lomo:pipeline/fabulous/blend.json5",

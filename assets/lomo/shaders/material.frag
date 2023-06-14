@@ -9,7 +9,8 @@
 #include frex:shaders/api/material.glsl
 #include frex:shaders/api/fragment.glsl
 #include lomo:shaders/lib/pack.glsl
-#include lomo:shaders/lib/compute_normal.glsl
+#include lomo:shaders/lib/hash.glsl
+#include lomo:shaders/lib/linear.glsl
 
 uniform samplerCube u_skybox;
 
@@ -17,6 +18,46 @@ uniform sampler2D u_prev_color;
 uniform sampler2D u_prev_depth;
 
 layout(location = 0) out vec4 out_color;
+
+vec3 compute_normal(
+	vec3 incidence, vec3 normal, vec2 pos, float roughness, uint stp
+) {
+	vec3 resulting_normal;
+
+	for(uint i = 0u; i < 4u; ++i) {
+		vec2 rand =
+			(hash34(uvec4(
+				pos, uint(frx_renderFrames) % (1024u * 1024u), stp * 1024u + i
+			))).rg;
+
+		rand = rand * 2.0 - 1.0;
+
+		vec3 reflected = reflect(incidence, normal);
+		vec3 cr = cross(incidence, normal);
+		if(cr == vec3(0.0)) {
+			cr = cross(incidence, vec3(1.0, 0.0, 0.0));
+		}
+		cr = normalize(cr);
+
+		vec3 reflected_1 = rotation(
+			rand.x * pow(roughness, 2.0) * PI,
+			cr
+		) * reflected;
+
+		reflected_1 = rotation(rand.y * PI, reflected) * reflected_1;
+
+		resulting_normal = normalize(-incidence + reflected_1);
+		if(resulting_normal == vec3(0.0)) {
+			resulting_normal = reflected_1;
+		}
+
+		if(dot(resulting_normal, normal) > 0.0) {
+			break;
+		}
+	}
+
+	return resulting_normal;
+}
 
 bool traverse(
 	vec3 pos, vec3 dir, int steps, out ivec2 hit_pos, out float hit_z, out float hit_depth
@@ -26,6 +67,7 @@ bool traverse(
 
 	pos.z -= max(0.0, dir.z * 4.0);
 	pos.z -= 1.0 / 1000000.0;
+	//pos.z = uintBitsToFloat(floatBitsToUint(pos.z) - 1u);
 
 	float dir_xy_length = length(dir.xy);
 	vec2 dir_xy = dir.xy / dir_xy_length;
@@ -36,7 +78,7 @@ bool traverse(
 	// shift[x] is 1u if isgn_xy[i] is -1, 0u otherwise
 	uvec2 shift = uvec2((-isgn_xy + 1) / 2);
 	uvec2 texel = uvec2(ivec2(pos.xy * sgn_xy)) - shift;
-	vec2 inner = fract(pos.xy * sgn_xy);
+	vec2 inner = vec2(0.5);//fract(pos.xy * sgn_xy);
 	float z = pos.z;
 
 	while(steps > 0) {
@@ -142,7 +184,6 @@ void frx_pipelineFragment() {
 		}
 	} else {
 		float ao = pow(frx_fragLight.z, 3.0);
-		//a.rgb *= frx_fragEnableAo ? vec3(ao) : vec3(1.0);
 
 		vec3 block = texture(frxs_lightmap, vec2(prev_light.x, 0.03125)).rgb;
 
@@ -157,34 +198,44 @@ void frx_pipelineFragment() {
 			dir = normalize(far - near);
 		}
 
-		/*vec3 changed_normal = compute_normal(
+		vec3 changed_normal = compute_normal(
 			dir, frag_normal, gl_FragCoord.xy, frx_fragRoughness, 0u
-		);*/
+		);
+		changed_normal = frag_normal;
 
-		vec3 reflect_dir = reflect(dir, frag_normal);
+		vec3 reflect_dir = reflect(dir, changed_normal);
+		vec3 clear_reflect_dir = reflect(dir, frag_normal);
 
 		vec3 pos_win = gl_FragCoord.xyz;
-
 		vec3 ndc = pos_win / vec3(frx_viewWidth, frx_viewHeight, 1.0) * 2.0 - 1.0;
-		vec4 world0 = frx_inverseViewProjectionMatrix * vec4(ndc, 1.0);
-		vec3 world = world0.xyz / world0.w;
-		world += frx_cameraPos;
-		// going backwards
-		world -= frx_lastCameraPos;
-		vec4 ndc0 = frx_lastViewProjectionMatrix * vec4(world, 1.0);
-		ndc = ndc0.xyz / ndc0.w;
-		pos_win = ndc * 0.5 + 0.5;
-		pos_win.xy *= vec2(frx_viewWidth, frx_viewHeight);
-
-		vec3 prev_reflect_dir = mat3(frx_lastViewMatrix) * (mat3(frx_inverseViewMatrix) * reflect_dir);
-		vec4 d = frx_lastProjectionMatrix * vec4(prev_reflect_dir, 0.0);
 
 		if(!frx_isHand) {
-			pos_win.z = texelFetch(
-				u_prev_depth,
-				ivec2(pos_win.xy),
-				0
-			).x;
+			vec4 world0 = frx_inverseViewProjectionMatrix * vec4(ndc, 1.0);
+			vec3 world = world0.xyz / world0.w;
+			world += frx_cameraPos;
+			// going backwards
+			world -= frx_lastCameraPos;
+			vec4 ndc0 = frx_lastViewProjectionMatrix * vec4(world, 1.0);
+		
+			ndc = ndc0.xyz / ndc0.w;
+			pos_win = ndc * 0.5 + 0.5;
+			pos_win.xy *= vec2(frx_viewWidth, frx_viewHeight);
+		}
+
+		vec3 prev_reflect_dir = mat3(frx_lastViewMatrix) * (mat3(frx_inverseViewMatrix) * reflect_dir);
+		vec4 d = frx_projectionMatrix * vec4(prev_reflect_dir, 0.0);
+
+		float prev_depth = texelFetch(
+			u_prev_depth,
+			ivec2(pos_win.xy),
+			0
+		).x;
+
+		vec3 prev_cam_pos = win_to_cam(vec3(pos_win.xy, prev_depth));
+		vec3 curr_cam_pos = win_to_cam(pos_win);
+
+		if(!frx_isHand && distance(prev_cam_pos, curr_cam_pos) < 0.5) {
+			pos_win.z = min(pos_win.z, prev_depth);
 			ndc.z = pos_win.z * 2.0 - 1.0;
 		}
 
@@ -198,7 +249,7 @@ void frx_pipelineFragment() {
 
 		bool result = false;
 		
-		if(frx_fragRoughness <= 0.1) {
+		if(frx_fragRoughness <= 0.4 && all(lessThan(abs(ndc), vec3(1.0)))) {
 			result = traverse(pos_win, dir_win, 48, hit_pos, hit_z, hit_depth);
 		}
 
@@ -206,9 +257,11 @@ void frx_pipelineFragment() {
 		vec3 pos_at_z = win_to_cam(vec3(vec2(hit_pos) + 0.5, hit_z));
 
 		result = result &&
-			result && hit_depth < 1.0 &&
-			!(length(pos_at_z) > length(pos_at_depth) && distance(pos_at_z, pos_at_depth) > length(pos_at_depth) / 4.0);
-		//a.rgb = texelFetch(u_prev_color, hit_pos, 0).rgb;
+			hit_depth < 1.0 &&
+			!(
+				length(pos_at_z) > length(pos_at_depth) &&
+				distance(pos_at_z, pos_at_depth) > length(pos_at_depth) / 4.0
+			);
 
 		vec3 reflected_color = vec3(0.0);
 
@@ -219,7 +272,7 @@ void frx_pipelineFragment() {
 			if(frx_worldHasSkylight == 1) {
 				reflected_color = textureLod(
 					u_skybox,
-					mat3(frx_inverseViewMatrix) * normalize(mix(reflect_dir, frag_normal, frx_fragRoughness)),
+					mat3(frx_inverseViewMatrix) * normalize(mix(clear_reflect_dir, frag_normal, frx_fragRoughness)),
 					pow(frx_fragRoughness, 1.0 / 6.0) * 7.0
 				).rgb * pow(frx_fragLight.y, 4.0);
 			}
@@ -232,7 +285,7 @@ void frx_pipelineFragment() {
 			vec4(reflected_color, 1.0),
 			vec4(a.rgb * reflected_color, a.a),
 			pow(
-				max(0.0, dot(reflect_dir, frag_normal)) + 0.0001,
+				max(0.0, dot(clear_reflect_dir, frag_normal)) + 0.0001,
 				pow(frx_fragReflectance * (1.0 - frx_fragRoughness), 16.0)
 			)
 		);

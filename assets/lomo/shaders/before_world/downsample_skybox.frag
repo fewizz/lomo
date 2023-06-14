@@ -30,7 +30,7 @@ vec3 sky(mat3 z_to_w, vec3 dir) {
 			vec3 r0 = rotation(radius * c_pos.y, vec3(1.0, 0.0, 0.0)) * vec3(0, 0, 1);
 			vec3 r1 = rotation(radius * c_pos.x, cross(r0, vec3(1.0, 0.0, 0.0))) * r0;
 
-			float weight = exp(-dot(c_pos, c_pos) * 1.0);
+			float weight = exp(-dot(c_pos, c_pos) * 2.0);
 
 			vec3 t = textureLod(u_skybox, z_to_w * (m * r1), previous_lod).rgb;
 			result += t * weight;
