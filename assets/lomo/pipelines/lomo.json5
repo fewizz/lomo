@@ -123,7 +123,6 @@ images: [
 			{ name: "TEXTURE_COMPARE_MODE", val: "NONE" }
 		]
 	},
-
 	{
 		name: "translucent_color",
 		internalFormat: "RGBA16F",

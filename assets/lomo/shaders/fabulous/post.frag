@@ -22,9 +22,11 @@ void main() {
 
 	vec3 dir = normalize(far - near);
 
+	float off = hash33(vec3(gl_FragCoord.xy, frx_renderSeconds)).x;
+
 	out_color =
 		depth0 >= 1.0 ?
-		sky(mat3(frx_inverseViewMatrix) * dir) :
+		sky(mat3(frx_inverseViewMatrix) * dir, off) :
 		texelFetch(u_blended_color, ivec2(gl_FragCoord.xy), 0).rgb;
 
 	out_color = pow(out_color, vec3(1.0 / 2.2));

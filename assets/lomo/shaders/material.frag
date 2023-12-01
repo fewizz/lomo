@@ -164,6 +164,7 @@ void frx_pipelineFragment() {
 	vec3 frag_normal = TBN * frx_fragNormal;
 	if(!frx_isHand) {
 		frag_normal = mat3(frx_viewMatrix) * frag_normal;
+		vertex_normal = mat3(frx_viewMatrix) * vertex_normal;
 	}
 
 	frx_fragColor.rgb = pow(frx_fragColor.rgb, vec3(2.2));
@@ -175,17 +176,14 @@ void frx_pipelineFragment() {
 	if (frx_isGui && !frx_isHand) {
 		if (frx_fragEnableDiffuse) {
 			float light = 0.4
-				+ 0.6 * clamp(dot(vertex_normal.xyz, vec3(-0.93205774, 0.26230583, -0.24393857)), 0.0, 1.0)
-				+ 0.6 * clamp(dot(vertex_normal.xyz, vec3(-0.10341814, 0.9751613, 0.18816751)), 0.0, 1.0);
+				+ 0.6 * clamp(dot(frx_vertexNormal.xyz, vec3(-0.93205774, 0.26230583, -0.24393857)), 0.0, 1.0)
+				+ 0.6 * clamp(dot(frx_vertexNormal.xyz, vec3(-0.10341814, 0.9751613, 0.18816751)), 0.0, 1.0);
 			float df = min(light, 1.0);
 			df = df + (1.0 - df) * frx_fragEmissive;
 			df = pow(df, 2.2);
 			a *= vec4(df, df, df, 1.0);
 		}
 	} else {
-		float ao = pow(frx_fragLight.z, 3.0);
-
-		vec3 block = texture(frxs_lightmap, vec2(prev_light.x, 0.03125)).rgb;
 
 		vec3 dir; {
 			vec3 ndc_near = vec3(gl_FragCoord.xy, 0.0) / vec3(frx_viewWidth, frx_viewHeight, 1.0) * 2.0 - 1.0;
@@ -201,7 +199,7 @@ void frx_pipelineFragment() {
 		vec3 changed_normal = compute_normal(
 			dir, frag_normal, gl_FragCoord.xy, frx_fragRoughness, 0u
 		);
-		changed_normal = frag_normal;
+		//changed_normal = frag_normal;
 
 		vec3 reflect_dir = reflect(dir, changed_normal);
 		vec3 clear_reflect_dir = reflect(dir, frag_normal);
@@ -222,9 +220,6 @@ void frx_pipelineFragment() {
 			pos_win.xy *= vec2(frx_viewWidth, frx_viewHeight);
 		}
 
-		vec3 prev_reflect_dir = mat3(frx_lastViewMatrix) * (mat3(frx_inverseViewMatrix) * reflect_dir);
-		vec4 d = frx_projectionMatrix * vec4(prev_reflect_dir, 0.0);
-
 		float prev_depth = texelFetch(
 			u_prev_depth,
 			ivec2(pos_win.xy),
@@ -234,14 +229,18 @@ void frx_pipelineFragment() {
 		vec3 prev_cam_pos = win_to_cam(vec3(pos_win.xy, prev_depth));
 		vec3 curr_cam_pos = win_to_cam(pos_win);
 
-		if(!frx_isHand && distance(prev_cam_pos, curr_cam_pos) < 0.5) {
-			pos_win.z = min(pos_win.z, prev_depth);
-			ndc.z = pos_win.z * 2.0 - 1.0;
-		}
+		vec3 prev_reflect_dir = mat3(frx_lastViewMatrix) * (mat3(frx_inverseViewMatrix) * reflect_dir);
+		vec4 d = frx_projectionMatrix * vec4(prev_reflect_dir, 0.0);
 
 		vec3 dir_win = normalize(
 			(d.xyz - ndc.xyz * d.w) * vec3(frx_viewWidth, frx_viewHeight, 1.0)
 		);
+
+		float dist = 1.0 / dot(-dir, frag_normal);
+		if(!frx_isHand && distance(prev_cam_pos, curr_cam_pos) < dist) {
+			pos_win.z = min(pos_win.z, prev_depth);
+			ndc.z = pos_win.z * 2.0 - 1.0;
+		}
 
 		ivec2 hit_pos;
 		float hit_z;
@@ -249,7 +248,12 @@ void frx_pipelineFragment() {
 
 		bool result = false;
 		
-		if(frx_fragRoughness <= 0.4 && all(lessThan(abs(ndc), vec3(1.0)))) {
+		if(
+			dot(changed_normal, vertex_normal) >= 0.0 &&
+			pos_win.z <= prev_depth &&
+			frx_fragRoughness <= 0.5 &&
+			all(lessThan(abs(ndc), vec3(1.0)))
+		) {
 			result = traverse(pos_win, dir_win, 48, hit_pos, hit_z, hit_depth);
 		}
 
@@ -265,16 +269,27 @@ void frx_pipelineFragment() {
 
 		vec3 reflected_color = vec3(0.0);
 
+		float ao = pow(frx_fragLight.z, 3.0);
+
+		//vec3 block = pow(texture(frxs_lightmap, vec2(prev_light.x, 0.03125)).rgb, vec3(2.2));
+		vec3 lightmap_sky = pow(texture(frxs_lightmap, vec2(0.03125, prev_light.y)).rgb, vec3(2.2));
+
 		if(result) {
 			reflected_color = texelFetch(u_prev_color, hit_pos, 0).rgb;
 		}
 		else {
 			if(frx_worldHasSkylight == 1) {
-				reflected_color = textureLod(
+				vec3 skybox = textureLod(
 					u_skybox,
 					mat3(frx_inverseViewMatrix) * normalize(mix(clear_reflect_dir, frag_normal, frx_fragRoughness)),
-					pow(frx_fragRoughness, 1.0 / 6.0) * 7.0
+					pow(frx_fragRoughness, 1.0 / 8.0) * 7.0
 				).rgb * pow(frx_fragLight.y, 4.0);
+
+				reflected_color = mix(
+					lightmap_sky,
+					skybox,
+					frx_fragLight.y
+				);
 			}
 			else {
 				reflected_color = pow(texture(frxs_lightmap, vec2(0.03125, frx_fragLight.y)).rgb, vec3(2.2));
@@ -291,13 +306,13 @@ void frx_pipelineFragment() {
 		);
 
 		a.rgb += frx_fragColor.rgb * mix(
-			pow(frx_fragLight.x, 4.0) * block,
-			frx_emissiveColor.rgb,
+			pow(frx_fragLight.x, 4.0) * vec3(1.0),// * block,
+			pow(frx_emissiveColor.rgb * 2.0, vec3(2.2)),
 			frx_fragEmissive
 		);
 
 		if (frx_fragEnableAo) {
-			a.rgb *= mix(1.0, ao, pow(frx_fragRoughness, 0.1) * (1.0 - frx_fragLight.x));
+			a.rgb *= mix(1.0, ao, pow(frx_fragRoughness, 0.1));
 		}
 	}
 

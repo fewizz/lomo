@@ -20,14 +20,14 @@ beforeWorldRender: { passes: [
 		name: "skybox",
 		framebuffer: "skybox",
 		program: "skybox",
-		width: 512, height: 512,
+		width: 256, height: 256,
 		samplerImages: []
 	},
 	{
 		name: "downsample_skybox_1",
 		framebuffer: "skybox_1",
 		program: "downsample_skybox",
-		width: 512, height: 512,
+		width: 256, height: 256,
 		lod: 1,
 		samplerImages: [ "skybox" ]
 	},
@@ -35,7 +35,7 @@ beforeWorldRender: { passes: [
 		name: "downsample_skybox_2",
 		framebuffer: "skybox_2",
 		program: "downsample_skybox",
-		width: 512, height: 512,
+		width: 256, height: 256,
 		lod: 2,
 		samplerImages: [ "skybox" ]
 	},
@@ -43,7 +43,7 @@ beforeWorldRender: { passes: [
 		name: "downsample_skybox_3",
 		framebuffer: "skybox_3",
 		program: "downsample_skybox",
-		width: 512, height: 512,
+		width: 256, height: 256,
 		lod: 3,
 		samplerImages: [ "skybox" ]
 	},
@@ -51,7 +51,7 @@ beforeWorldRender: { passes: [
 		name: "downsample_skybox_4",
 		framebuffer: "skybox_4",
 		program: "downsample_skybox",
-		width: 512, height: 512,
+		width: 256, height: 256,
 		lod: 4,
 		samplerImages: [ "skybox" ]
 	},
@@ -59,7 +59,7 @@ beforeWorldRender: { passes: [
 		name: "downsample_skybox_5",
 		framebuffer: "skybox_5",
 		program: "downsample_skybox",
-		width: 512, height: 512,
+		width: 256, height: 256,
 		lod: 5,
 		samplerImages: [ "skybox" ]
 	},
@@ -67,7 +67,7 @@ beforeWorldRender: { passes: [
 		name: "downsample_skybox_6",
 		framebuffer: "skybox_6",
 		program: "downsample_skybox",
-		width: 512, height: 512,
+		width: 256, height: 256,
 		lod: 6,
 		samplerImages: [ "skybox" ]
 	},
@@ -75,7 +75,7 @@ beforeWorldRender: { passes: [
 		name: "downsample_skybox_7",
 		framebuffer: "skybox_7",
 		program: "downsample_skybox",
-		width: 512, height: 512,
+		width: 256, height: 256,
 		lod: 7,
 		samplerImages: [ "skybox" ]
 	}
@@ -85,11 +85,11 @@ images: [
 	{
 		name: "skybox",
 		target: "TEXTURE_CUBE_MAP",
-		internalFormat: "RGB32F",
+		internalFormat: "RGB16F",
 		pixelFormat: "RGB",
 		pixelDataType: "FLOAT",
-		size: 512,
-		lod: 7,
+		size: 256,
+		lod: 8,
 		texParams: [
 			{ "name": "TEXTURE_MIN_FILTER", "val": "LINEAR_MIPMAP_LINEAR" },
 			{ "name": "TEXTURE_MAG_FILTER", "val": "LINEAR" },
@@ -104,89 +104,89 @@ framebuffers: [
 	{
 		name: "skybox",
 		colorAttachments: [
-			{ image: "skybox", lod: 0, layer: 0 },
-			{ image: "skybox", lod: 0, layer: 1 },
-			{ image: "skybox", lod: 0, layer: 2 },
-			{ image: "skybox", lod: 0, layer: 3 },
-			{ image: "skybox", lod: 0, layer: 4 },
-			{ image: "skybox", lod: 0, layer: 5 }
+			{ image: "skybox", lod: 0, face: 0 },
+			{ image: "skybox", lod: 0, face: 1 },
+			{ image: "skybox", lod: 0, face: 2 },
+			{ image: "skybox", lod: 0, face: 3 },
+			{ image: "skybox", lod: 0, face: 4 },
+			{ image: "skybox", lod: 0, face: 5 }
 		]
 	},
 	{
 		name: "skybox_1",
 		colorAttachments: [
-			{ image: "skybox", lod: 1, layer: 0 },
-			{ image: "skybox", lod: 1, layer: 1 },
-			{ image: "skybox", lod: 1, layer: 2 },
-			{ image: "skybox", lod: 1, layer: 3 },
-			{ image: "skybox", lod: 1, layer: 4 },
-			{ image: "skybox", lod: 1, layer: 5 }
+			{ image: "skybox", lod: 1, face: 0 },
+			{ image: "skybox", lod: 1, face: 1 },
+			{ image: "skybox", lod: 1, face: 2 },
+			{ image: "skybox", lod: 1, face: 3 },
+			{ image: "skybox", lod: 1, face: 4 },
+			{ image: "skybox", lod: 1, face: 5 }
 		]
 	},
 	{
 		name: "skybox_2",
 		colorAttachments: [
-			{ image: "skybox", lod: 2, layer: 0 },
-			{ image: "skybox", lod: 2, layer: 1 },
-			{ image: "skybox", lod: 2, layer: 2 },
-			{ image: "skybox", lod: 2, layer: 3 },
-			{ image: "skybox", lod: 2, layer: 4 },
-			{ image: "skybox", lod: 2, layer: 5 }
+			{ image: "skybox", lod: 2, face: 0 },
+			{ image: "skybox", lod: 2, face: 1 },
+			{ image: "skybox", lod: 2, face: 2 },
+			{ image: "skybox", lod: 2, face: 3 },
+			{ image: "skybox", lod: 2, face: 4 },
+			{ image: "skybox", lod: 2, face: 5 }
 		]
 	},
 	{
 		name: "skybox_3",
 		colorAttachments: [
-			{ image: "skybox", lod: 3, layer: 0 },
-			{ image: "skybox", lod: 3, layer: 1 },
-			{ image: "skybox", lod: 3, layer: 2 },
-			{ image: "skybox", lod: 3, layer: 3 },
-			{ image: "skybox", lod: 3, layer: 4 },
-			{ image: "skybox", lod: 3, layer: 5 }
+			{ image: "skybox", lod: 3, face: 0 },
+			{ image: "skybox", lod: 3, face: 1 },
+			{ image: "skybox", lod: 3, face: 2 },
+			{ image: "skybox", lod: 3, face: 3 },
+			{ image: "skybox", lod: 3, face: 4 },
+			{ image: "skybox", lod: 3, face: 5 }
 		]
 	},
 	{
 		name: "skybox_4",
 		colorAttachments: [
-			{ image: "skybox", lod: 4, layer: 0 },
-			{ image: "skybox", lod: 4, layer: 1 },
-			{ image: "skybox", lod: 4, layer: 2 },
-			{ image: "skybox", lod: 4, layer: 3 },
-			{ image: "skybox", lod: 4, layer: 4 },
-			{ image: "skybox", lod: 4, layer: 5 }
+			{ image: "skybox", lod: 4, face: 0 },
+			{ image: "skybox", lod: 4, face: 1 },
+			{ image: "skybox", lod: 4, face: 2 },
+			{ image: "skybox", lod: 4, face: 3 },
+			{ image: "skybox", lod: 4, face: 4 },
+			{ image: "skybox", lod: 4, face: 5 }
 		]
 	},
 	{
 		name: "skybox_5",
 		colorAttachments: [
-			{ image: "skybox", lod: 5, layer: 0 },
-			{ image: "skybox", lod: 5, layer: 1 },
-			{ image: "skybox", lod: 5, layer: 2 },
-			{ image: "skybox", lod: 5, layer: 3 },
-			{ image: "skybox", lod: 5, layer: 4 },
-			{ image: "skybox", lod: 5, layer: 5 }
+			{ image: "skybox", lod: 5, face: 0 },
+			{ image: "skybox", lod: 5, face: 1 },
+			{ image: "skybox", lod: 5, face: 2 },
+			{ image: "skybox", lod: 5, face: 3 },
+			{ image: "skybox", lod: 5, face: 4 },
+			{ image: "skybox", lod: 5, face: 5 }
 		]
 	},
 	{
 		name: "skybox_6",
 		colorAttachments: [
-			{ image: "skybox", lod: 6, layer: 0 },
-			{ image: "skybox", lod: 6, layer: 1 },
-			{ image: "skybox", lod: 6, layer: 2 },
-			{ image: "skybox", lod: 6, layer: 3 },
-			{ image: "skybox", lod: 6, layer: 4 },
-			{ image: "skybox", lod: 6, layer: 5 }
+			{ image: "skybox", lod: 6, face: 0 },
+			{ image: "skybox", lod: 6, face: 1 },
+			{ image: "skybox", lod: 6, face: 2 },
+			{ image: "skybox", lod: 6, face: 3 },
+			{ image: "skybox", lod: 6, face: 4 },
+			{ image: "skybox", lod: 6, face: 5 }
 		]
 	},
 	{
 		name: "skybox_7",
 		colorAttachments: [
-			{ image: "skybox", lod: 7, layer: 0 },
-			{ image: "skybox", lod: 7, layer: 1 },
-			{ image: "skybox", lod: 7, layer: 2 },
-			{ image: "skybox", lod: 7, layer: 3 },
-			{ image: "skybox", lod: 7, layer: 4 },
-			{ image: "skybox", lod: 7, layer: 5 }
+			{ image: "skybox", lod: 7, face: 0 },
+			{ image: "skybox", lod: 7, face: 1 },
+			{ image: "skybox", lod: 7, face: 2 },
+			{ image: "skybox", lod: 7, face: 3 },
+			{ image: "skybox", lod: 7, face: 4 },
+			{ image: "skybox", lod: 7, face: 5 }
 		]
 	}
 ]

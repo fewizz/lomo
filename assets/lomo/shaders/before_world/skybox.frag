@@ -17,10 +17,10 @@ void main() {
 	const vec3 x_axis = vec3(1, 0, 0);
 
 	// sky function takes world-space view direction
-	face[0] = sky(rotation( PI / 2.0, y_axis) * d);
-	face[1] = sky(rotation(-PI / 2.0, y_axis) * d);
-	face[2] = sky(rotation(-PI / 2.0, x_axis) * d);
-	face[3] = sky(rotation( PI / 2.0, x_axis) * d);
-	face[4] = sky(                              d);
-	face[5] = sky(rotation( PI,       y_axis) * d);
+	face[0] = sky(rotation( PI / 2.0, y_axis) * d, 0.5);
+	face[1] = sky(rotation(-PI / 2.0, y_axis) * d, 0.5);
+	face[2] = sky(rotation(-PI / 2.0, x_axis) * d, 0.5);
+	face[3] = sky(rotation( PI / 2.0, x_axis) * d, 0.5);
+	face[4] = sky(                              d, 0.5);
+	face[5] = sky(rotation( PI,       y_axis) * d, 0.5);
 }

@@ -37,6 +37,7 @@ void main() {
 
 	if(any(greaterThanEqual(abs(ndc.xy), vec2(1.0)))) {
 		out_color = vec4(color, 1.0);
+		out_depth = depth;
 		return;
 	}
 
@@ -63,5 +64,5 @@ void main() {
 		clamp(mix(prev_color, color, 1.0 / 4.0), mn, mx),
 		1.0
 	);
-	out_depth = mix(prev_depth, depth, 1.0 / 4.0);
+	out_depth = mix(prev_depth, depth, 0.5);
 }
