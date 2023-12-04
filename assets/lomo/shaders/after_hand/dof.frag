@@ -117,7 +117,7 @@ void main() {
 	vec3 color = vec3(0.0);
 	float weight_sum = 0.0;
 
-	const float radius = 2.0;
+	const float radius = 4.0;
 
 	for(int stp = 0; stp < steps; ++stp) {
 		vec2 off = positions[stp] * radius;
@@ -130,16 +130,16 @@ void main() {
 		vec3 near_cam = win_to_cam(vec3(pos.xy, 0.0));
 		vec3 mid_cam = win_to_cam(vec3(pos.xy, center_depth));
 
-		float dist_to_mid_z = distance(pos_cam, mid_cam);
+		float dist_to_mid_z = distance(pos_cam.z, mid_cam.z);
 
 		float radius0 =
 			min(
-				dist_to_mid_z / distance(near_cam, pos_cam) * 0.5,
+				dist_to_mid_z / abs(pos_cam.z) / distance(near_cam.z, mid_cam.z) * 4.0,
 				radius
 			);
 
 		float weight =
-			clamp(radius0 + 0.5 - length(off), 0.0, 1.0) *
+			clamp(radius0 + 1.0 - length(off), 0.0, 1.0) *
 			float(all(greaterThanEqual(ipos, ivec2(0)))) *
 			float(all(lessThan(ipos, ivec2(frxu_size.xy))));
 
