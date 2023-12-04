@@ -22,7 +22,6 @@ void main() {
 		}
 	}
 	vec3 color = texelFetch(u_color, ivec2(gl_FragCoord.xy), 0).rgb;
-	color = pow(color, vec3(2.2));
 
 	vec3 ndc = vec3(gl_FragCoord.xy, depth) / vec3(frxu_size, 1.0) * 2.0 - 1.0;
 	vec4 world0 = frx_inverseViewProjectionMatrix * vec4(ndc, 1.0);
@@ -53,8 +52,7 @@ void main() {
 		for(int y = -1; y <= 1; ++y) {
 			vec2 off = vec2(x, y);
 			off = off != vec2(0.0) ? normalize(off) : off;
-			vec3 c = texture(u_color, (gl_FragCoord.xy + off) / vec2(frxu_size)).rgb;
-			c = pow(c, vec3(2.2));
+			vec3 c = texelFetch(u_color, ivec2(gl_FragCoord.xy + off), 0).rgb;
 			mn = min(c, mn);
 			mx = max(c, mx);
 		}

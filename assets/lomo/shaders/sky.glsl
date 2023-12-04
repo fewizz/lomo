@@ -83,7 +83,7 @@ const float earth_radius = 6000000.0;
 vec3 sky(ray r, float offset, float phase_r, float phase_m, bool sun) {
 	vec3 rgb = vec3(7.2, 5.7, 4.2);
 	layer rayleigh = layer(
-		0.001 / pow(rgb, vec3(4.0)),
+		0.002 / pow(rgb, vec3(4.0)),
 		earth_radius,
 		8000.0
 	);
@@ -138,11 +138,11 @@ vec3 sky(ray r, float offset, float phase_r, float phase_m, bool sun) {
 		dist += stp;
 	}
 
-	vec3 s = vec3(80.0);
+	vec3 s = vec3(60.0);
 
 	vec3 result = s * (result_rayleigh + result_mie);
 	if(sun) {
-		result += vec3(70.0, 60.0, 40.0)*s*exp(
+		result += vec3(60.0, 60.0, 40.0)*s*exp(
 			-od(r.pos, r.dir, rayleigh, offset)*rayleigh.coeffs
 			//-od(r.pos, mie, hsh.y)*mie.coeffs
 		);

@@ -2,33 +2,25 @@
 
 programs: [
 	{
-		name: "dof",
+		name: "tone_mapping",
 		vertexSource: "lomo:shaders/full_frame.vert",
-		fragmentSource: "lomo:shaders/after_hand/dof.frag",
-		samplers: [ "u_color", "u_depth" ]
+		fragmentSource: "lomo:shaders/after_hand/tone_mapping.frag",
+		samplers: [ "u_color" ]
 	}
 ],
 
 afterRenderHand: { passes: [
 	{
-		name: "dof",
-		program: "dof",
-		framebuffer: "dof",
-		samplerImages: [
-			"taa", "taa_depth"
-		]
-	},
-	{
-		name: "copy_dof_to_solid_color",
-		framebuffer: "solid_color",
-		program: "copy",
-		samplerImages: [ "dof" ]
-	},
+		name: "tone_mapping",
+		framebuffer: "tone_mapping",
+		program: "tone_mapping",
+		samplerImages: [ "color_with_bloom" ]
+	}
 ]},
 
 images: [
 	{
-		name: "dof",
+		name: "tone_mapping",
 		internalFormat: "RGBA16F",
 		pixelFormat: "RGBA",
 		texParams: [
@@ -42,11 +34,9 @@ images: [
 
 framebuffers: [
 	{
-		name: "dof",
-		colorAttachments: [{
-			image: "dof"
-		}]
-	}
+		name: "tone_mapping",
+		colorAttachments: [{ image: "tone_mapping" }]
+	},
 ]
 
 }

@@ -272,28 +272,39 @@ void frx_pipelineFragment() {
 		float ao = pow(frx_fragLight.z, 3.0);
 
 		//vec3 block = pow(texture(frxs_lightmap, vec2(prev_light.x, 0.03125)).rgb, vec3(2.2));
-		vec3 lightmap_sky = pow(texture(frxs_lightmap, vec2(0.03125, prev_light.y)).rgb, vec3(2.2));
 
 		if(result) {
 			reflected_color = texelFetch(u_prev_color, hit_pos, 0).rgb;
 		}
-		else {
-			if(frx_worldHasSkylight == 1) {
-				vec3 skybox = textureLod(
-					u_skybox,
-					mat3(frx_inverseViewMatrix) * normalize(mix(clear_reflect_dir, frag_normal, frx_fragRoughness)),
-					pow(frx_fragRoughness, 1.0 / 8.0) * 7.0
-				).rgb * pow(frx_fragLight.y, 4.0);
 
-				reflected_color = mix(
-					lightmap_sky,
-					skybox,
-					frx_fragLight.y
-				);
-			}
-			else {
-				reflected_color = pow(texture(frxs_lightmap, vec2(0.03125, frx_fragLight.y)).rgb, vec3(2.2));
-			}
+		vec3 reflected_sky = vec3(0.0);
+		if(frx_worldHasSkylight == 1) {
+			vec3 lightmap_sky = pow(texture(frxs_lightmap, vec2(0.03125, prev_light.y)).rgb, vec3(2.2));
+			vec3 skybox = textureLod(
+				u_skybox,
+				mat3(frx_inverseViewMatrix) * normalize(mix(clear_reflect_dir, frag_normal, frx_fragRoughness)),
+				pow(frx_fragRoughness, 1.0 / 8.0) * 7.0
+			).rgb * pow(frx_fragLight.y, 4.0);
+
+			reflected_sky = mix(
+				lightmap_sky,
+				skybox,
+				frx_fragLight.y
+			);
+		}
+		else {
+			reflected_sky = pow(texture(frxs_lightmap, vec2(0.03125, frx_fragLight.y)).rgb, vec3(2.2));
+		}
+
+		if(result) {
+			reflected_color = mix(
+				reflected_color,
+				reflected_sky,
+				pow(frx_fragRoughness, 2.0) * 0.8
+			);
+		}
+		else {
+			reflected_color = reflected_sky;
 		}
 
 		a = mix(

@@ -40,7 +40,7 @@ programs: [
 		"name": "select_bloom",
 		"vertexSource": "lomo:shaders/full_frame.vert",
 		"fragmentSource": "lomo:shaders/after_hand/select_bloom.frag",
-		"samplers": [ "u_light" ]
+		"samplers": [ "u_color" ]
 	},
 	{
 		"name": "bloom_downsample",
@@ -59,6 +59,12 @@ programs: [
 		"vertexSource": "canvas:shaders/pipeline/post/simple_full_frame.vert",
 		"fragmentSource": "canvas:shaders/pipeline/post/upsample.frag",
 		"samplers": ["_cvu_input", "cvu_prior"]
+	},
+	{
+		"name": "merge_bloom",
+		"vertexSource": "canvas:shaders/pipeline/post/simple_full_frame.vert",
+		"fragmentSource": "lomo:shaders/after_hand/merge_bloom.frag",
+		"samplers": ["u_color", "u_bloom"]
 	}
 ],
 
@@ -68,7 +74,7 @@ afterRenderHand: { passes: [
 		"program": "select_bloom",
 		"framebuffer": "selected_bloom",
 		"samplerImages": [
-			"dof"
+			"solid_color"
 		]
 	},
 	{
@@ -168,12 +174,29 @@ afterRenderHand: { passes: [
 		"framebuffer": "bloom_upsample_0",
 		"samplerImages": ["bloom_downsample", "bloom_upsample"],
 		"lod": 0
+	},
+	{
+		"name": "merge_bloom",
+		"program": "merge_bloom",
+		"framebuffer": "color_with_bloom",
+		"samplerImages": ["solid_color", "bloom_upsample"]
 	}
 ]},
 
 images: [
 	{
 		name: "selected_bloom",
+		internalFormat: "RGBA16F",
+		pixelFormat: "RGBA",
+		texParams: [
+			{ name: "TEXTURE_MIN_FILTER", val: "NEAREST" },
+			{ name: "TEXTURE_MAG_FILTER", val: "NEAREST" },
+			{ name: "TEXTURE_WRAP_S", val: "CLAMP_TO_EDGE" },
+			{ name: "TEXTURE_WRAP_T", val: "CLAMP_TO_EDGE" }
+		]
+	},
+	{
+		name: "color_with_bloom",
 		internalFormat: "RGBA16F",
 		pixelFormat: "RGBA",
 		texParams: [
@@ -215,6 +238,10 @@ framebuffers: [
 	{
 		"name": "selected_bloom",
 		"colorAttachments": [ { "image": "selected_bloom" } ]
+	},
+	{
+		"name": "color_with_bloom",
+		"colorAttachments": [ { "image": "color_with_bloom" } ]
 	},
 	{
 		"name": "bloom_downsample_0",

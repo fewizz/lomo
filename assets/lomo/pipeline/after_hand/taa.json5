@@ -31,7 +31,7 @@ afterRenderHand: { passes: [
 		framebuffer: "taa",
 		program: "taa",
 		samplerImages: [
-			"solid_color", "blended_depth", "solid_depth"
+			"tone_mapping", "blended_depth", "solid_depth"
 			"previous_taa", "previous_taa_depth"
 		]
 	},
@@ -46,7 +46,13 @@ afterRenderHand: { passes: [
 		framebuffer: "previous_taa_depth",
 		program: "copy",
 		samplerImages: [ "taa_depth" ]
-	}
+	},
+	{
+		name: "copy_taa_to_solid_color",
+		framebuffer: "solid_color",
+		program: "copy",
+		samplerImages: [ "taa" ]
+	},
 ]},
 
 images: [

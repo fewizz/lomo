@@ -6,15 +6,13 @@
 void frx_materialFragment() {
 	#ifdef PBR_ENABLED
 
-	//frx_fragColor = vec4(1.0)vec4(vec3(0.2, 0.6, 1.0), 0.5);
-
 	frx_fragNormal = normalize(vec3(
 		snoise(
 			vec4(frx_cameraPos + frx_vertex.xyz, frx_renderSeconds)// / 2.0 + vec3(frx_renderSeconds, frx_renderSeconds * 0.2, frx_renderSeconds)
-		) / 64.0,
+		) / 32.0,
 		snoise(
 			vec4((frx_cameraPos + frx_vertex.xyz + 16), frx_renderSeconds)// / 2.0 + frx_renderSeconds)
-		) / 64.0,
+		) / 32.0,
 		1.0
 	));
 

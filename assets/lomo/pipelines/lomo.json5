@@ -51,10 +51,10 @@ include: [
 	"lomo:pipeline/fabulous/hierarchical_depths.json5",
 	"lomo:pipeline/fabulous/post.json5",
 
-	"lomo:pipeline/after_hand/taa.json5",
-	"lomo:pipeline/after_hand/dof.json5",
 	"lomo:pipeline/after_hand/bloom.json5",
-	"lomo:pipeline/after_hand/final.json5"
+	"lomo:pipeline/after_hand/tone_mapping.json5",
+	"lomo:pipeline/after_hand/taa.json5",
+	"lomo:pipeline/after_hand/dof.json5"
 ],
 
 programs: [
