@@ -14,14 +14,16 @@ materialProgram: {
 		"cvu_glint_entity",
 		"u_skybox",
 		"u_prev_color",
-		"u_prev_depth"
+		"u_prev_depth",
+		"u_shadow_map"
 	],
 	samplerImages: [
 		"minecraft:textures/misc/enchanted_glint_item.png",
 		"minecraft:textures/misc/enchanted_glint_entity.png",
 		"skybox",
 		"blended_without_particles_color",
-		"blended_without_particles_depth"
+		"blended_without_particles_depth",
+		"shadow_map"
 	]
 },
 
@@ -98,6 +100,20 @@ beforeWorldRender: { passes: [
 		program: "frex_clear"
 	}
 ]},
+
+skyShadows: {
+	framebuffer: "shadow",
+	allowEntities: true,
+	allowParticles: true,
+	supportForwardRender: true,
+	vertexSource: "canvas:shaders/pipeline/shadow.vert",
+	fragmentSource: "canvas:shaders/pipeline/shadow.frag",
+	offsetSlopeFactor: 1.1,
+	offsetBiasUnits: 4.0,
+	cascadeRadius: [32, 16, 8],
+	samplers: [],
+	samplerImages: []
+},
 
 images: [
 	{
@@ -241,6 +257,23 @@ images: [
 			{ name: "TEXTURE_WRAP_T", val: "CLAMP_TO_EDGE" },
 			{ name: "TEXTURE_COMPARE_MODE", val: "NONE" }
 		]
+	},
+	{
+		size: 1024,
+		name: "shadow_map",
+		internalFormat: "DEPTH_COMPONENT32",
+		pixelFormat: "DEPTH_COMPONENT",
+		pixelDataType: "FLOAT",
+		target: "TEXTURE_2D_ARRAY",
+		depth: 4,
+		texParams: [
+			{ name: "TEXTURE_MIN_FILTER", val: "LINEAR" },
+			{ name: "TEXTURE_MAG_FILTER", val: "LINEAR" },
+			{ name: "TEXTURE_WRAP_S", val: "CLAMP_TO_EDGE" },
+			{ name: "TEXTURE_WRAP_T", val: "CLAMP_TO_EDGE" },
+			{ name: "TEXTURE_COMPARE_MODE", val: "COMPARE_REF_TO_TEXTURE" },
+			{ name: "TEXTURE_COMPARE_FUNC", val: "LEQUAL" }
+		]
 	}
 ],
 
@@ -304,6 +337,10 @@ framebuffers: [
 		depthAttachment: {
 			image: "misc_depth", clearDepth: 1.0
 		}
+	},
+	{
+		name: "shadow",
+		depthAttachment: { image: "shadow_map", clearDepth: 1.0 }
 	}
 ]
 

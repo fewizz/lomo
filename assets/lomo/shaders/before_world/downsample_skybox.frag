@@ -3,7 +3,7 @@
 #include frex:shaders/api/world.glsl
 #include lomo:shaders/lib/linear.glsl
 
-uniform samplerCube u_skybox;
+uniform samplerCubeArray u_skybox;
 
 layout(location = 0) out vec3 face[6];
 
@@ -77,7 +77,7 @@ const vec2[steps] points = vec2[steps](
 );
 
 vec3 sky(mat3 z_to_w, vec3 dir) {
-	int previous_layer = frxu_lod - 1;
+	int previous_lod = frxu_lod - 1;
 
 	vec3 d = z_to_w * dir;
 
@@ -92,7 +92,7 @@ vec3 sky(mat3 z_to_w, vec3 dir) {
 	//	d.xyz
 	//);
 
-	float radius = PI * 1.0 / pow(2.0, max(0.0, float(6 - previous_layer)));
+	float radius = PI * 1.0 / pow(2.0, max(0.0, float(6 - previous_lod)));
 
 	vec3 result = vec3(0.0);
 
@@ -105,12 +105,10 @@ vec3 sky(mat3 z_to_w, vec3 dir) {
 			rotation(radius * c_pos.y, perp_y) *
 			rotation(radius * c_pos.x, perp_x) *
 			d;
-		//r = z_to_w * r;
-		// vec3 r1 = rotation(radius * c_pos.y, r0) * d;
 
 		float weight = 1.0;//exp(-dot(c_pos, c_pos) * 2.0);
 
-		vec3 t = textureLod(u_skybox, r, previous_layer).rgb;
+		vec3 t = textureLod(u_skybox, vec4(r, frxu_layer), previous_lod).rgb;
 		result += t * weight;
 		weight_sum += weight;
 	}

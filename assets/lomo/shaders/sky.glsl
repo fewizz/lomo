@@ -41,7 +41,7 @@ float ray_layer_intersection(ray r, layer l) {
 	return 0.0;
 }
 
-const int steps = 16;
+const int steps = 4;
 
 float oddl(vec3 pos, layer l) {
 	float dist = distance(pos, vec3(0.0, -l.height, 0.0)) - l.height;
@@ -80,7 +80,7 @@ float rayleigh_phase_function(float cosa) {
 
 const float earth_radius = 6000000.0;
 
-vec3 sky(ray r, float offset, float phase_r, float phase_m, bool sun) {
+vec3 sky0(ray r, float offset, float phase_r, float phase_m, bool sun) {
 	vec3 rgb = vec3(7.2, 5.7, 4.2);
 	layer rayleigh = layer(
 		0.002 / pow(rgb, vec3(4.0)),
@@ -150,7 +150,7 @@ vec3 sky(ray r, float offset, float phase_r, float phase_m, bool sun) {
 	return result;
 }
 
-vec3 overworld_sky(vec3 dir, float offset) {
+vec3 overworld_sky(vec3 dir, float offset, bool with_sun) {
 	vec3 eye_pos = frx_cameraPos;
 	//eye_pos.y += 1000.0;
 	eye_pos.x = 0.0; eye_pos.z = 0.0;
@@ -159,12 +159,12 @@ vec3 overworld_sky(vec3 dir, float offset) {
 	vec3 rgb = pow(vec3(7.2, 5.7, 4.2), vec3(4.0));
 	//vec3 hsh = hash33(vec3(gl_FragCoord.xy, frx_renderSeconds));
 
-	vec3 color = sky(
+	vec3 color = sky0(
 		eye,
 		offset,
 		rayleigh_phase_function(a),
 		henyey_greenstein_phase_function(0.75, a),
-		a > 0.9995
+		a > 0.9995 && with_sun
 	);
 	/*vec3 m = vec3(0.0);sky(
 		eye,
@@ -229,10 +229,10 @@ vec3 end_sky(vec3 dir) {
 		dots;
 }
 
-vec3 sky(vec3 dir, float offset) {
+vec3 sky(vec3 dir, float offset, bool with_sun) {
 	if(frx_worldHasSkylight == 1) {
 		if(frx_worldIsOverworld == 1) {
-			return overworld_sky(dir, offset);
+			return overworld_sky(dir, offset, with_sun);
 		}
 		if(frx_worldIsEnd == 1) {
 			return end_sky(dir);

@@ -1,8 +1,7 @@
 #include lomo:shaders/sky.glsl
 #include lomo:shaders/lib/linear.glsl
 #include frex:shaders/lib/math.glsl
-
-uniform ivec2 frxu_size;
+#include canvas:shaders/pipeline/pipeline.glsl
 
 layout(location = 0) out vec3 face[6];
 
@@ -17,10 +16,10 @@ void main() {
 	const vec3 x_axis = vec3(1, 0, 0);
 
 	// sky function takes world-space view direction
-	face[0] = sky(rotation( PI / 2.0, y_axis) * d, 0.5);
-	face[1] = sky(rotation(-PI / 2.0, y_axis) * d, 0.5);
-	face[2] = sky(rotation(-PI / 2.0, x_axis) * d, 0.5);
-	face[3] = sky(rotation( PI / 2.0, x_axis) * d, 0.5);
-	face[4] = sky(                              d, 0.5);
-	face[5] = sky(rotation( PI,       y_axis) * d, 0.5);
+	face[0] = sky(rotation( PI / 2.0, y_axis) * d, 0.5, frxu_layer == 0);
+	face[1] = sky(rotation(-PI / 2.0, y_axis) * d, 0.5, frxu_layer == 0);
+	face[2] = sky(rotation(-PI / 2.0, x_axis) * d, 0.5, frxu_layer == 0);
+	face[3] = sky(rotation( PI / 2.0, x_axis) * d, 0.5, frxu_layer == 0);
+	face[4] = sky(                              d, 0.5, frxu_layer == 0);
+	face[5] = sky(rotation( PI,       y_axis) * d, 0.5, frxu_layer == 0);
 }

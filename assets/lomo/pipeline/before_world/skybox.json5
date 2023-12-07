@@ -17,78 +17,149 @@ programs: [
 
 beforeWorldRender: { passes: [
 	{
-		name: "skybox",
-		framebuffer: "skybox",
+		name: "skybox_with_sun",
+		framebuffer: "skybox_with_sun",
 		program: "skybox",
-		width: 256, height: 256,
+		width: 256, height: 256, layer: 0,
 		samplerImages: []
 	},
 	{
-		name: "downsample_skybox_1",
-		framebuffer: "skybox_1",
+		name: "skybox_without_sun",
+		framebuffer: "skybox_without_sun",
+		program: "skybox",
+		width: 256, height: 256, layer: 1,
+		samplerImages: []
+	},
+
+	{
+		name: "downsample_skybox_1_with_sun",
+		framebuffer: "skybox_1_with_sun",
 		program: "downsample_skybox",
-		width: 256, height: 256,
+		width: 256, height: 256, layer: 0,
 		lod: 1,
 		samplerImages: [ "skybox" ]
 	},
 	{
-		name: "downsample_skybox_2",
-		framebuffer: "skybox_2",
+		name: "downsample_skybox_1_without_sun",
+		framebuffer: "skybox_1_without_sun",
 		program: "downsample_skybox",
-		width: 256, height: 256,
+		width: 256, height: 256, layer: 1,
+		lod: 1,
+		samplerImages: [ "skybox" ]
+	},
+
+	{
+		name: "downsample_skybox_2_with_sun",
+		framebuffer: "skybox_2_with_sun",
+		program: "downsample_skybox",
+		width: 256, height: 256, layer: 0,
 		lod: 2,
 		samplerImages: [ "skybox" ]
 	},
 	{
-		name: "downsample_skybox_3",
-		framebuffer: "skybox_3",
+		name: "downsample_skybox_2_without_sun",
+		framebuffer: "skybox_2_without_sun",
 		program: "downsample_skybox",
-		width: 256, height: 256,
+		width: 256, height: 256, layer: 1,
+		lod: 2,
+		samplerImages: [ "skybox" ]
+	},
+
+	{
+		name: "downsample_skybox_3_with_sun",
+		framebuffer: "skybox_3_with_sun",
+		program: "downsample_skybox",
+		width: 256, height: 256, layer: 0,
 		lod: 3,
 		samplerImages: [ "skybox" ]
 	},
 	{
-		name: "downsample_skybox_4",
-		framebuffer: "skybox_4",
+		name: "downsample_skybox_3_without_sun",
+		framebuffer: "skybox_3_without_sun",
 		program: "downsample_skybox",
-		width: 256, height: 256,
+		width: 256, height: 256, layer: 1,
+		lod: 3,
+		samplerImages: [ "skybox" ]
+	},
+
+	{
+		name: "downsample_skybox_4_with_sun",
+		framebuffer: "skybox_4_with_sun",
+		program: "downsample_skybox",
+		width: 256, height: 256, layer: 0,
 		lod: 4,
 		samplerImages: [ "skybox" ]
 	},
 	{
-		name: "downsample_skybox_5",
-		framebuffer: "skybox_5",
+		name: "downsample_skybox_4_without_sun",
+		framebuffer: "skybox_4_without_sun",
 		program: "downsample_skybox",
-		width: 256, height: 256,
+		width: 256, height: 256, layer: 1,
+		lod: 4,
+		samplerImages: [ "skybox" ]
+	},
+
+	{
+		name: "downsample_skybox_5_with_sun",
+		framebuffer: "skybox_5_with_sun",
+		program: "downsample_skybox",
+		width: 256, height: 256, layer: 0,
 		lod: 5,
 		samplerImages: [ "skybox" ]
 	},
 	{
-		name: "downsample_skybox_6",
-		framebuffer: "skybox_6",
+		name: "downsample_skybox_5_without_sun",
+		framebuffer: "skybox_5_without_sun",
 		program: "downsample_skybox",
-		width: 256, height: 256,
+		width: 256, height: 256, layer: 1,
+		lod: 5,
+		samplerImages: [ "skybox" ]
+	},
+
+	{
+		name: "downsample_skybox_6_with_sun",
+		framebuffer: "skybox_6_with_sun",
+		program: "downsample_skybox",
+		width: 256, height: 256, layer: 0,
 		lod: 6,
 		samplerImages: [ "skybox" ]
 	},
 	{
-		name: "downsample_skybox_7",
-		framebuffer: "skybox_7",
+		name: "downsample_skybox_6_without_sun",
+		framebuffer: "skybox_6_without_sun",
 		program: "downsample_skybox",
-		width: 256, height: 256,
+		width: 256, height: 256, layer: 1,
+		lod: 6,
+		samplerImages: [ "skybox" ]
+	},
+
+	{
+		name: "downsample_skybox_7_with_sun",
+		framebuffer: "skybox_7_with_sun",
+		program: "downsample_skybox",
+		width: 256, height: 256, layer: 0,
 		lod: 7,
 		samplerImages: [ "skybox" ]
-	}
+	},
+	{
+		name: "downsample_skybox_7_without_sun",
+		framebuffer: "skybox_7_without_sun",
+		program: "downsample_skybox",
+		width: 256, height: 256, layer: 1,
+		lod: 7,
+		samplerImages: [ "skybox" ]
+	},
 ]},
 
 images: [
 	{
 		name: "skybox",
-		target: "TEXTURE_CUBE_MAP",
+		target: "TEXTURE_CUBE_MAP_ARRAY",
 		internalFormat: "RGB16F",
 		pixelFormat: "RGB",
 		pixelDataType: "FLOAT",
 		size: 256,
+		depth: 2,
 		lod: 8,
 		texParams: [
 			{ "name": "TEXTURE_MIN_FILTER", "val": "LINEAR_MIPMAP_LINEAR" },
@@ -102,91 +173,180 @@ images: [
 
 framebuffers: [
 	{
-		name: "skybox",
+		name: "skybox_with_sun",
 		colorAttachments: [
-			{ image: "skybox", lod: 0, face: 0 },
-			{ image: "skybox", lod: 0, face: 1 },
-			{ image: "skybox", lod: 0, face: 2 },
-			{ image: "skybox", lod: 0, face: 3 },
-			{ image: "skybox", lod: 0, face: 4 },
-			{ image: "skybox", lod: 0, face: 5 }
+			{ image: "skybox", lod: 0, face: 0, layer: 0 },
+			{ image: "skybox", lod: 0, face: 1, layer: 0 },
+			{ image: "skybox", lod: 0, face: 2, layer: 0 },
+			{ image: "skybox", lod: 0, face: 3, layer: 0 },
+			{ image: "skybox", lod: 0, face: 4, layer: 0 },
+			{ image: "skybox", lod: 0, face: 5, layer: 0 }
 		]
 	},
 	{
-		name: "skybox_1",
+		name: "skybox_1_with_sun",
 		colorAttachments: [
-			{ image: "skybox", lod: 1, face: 0 },
-			{ image: "skybox", lod: 1, face: 1 },
-			{ image: "skybox", lod: 1, face: 2 },
-			{ image: "skybox", lod: 1, face: 3 },
-			{ image: "skybox", lod: 1, face: 4 },
-			{ image: "skybox", lod: 1, face: 5 }
+			{ image: "skybox", lod: 1, face: 0, layer: 0 },
+			{ image: "skybox", lod: 1, face: 1, layer: 0 },
+			{ image: "skybox", lod: 1, face: 2, layer: 0 },
+			{ image: "skybox", lod: 1, face: 3, layer: 0 },
+			{ image: "skybox", lod: 1, face: 4, layer: 0 },
+			{ image: "skybox", lod: 1, face: 5, layer: 0 }
 		]
 	},
 	{
-		name: "skybox_2",
+		name: "skybox_2_with_sun",
 		colorAttachments: [
-			{ image: "skybox", lod: 2, face: 0 },
-			{ image: "skybox", lod: 2, face: 1 },
-			{ image: "skybox", lod: 2, face: 2 },
-			{ image: "skybox", lod: 2, face: 3 },
-			{ image: "skybox", lod: 2, face: 4 },
-			{ image: "skybox", lod: 2, face: 5 }
+			{ image: "skybox", lod: 2, face: 0, layer: 0 },
+			{ image: "skybox", lod: 2, face: 1, layer: 0 },
+			{ image: "skybox", lod: 2, face: 2, layer: 0 },
+			{ image: "skybox", lod: 2, face: 3, layer: 0 },
+			{ image: "skybox", lod: 2, face: 4, layer: 0 },
+			{ image: "skybox", lod: 2, face: 5, layer: 0 }
 		]
 	},
 	{
-		name: "skybox_3",
+		name: "skybox_3_with_sun",
 		colorAttachments: [
-			{ image: "skybox", lod: 3, face: 0 },
-			{ image: "skybox", lod: 3, face: 1 },
-			{ image: "skybox", lod: 3, face: 2 },
-			{ image: "skybox", lod: 3, face: 3 },
-			{ image: "skybox", lod: 3, face: 4 },
-			{ image: "skybox", lod: 3, face: 5 }
+			{ image: "skybox", lod: 3, face: 0, layer: 0 },
+			{ image: "skybox", lod: 3, face: 1, layer: 0 },
+			{ image: "skybox", lod: 3, face: 2, layer: 0 },
+			{ image: "skybox", lod: 3, face: 3, layer: 0 },
+			{ image: "skybox", lod: 3, face: 4, layer: 0 },
+			{ image: "skybox", lod: 3, face: 5, layer: 0 }
 		]
 	},
 	{
-		name: "skybox_4",
+		name: "skybox_4_with_sun",
 		colorAttachments: [
-			{ image: "skybox", lod: 4, face: 0 },
-			{ image: "skybox", lod: 4, face: 1 },
-			{ image: "skybox", lod: 4, face: 2 },
-			{ image: "skybox", lod: 4, face: 3 },
-			{ image: "skybox", lod: 4, face: 4 },
-			{ image: "skybox", lod: 4, face: 5 }
+			{ image: "skybox", lod: 4, face: 0, layer: 0 },
+			{ image: "skybox", lod: 4, face: 1, layer: 0 },
+			{ image: "skybox", lod: 4, face: 2, layer: 0 },
+			{ image: "skybox", lod: 4, face: 3, layer: 0 },
+			{ image: "skybox", lod: 4, face: 4, layer: 0 },
+			{ image: "skybox", lod: 4, face: 5, layer: 0 }
 		]
 	},
 	{
-		name: "skybox_5",
+		name: "skybox_5_with_sun",
 		colorAttachments: [
-			{ image: "skybox", lod: 5, face: 0 },
-			{ image: "skybox", lod: 5, face: 1 },
-			{ image: "skybox", lod: 5, face: 2 },
-			{ image: "skybox", lod: 5, face: 3 },
-			{ image: "skybox", lod: 5, face: 4 },
-			{ image: "skybox", lod: 5, face: 5 }
+			{ image: "skybox", lod: 5, face: 0, layer: 0 },
+			{ image: "skybox", lod: 5, face: 1, layer: 0 },
+			{ image: "skybox", lod: 5, face: 2, layer: 0 },
+			{ image: "skybox", lod: 5, face: 3, layer: 0 },
+			{ image: "skybox", lod: 5, face: 4, layer: 0 },
+			{ image: "skybox", lod: 5, face: 5, layer: 0 }
 		]
 	},
 	{
-		name: "skybox_6",
+		name: "skybox_6_with_sun",
 		colorAttachments: [
-			{ image: "skybox", lod: 6, face: 0 },
-			{ image: "skybox", lod: 6, face: 1 },
-			{ image: "skybox", lod: 6, face: 2 },
-			{ image: "skybox", lod: 6, face: 3 },
-			{ image: "skybox", lod: 6, face: 4 },
-			{ image: "skybox", lod: 6, face: 5 }
+			{ image: "skybox", lod: 6, face: 0, layer: 0 },
+			{ image: "skybox", lod: 6, face: 1, layer: 0 },
+			{ image: "skybox", lod: 6, face: 2, layer: 0 },
+			{ image: "skybox", lod: 6, face: 3, layer: 0 },
+			{ image: "skybox", lod: 6, face: 4, layer: 0 },
+			{ image: "skybox", lod: 6, face: 5, layer: 0 }
 		]
 	},
 	{
-		name: "skybox_7",
+		name: "skybox_7_with_sun",
 		colorAttachments: [
-			{ image: "skybox", lod: 7, face: 0 },
-			{ image: "skybox", lod: 7, face: 1 },
-			{ image: "skybox", lod: 7, face: 2 },
-			{ image: "skybox", lod: 7, face: 3 },
-			{ image: "skybox", lod: 7, face: 4 },
-			{ image: "skybox", lod: 7, face: 5 }
+			{ image: "skybox", lod: 7, face: 0, layer: 0 },
+			{ image: "skybox", lod: 7, face: 1, layer: 0 },
+			{ image: "skybox", lod: 7, face: 2, layer: 0 },
+			{ image: "skybox", lod: 7, face: 3, layer: 0 },
+			{ image: "skybox", lod: 7, face: 4, layer: 0 },
+			{ image: "skybox", lod: 7, face: 5, layer: 0 }
+		]
+	},
+
+	{
+		name: "skybox_without_sun",
+		colorAttachments: [
+			{ image: "skybox", lod: 0, face: 0, layer: 1 },
+			{ image: "skybox", lod: 0, face: 1, layer: 1 },
+			{ image: "skybox", lod: 0, face: 2, layer: 1 },
+			{ image: "skybox", lod: 0, face: 3, layer: 1 },
+			{ image: "skybox", lod: 0, face: 4, layer: 1 },
+			{ image: "skybox", lod: 0, face: 5, layer: 1 }
+		]
+	},
+	{
+		name: "skybox_1_without_sun",
+		colorAttachments: [
+			{ image: "skybox", lod: 1, face: 0, layer: 1 },
+			{ image: "skybox", lod: 1, face: 1, layer: 1 },
+			{ image: "skybox", lod: 1, face: 2, layer: 1 },
+			{ image: "skybox", lod: 1, face: 3, layer: 1 },
+			{ image: "skybox", lod: 1, face: 4, layer: 1 },
+			{ image: "skybox", lod: 1, face: 5, layer: 1 }
+		]
+	},
+	{
+		name: "skybox_2_without_sun",
+		colorAttachments: [
+			{ image: "skybox", lod: 2, face: 0, layer: 1 },
+			{ image: "skybox", lod: 2, face: 1, layer: 1 },
+			{ image: "skybox", lod: 2, face: 2, layer: 1 },
+			{ image: "skybox", lod: 2, face: 3, layer: 1 },
+			{ image: "skybox", lod: 2, face: 4, layer: 1 },
+			{ image: "skybox", lod: 2, face: 5, layer: 1 }
+		]
+	},
+	{
+		name: "skybox_3_without_sun",
+		colorAttachments: [
+			{ image: "skybox", lod: 3, face: 0, layer: 1 },
+			{ image: "skybox", lod: 3, face: 1, layer: 1 },
+			{ image: "skybox", lod: 3, face: 2, layer: 1 },
+			{ image: "skybox", lod: 3, face: 3, layer: 1 },
+			{ image: "skybox", lod: 3, face: 4, layer: 1 },
+			{ image: "skybox", lod: 3, face: 5, layer: 1 }
+		]
+	},
+	{
+		name: "skybox_4_without_sun",
+		colorAttachments: [
+			{ image: "skybox", lod: 4, face: 0, layer: 1 },
+			{ image: "skybox", lod: 4, face: 1, layer: 1 },
+			{ image: "skybox", lod: 4, face: 2, layer: 1 },
+			{ image: "skybox", lod: 4, face: 3, layer: 1 },
+			{ image: "skybox", lod: 4, face: 4, layer: 1 },
+			{ image: "skybox", lod: 4, face: 5, layer: 1 }
+		]
+	},
+	{
+		name: "skybox_5_without_sun",
+		colorAttachments: [
+			{ image: "skybox", lod: 5, face: 0, layer: 1 },
+			{ image: "skybox", lod: 5, face: 1, layer: 1 },
+			{ image: "skybox", lod: 5, face: 2, layer: 1 },
+			{ image: "skybox", lod: 5, face: 3, layer: 1 },
+			{ image: "skybox", lod: 5, face: 4, layer: 1 },
+			{ image: "skybox", lod: 5, face: 5, layer: 1 }
+		]
+	},
+	{
+		name: "skybox_6_without_sun",
+		colorAttachments: [
+			{ image: "skybox", lod: 6, face: 0, layer: 1 },
+			{ image: "skybox", lod: 6, face: 1, layer: 1 },
+			{ image: "skybox", lod: 6, face: 2, layer: 1 },
+			{ image: "skybox", lod: 6, face: 3, layer: 1 },
+			{ image: "skybox", lod: 6, face: 4, layer: 1 },
+			{ image: "skybox", lod: 6, face: 5, layer: 1 }
+		]
+	},
+	{
+		name: "skybox_7_without_sun",
+		colorAttachments: [
+			{ image: "skybox", lod: 7, face: 0, layer: 1 },
+			{ image: "skybox", lod: 7, face: 1, layer: 1 },
+			{ image: "skybox", lod: 7, face: 2, layer: 1 },
+			{ image: "skybox", lod: 7, face: 3, layer: 1 },
+			{ image: "skybox", lod: 7, face: 4, layer: 1 },
+			{ image: "skybox", lod: 7, face: 5, layer: 1 }
 		]
 	}
 ]

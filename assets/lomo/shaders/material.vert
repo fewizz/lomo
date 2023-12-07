@@ -3,6 +3,7 @@
 #include frex:shaders/api/player.glsl
 
 //out vec3 prev_camera_space_pos;
+out vec3 shadow_pos;
 
 vec2 taa_offset() {
 	// 0: -0.25, -0.25
@@ -40,5 +41,8 @@ void frx_pipelineVertex() {
 
 		ndc = window_space_pos / vec3(frx_viewWidth, frx_viewHeight, 1.0) * 2.0 - 1.0;
 		gl_Position = vec4(ndc, 1.0) * ndc0.w;
+
+		vec4 shadow_pos0 = frx_shadowViewMatrix * frx_vertex;
+		shadow_pos = shadow_pos0.xyz / shadow_pos0.w;
 	}
 }

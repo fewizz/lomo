@@ -26,7 +26,7 @@ void main() {
 
 	out_color =
 		depth0 >= 1.0 ?
-		sky(mat3(frx_inverseViewMatrix) * dir, off) :
+		sky(mat3(frx_inverseViewMatrix) * dir, off, true) :
 		texelFetch(u_blended_color, ivec2(gl_FragCoord.xy), 0).rgb;
 
 	//out_color = pow(out_color, vec3(1.0 / 2.2));

@@ -11,13 +11,33 @@
 #include lomo:shaders/lib/pack.glsl
 #include lomo:shaders/lib/hash.glsl
 #include lomo:shaders/lib/linear.glsl
+#include lomo:shaders/lib/linear.glsl
 
-uniform samplerCube u_skybox;
+uniform samplerCubeArray u_skybox;
 
 uniform sampler2D u_prev_color;
 uniform sampler2D u_prev_depth;
 
+uniform sampler2DArray u_shadow_map;
+
+in vec3 shadow_pos;
+
 layout(location = 0) out vec4 out_color;
+
+vec3 shadow_dist(int cascade, vec3 shadow_pos) {
+	vec4 c = frx_shadowCenter(cascade);
+	return abs((c.xyz - shadow_pos.xyz) / c.w);
+}
+
+int select_shadow_cascade(vec3 shadow_pos) {
+	vec3 d3 = shadow_dist(3, shadow_pos);
+	vec3 d2 = shadow_dist(2, shadow_pos);
+	vec3 d1 = shadow_dist(1, shadow_pos);
+	if (all(lessThan(d3, vec3(1.0)))) return 3;
+	if (all(lessThan(d2, vec3(1.0)))) return 2;
+	if (all(lessThan(d1, vec3(1.0)))) return 1;
+	return 0;
+}
 
 vec3 compute_normal(
 	vec3 incidence, vec3 normal, vec2 pos, float roughness, uint stp
@@ -277,34 +297,43 @@ void frx_pipelineFragment() {
 			reflected_color = texelFetch(u_prev_color, hit_pos, 0).rgb;
 		}
 
-		vec3 reflected_sky = vec3(0.0);
+		vec3 sky_light = vec3(0.0);
 		if(frx_worldHasSkylight == 1) {
 			vec3 lightmap_sky = pow(texture(frxs_lightmap, vec2(0.03125, prev_light.y)).rgb, vec3(2.2));
+			vec3 skybox_dir = mat3(frx_inverseViewMatrix) * normalize(mix(clear_reflect_dir, frag_normal, frx_fragRoughness));
+
+			int cascade = select_shadow_cascade(shadow_pos);
+
+			vec4 shadow_pos_ndc0 = frx_shadowProjectionMatrix(cascade) * vec4(shadow_pos, 1.0);
+			vec3 shadow_pos_ndc = shadow_pos_ndc0.xyz /= shadow_pos_ndc0.w;
+			vec3 shadow_pos_win = shadow_pos_ndc * 0.5 + 0.5;
+			float is_shadowed = float(texture(u_shadow_map, vec3(shadow_pos_win.xy, cascade)).r < shadow_pos_win.z);
+
 			vec3 skybox = textureLod(
 				u_skybox,
-				mat3(frx_inverseViewMatrix) * normalize(mix(clear_reflect_dir, frag_normal, frx_fragRoughness)),
+				vec4(skybox_dir, is_shadowed),
 				pow(frx_fragRoughness, 1.0 / 8.0) * 7.0
 			).rgb * pow(frx_fragLight.y, 4.0);
 
-			reflected_sky = mix(
+			sky_light = mix(
 				lightmap_sky,
 				skybox,
 				frx_fragLight.y
 			);
 		}
 		else {
-			reflected_sky = pow(texture(frxs_lightmap, vec2(0.03125, frx_fragLight.y)).rgb, vec3(2.2));
+			sky_light = pow(texture(frxs_lightmap, vec2(0.03125, frx_fragLight.y)).rgb, vec3(2.2));
 		}
 
 		if(result) {
 			reflected_color = mix(
 				reflected_color,
-				reflected_sky,
+				sky_light,
 				pow(frx_fragRoughness, 2.0) * 0.8
 			);
 		}
 		else {
-			reflected_color = reflected_sky;
+			reflected_color = sky_light;
 		}
 
 		a = mix(
